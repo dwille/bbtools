@@ -1,5 +1,5 @@
-%% number_density.m
-% Usage: number_density(ts, te, options)
+%% number_density_cross.m
+% Usage: number_density_cross(ts, te, options)
 % Purpose: Reconstructs the number density using a Fourier expansion
 %           Treats the z-direction as different from the x-stream, which are 
 %           assumed to be periodic
@@ -13,7 +13,7 @@
 %     part_data.mat
 %     grid_data.mat
 
-function part_space(ts, te, options);
+function number_density_cross(ts, te, options);
 load part_data.mat;
 load grid_data.mat;
 
@@ -52,31 +52,51 @@ alpha = zeros(1,length(time));  % volume fraction at each time
 % Number density
 order = 5;           
 evalX = linspace(dom.xs, dom.xe)';            % location to eval F-Series
+evalY = linspace(dom.ys, dom.ye)';            % location to eval F-Series
 n0 = dom.N/(dom.xl*dom.yl*dom.zl);            % constant term
-n_even = n0*ones(length(evalX), length(time)); % even terms
-n_odd = zeros(length(evalX), length(time));    % odd terms
-n_ces = n0*ones(length(evalX), length(time));  % cesaro sum
-n.even.k0 = n_even;
-n.odd.k0 = n_odd;
-n.ces.k0 = n_ces;
+
+nX_even = n0*ones(length(evalX), length(time)); % even terms
+nX_odd = zeros(length(evalX), length(time));    % odd terms
+nX_ces = n0*ones(length(evalX), length(time));  % cesaro sum
+nX.even.k0 = n_even;
+nX.odd.k0 = n_odd;
+nX.ces.k0 = n_ces;
+
+nY.even.k0 = n_even;
+nY.odd.k0 = n_odd;
+nY.ces.k0 = n_ces;
+nY_even = n0*ones(length(evalY), length(time));
+nY_odd = zeros(length(evalY), length(time));
+nY_ces = n0*ones(length(evalY), length(time));
 
 for tt = 1:length(time)
   %% Number Density
   for ll = 1:order
     k_l = 2*pi*ll/dom.xl;
-    nl_even = 1/(0.5*dom.zl*dom.xl*dom.yl)*sum(cos(k_l*Xp(:,tt)));
-    nl_odd = -1i/(0.5*dom.zl*dom.xl*dom.yl)*sum(sin(k_l*Xp(:,tt)));
 
-    n_even(:,tt) = n_even(:,tt) + nl_even*cos(k_l*evalX);
-    n_odd(:,tt) = n_odd(:,tt) + 1i*nl_odd*sin(k_l*evalX);
-    n_ces(:,tt) = n_ces(:,tt) + (1 - ll/(dom.N + 1))*nl_even*cos(k_l*evalX) +...
-                                (1 - ll/(dom.N + 1))*nl_odd*sin(k_l*evalX)*1i;
+    nXl_even = 1/(0.5*dom.zl*dom.xl*dom.yl)*sum(cos(k_l*Xp(:,tt)));
+    nXl_odd = -1i/(0.5*dom.zl*dom.xl*dom.yl)*sum(sin(k_l*Xp(:,tt)));
+    nYl_even = 1/(0.5*dom.zl*dom.xl*dom.yl)*sum(cos(k_l*Yp(:,tt)));
+    nYl_odd = -1i/(0.5*dom.zl*dom.xl*dom.yl)*sum(sin(k_l*Yp(:,tt)));
+
+    nX_even(:,tt) = n_even(:,tt) + nXl_even*cos(k_l*evalX);
+    nX_odd(:,tt) = n_odd(:,tt) + 1i*nXl_odd*sin(k_l*evalX);
+    nX_ces(:,tt) = n_ces(:,tt) + (1 - ll/(dom.N + 1))*nXl_even*cos(k_l*evalX) +...
+                                (1 - ll/(dom.N + 1))*nXl_odd*sin(k_l*evalX)*1i;
+    nY_even(:,tt) = n_even(:,tt) + nYl_even*cos(k_l*evalY);
+    nY_odd(:,tt) = n_odd(:,tt) + 1i*nYl_odd*sin(k_l*evalY);
+    nY_ces(:,tt) = n_ces(:,tt) + (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalY) +...
+                                (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalY)*1i;
 
     field = ['k' num2str(ll)];
-    n.even.(field)(:,tt) = nl_even*cos(k_l*evalX);
-    n.odd.(field)(:,tt) = 1i*nl_odd*sin(k_l*evalX);
-    n.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nl_even*cos(k_l*evalX) +...
-                           (1 - ll/(dom.N + 1))*nl_odd*sin(k_l*evalX)*1i;
+    nX.even.(field)(:,tt) = nXl_even*cos(k_l*evalX);
+    nX.odd.(field)(:,tt) = 1i*nXl_odd*sin(k_l*evalX);
+    nX.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalX) +...
+                           (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalX)*1i;
+    nY.even.(field)(:,tt) = nXl_even*cos(k_l*evalY);
+    nY.odd.(field)(:,tt) = 1i*nXl_odd*sin(k_l*evalY);
+    nY.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalY) +...
+                           (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalY)*1i;
 
   end
 end
@@ -85,42 +105,87 @@ end
 figure
 subplot(3,2,1);
 set(gca, 'Position', [0.04 0.68 0.44 0.28])
-imagesc(time, evalX, n_ces);
+imagesc(time, evalX, nX_ces);
 axis xy;
 title('k_0')
 xlabel('Time'); ylabel('X')
 
 subplot(3,2,2);
 set(gca, 'Position', [0.52 0.68 0.44 0.28])
-imagesc(time, evalX, n.ces.k1);
+imagesc(time, evalX, nX.ces.k1);
 axis xy;
 title('k_1')
 xlabel('Time'); ylabel('X')
 
 subplot(3,2,3);
 set(gca, 'Position', [0.04 0.36 0.44 0.28])
-imagesc(time, evalX, n.ces.k2);
+imagesc(time, evalX, nX.ces.k2);
 axis xy;
 title('k_2')
 xlabel('Time'); ylabel('X')
 
 subplot(3,2,4);
 set(gca, 'Position', [0.52 0.36 0.44 0.28])
-imagesc(time, evalX, n.ces.k3);
+imagesc(time, evalX, nX.ces.k3);
 axis xy;
 title('k_3')
 xlabel('Time'); ylabel('X')
 
 subplot(3,2,5);
 set(gca, 'Position', [0.04 0.04 0.44 0.28])
-imagesc(time, evalX, n.ces.k4);
+imagesc(time, evalX, nX.ces.k4);
 axis xy;
 title('k_4')
 xlabel('Time'); ylabel('X')
 
 subplot(3,2,6);
 set(gca, 'Position', [0.52 0.04 0.44 0.28])
-imagesc(time, evalX, n.ces.k5);
+imagesc(time, evalX, nX.ces.k5);
 axis xy;
 title('k_5')
 xlabel('Time'); ylabel('X')
+
+
+% plot f-series
+figure
+subplot(3,2,1);
+set(gca, 'Position', [0.04 0.68 0.44 0.28])
+imagesc(time, evalY, nY_ces);
+axis xy;
+title('k_0')
+xlabel('Time'); ylabel('Y')
+
+subplot(3,2,2);
+set(gca, 'Position', [0.52 0.68 0.44 0.28])
+imagesc(time, evalY, nY.ces.k1);
+axis xy;
+title('k_1')
+xlabel('Time'); ylabel('Y')
+
+subplot(3,2,3);
+set(gca, 'Position', [0.04 0.36 0.44 0.28])
+imagesc(time, evalY, nY.ces.k2);
+axis xy;
+title('k_2')
+xlabel('Time'); ylabel('Y')
+
+subplot(3,2,4);
+set(gca, 'Position', [0.52 0.36 0.44 0.28])
+imagesc(time, evalY, nY.ces.k3);
+axis xy;
+title('k_3')
+xlabel('Time'); ylabel('Y')
+
+subplot(3,2,5);
+set(gca, 'Position', [0.04 0.04 0.44 0.28])
+imagesc(time, evalY, nY.ces.k4);
+axis xy;
+title('k_4')
+xlabel('Time'); ylabel('Y')
+
+subplot(3,2,6);
+set(gca, 'Position', [0.52 0.04 0.44 0.28])
+imagesc(time, evalY, nY.ces.k5);
+axis xy;
+title('k_5')
+xlabel('Time'); ylabel('Y')
