@@ -9,7 +9,7 @@
 %     dom         -   Domain structure from grid_data.mat
 %     nt          -   length(time)
 
-function [X Y Z] = periodic_flip(X, Y, Z, dom);
+function [X Y Z] = periodic_flip(X, Y, Z, dom, nt);
 
 for nn = 1:dom.N
   for tt = 1:nt

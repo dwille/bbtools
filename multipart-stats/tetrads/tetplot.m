@@ -2,6 +2,17 @@ clear all; close all; clc;
 load tetrad_stats.mat
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
 
+try
+  mkdir img
+catch
+end
+od = cd('img');
+try 
+  mkdir tetrad
+catch
+end
+cd(od)
+
 time = time - time(1);
 
 % Plot volume
@@ -14,14 +25,16 @@ for rr = 1:length(r0)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-loglog(time, 0.01*time.^(2), 'k--')
+loglog([10^2 10^4], 1e-5*[10^2 10^4].^(2), 'k--')
 xlabel('Time')
 ylabel('<V>/(4/3 \pi r^3)')
 title('Tetrad Volume')
 leg = [leg {'t^{2}'}];
 legend(leg, 'Location', 'SouthEast')
 clearvars leg
-%print('vol', '-dpdf', '-r300')
+set(gcf, 'PaperUnits', 'normalized')
+set(gcf, 'PaperPosition', [0 0 1 1])
+print('img/tetrad/vol', '-dpdf', '-r300')
 
 % Plot radius of gyration
 figure
@@ -33,15 +46,17 @@ for rr = 1:length(r0)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-loglog(time, 1.25*time.^(2/3), 'k--')
+loglog([10^2 10^4], 0.11*[10^2 10^4].^(2/3), 'k--')
 ylim([2*10^0, 10^(1.5)]);
 xlabel('Time')
 ylabel('<R^2>^{1/2}/r')
 title('Tetrad Radius of Gyration')
-leg = [leg {'t^{3/4}'}];
+leg = [leg {'t^{2/3}'}];
 legend(leg, 'Location', 'SouthEast')
 clearvars leg
-%print('rsq', '-dpdf', '-r300')
+set(gcf, 'PaperUnits', 'normalized')
+set(gcf, 'PaperPosition', [0 0 1 1])
+print('img/tetrad/rsq', '-dpdf', '-r300')
  
 % Plot lambda
 figure
@@ -58,7 +73,9 @@ ylabel('\Lambda')
 title('\Lambda = V^{2/3}/R^2')
 legend(leg)
 clearvars leg
-%print('lambda', '-dpdf', '-r300')
+set(gcf, 'PaperUnits', 'normalized')
+set(gcf, 'PaperPosition', [0 0 1 1])
+print('img/tetrad/lambda', '-dpdf', '-r300')
 
 % Plot I1
 figure
@@ -96,7 +113,11 @@ end
 xlabel('Time [ms]')
 ylabel('I3')
 legend(leg, 'Location', 'NorthEast')
-%print('ifactor', '-dpdf', '-r300')
+set(gcf, 'PaperUnits', 'normalized')
+set(gcf, 'PaperPosition', [0 0 1 1])
+print('img/tetrad/ifactor', '-dpdf', '-r300')
+
+close all
 
 % % Plot theta1
 % figure

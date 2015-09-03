@@ -31,6 +31,8 @@ ts = nInd(1);
 te = nInd(end);
 
 % Go through options
+%TODO: this isnt necessary w/ f-reconstruction stuff, only the legacy volfrac that was
+% removed from this function
 if nargin == 3
   switch options
     case 'periodic'
@@ -58,16 +60,16 @@ n0 = dom.N/(dom.xl*dom.yl*dom.zl);            % constant term
 nX_even = n0*ones(length(evalX), length(time)); % even terms
 nX_odd = zeros(length(evalX), length(time));    % odd terms
 nX_ces = n0*ones(length(evalX), length(time));  % cesaro sum
-nX.even.k0 = n_even;
-nX.odd.k0 = n_odd;
-nX.ces.k0 = n_ces;
+nX.even.k0 = nX_even;
+nX.odd.k0 = nX_odd;
+nX.ces.k0 = nX_ces;
 
-nY.even.k0 = n_even;
-nY.odd.k0 = n_odd;
-nY.ces.k0 = n_ces;
 nY_even = n0*ones(length(evalY), length(time));
 nY_odd = zeros(length(evalY), length(time));
 nY_ces = n0*ones(length(evalY), length(time));
+nY.even.k0 = nY_even;
+nY.odd.k0 = nY_odd;
+nY.ces.k0 = nY_ces;
 
 for tt = 1:length(time)
   %% Number Density
@@ -76,25 +78,26 @@ for tt = 1:length(time)
 
     nXl_even = 1/(0.5*dom.zl*dom.xl*dom.yl)*sum(cos(k_l*Xp(:,tt)));
     nXl_odd = -1i/(0.5*dom.zl*dom.xl*dom.yl)*sum(sin(k_l*Xp(:,tt)));
+
     nYl_even = 1/(0.5*dom.zl*dom.xl*dom.yl)*sum(cos(k_l*Yp(:,tt)));
     nYl_odd = -1i/(0.5*dom.zl*dom.xl*dom.yl)*sum(sin(k_l*Yp(:,tt)));
 
-    nX_even(:,tt) = n_even(:,tt) + nXl_even*cos(k_l*evalX);
-    nX_odd(:,tt) = n_odd(:,tt) + 1i*nXl_odd*sin(k_l*evalX);
-    nX_ces(:,tt) = n_ces(:,tt) + (1 - ll/(dom.N + 1))*nXl_even*cos(k_l*evalX) +...
+    nX_even(:,tt) = nX_even(:,tt) + nXl_even*cos(k_l*evalX);
+    nX_odd(:,tt) = nX_odd(:,tt) + 1i*nXl_odd*sin(k_l*evalX);
+    nX_ces(:,tt) = nX_ces(:,tt) + (1 - ll/(dom.N + 1))*nXl_even*cos(k_l*evalX) +...
                                 (1 - ll/(dom.N + 1))*nXl_odd*sin(k_l*evalX)*1i;
-    nY_even(:,tt) = n_even(:,tt) + nYl_even*cos(k_l*evalY);
-    nY_odd(:,tt) = n_odd(:,tt) + 1i*nYl_odd*sin(k_l*evalY);
-    nY_ces(:,tt) = n_ces(:,tt) + (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalY) +...
+    nY_even(:,tt) = nY_even(:,tt) + nYl_even*cos(k_l*evalY);
+    nY_odd(:,tt) = nY_odd(:,tt) + 1i*nYl_odd*sin(k_l*evalY);
+    nY_ces(:,tt) = nY_ces(:,tt) + (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalY) +...
                                 (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalY)*1i;
 
     field = ['k' num2str(ll)];
     nX.even.(field)(:,tt) = nXl_even*cos(k_l*evalX);
     nX.odd.(field)(:,tt) = 1i*nXl_odd*sin(k_l*evalX);
-    nX.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalX) +...
-                           (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalX)*1i;
-    nY.even.(field)(:,tt) = nXl_even*cos(k_l*evalY);
-    nY.odd.(field)(:,tt) = 1i*nXl_odd*sin(k_l*evalY);
+    nX.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nXl_even*cos(k_l*evalX) +...
+                           (1 - ll/(dom.N + 1))*nXl_odd*sin(k_l*evalX)*1i;
+    nY.even.(field)(:,tt) = nYl_even*cos(k_l*evalY);
+    nY.odd.(field)(:,tt) = 1i*nYl_odd*sin(k_l*evalY);
     nY.ces.(field)(:,tt) = (1 - ll/(dom.N + 1))*nYl_even*cos(k_l*evalY) +...
                            (1 - ll/(dom.N + 1))*nYl_odd*sin(k_l*evalY)*1i;
 
