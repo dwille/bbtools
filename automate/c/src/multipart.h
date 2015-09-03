@@ -14,6 +14,8 @@
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
 #define ROOT_DIR "."
+#define INPUT_DIR "input"
+#define OUTPUT_DIR "output"
 
 // Declare global variables
 extern double ts;         // starting time

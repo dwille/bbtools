@@ -13,7 +13,7 @@ void read_input(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/input.config", ROOT_DIR);
+  sprintf(fname, "%s/%s/input.config", ROOT_DIR, INPUT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     fprintf(stderr, "Could not open file %s\n", fname);
@@ -55,41 +55,53 @@ void read_time(void)
   struct dirent *ent;
   char output_path[FILE_NAME_SIZE] = "";
   sprintf(output_path, "%s/output", ROOT_DIR);
+  int fret = 0;
+  double time;
 
-  // count number of part files in directory
+  fret = fret;
+  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+
+  // count number of part files in directory that fall in time range
   int partCount = 0;
-  int isPart = -3;
+  int isPart;
+  int inTime;
   if ((dir = opendir (output_path)) != NULL) {
     while ((ent = readdir (dir)) != NULL) {
+      // check if part file
       isPart = strncmp(ent->d_name, "part", 4);
-      partCount = partCount + !isPart;
+      // check if in time range
+      fret = sscanf(end->d_name, "part-%lf.cgns", time);
+      inTime = ((time >= ts) & (time <= te));
+
+      partCount = partCount + !isPart*inTime;
     }
     closedir (dir);
   } else {
-    perror("");
+    printf("Output directory does not exist!\n");
     exit(EXIT_FAILURE);
   }
 
-  // create vector containing all times
+  // create vector of times in file name
   fileTime = malloc(partCount * sizeof(double));
-  int fret = 0;
-  fret = fret;
   int ind = 0;
   if ((dir = opendir (output_path)) != NULL) {
     while ((ent = readdir (dir)) != NULL) {
       isPart = strncmp(ent->d_name, "part", 4);
-      if (!isPart) {
+      fret = sscanf(end->d_name, "part-%lf.cgns", time);
+      inTime = ((time >= ts) & (time <= te));
+      // if partfile and in time range
+      if (!isPart*inTime) {
         fret = sscanf(ent->d_name, "part-%lf.cgns", &fileTime[ind]); 
         ind++;
       }
     }
     closedir (dir);
   } else {
-    perror("");
+    printf("Output directory does not exist!\n");
     exit(EXIT_FAILURE);
   }
 
-  // sort the array
+  // TODO: sort the array
   qsort(fileTime, partCount, sizeof(double), compare);
   for (int i = 0; i < partCount; i++) {
     printf("%lf\n", fileTime[i]);
