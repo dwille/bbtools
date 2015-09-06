@@ -22,12 +22,16 @@ if nargin == 4
     case 'append'
       % append data to pre-existing file
       fprintf('\t''append'' option enabled\n');
-      load data/part_data.mat
-      ts = time(end);
+      try
+        load data/part_data.mat
+        ts = time(end);
+        appendFlag = 1;
+      catch
+        ts = 0;
+      end
       if (te <= ts)
         error('te <= ts')
       end
-      appendFlag = 1;
     otherwise
       fprintf('Unrecognized option. Current options are:\n');
       fprintf('\t append');

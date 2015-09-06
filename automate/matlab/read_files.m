@@ -35,7 +35,7 @@ while ischar(line)
   tmp = strsplit(line, ' ');
   ts(count) = str2num(tmp{2});
 
-  line = fgets(fid)
+  line = fgets(fid);
   count = count + 1;
 end
 fclose(fid);

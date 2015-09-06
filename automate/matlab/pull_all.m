@@ -11,8 +11,18 @@ ROOT_DIR = (pwd);
 for ff = 1:length(te)
   fprintf('Reading %d of %d...\n', ff, length(te))
   od = cd(files{ff});
-  % TODO: fix append
-  pull_part_data(pwd, 0, ceil(te(ff)));
+  try
+    load data/part_data.mat;
+    currTS = time(end);
+    currTE = te(ff);
+    if isnan(NaN)
+      currTS = 0;
+    end
+  catch
+    currTS = 0;
+    currTE = te(ff);
+  end
+  pull_part_data(pwd, currTS, currTE, 'append');
   cd(od);
   clc;
 end

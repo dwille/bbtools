@@ -22,12 +22,16 @@ if nargin == 4
     case 'append'
       % append data to pre-existing file
       fprintf('\t''append'' option enabled\n');
-      load flow_data.mat
-      ts = time(end);
+      try
+        load flow_data.mat
+        ts = time(end);
+        appendFlag = 1;
+      catch
+        ts = 0;
+      end
       if (te <= ts)
         error('te <= ts')
       end
-    appendFlag = 1;
     otherwise
       fprintf('Unrecognized option. Current options are:\n');
       fprintf('\t append');
@@ -56,16 +60,13 @@ nt = length(tnum);
 temp = cgns_read_flow_vel(pwd, tstr{1});
 [ni nj nk] = size(temp);
 
-if nargin == 4
-  switch options
-    case 'append'
-      % extend old arrays
-      Uf = [Uf, zeros(ni, nj, nk, nt)];
-      Vf = [Vf, zeros(ni, nj, nk, nt)];
-      Wf = [Wf, zeros(ni, nj, nk, nt)];
-      phase = [phase, zeros(ni, nj, nk, nt)];
-      time = [time, tnum];
-  end
+if appendFlag == 1
+  % extend old arrays
+  Uf = [Uf, zeros(ni, nj, nk, nt)];
+  Vf = [Vf, zeros(ni, nj, nk, nt)];
+  Wf = [Wf, zeros(ni, nj, nk, nt)];
+  phase = [phase, zeros(ni, nj, nk, nt)];
+  time = [time, tnum];
 else
   % create new arrays
   Uf = zeros(ni, nj, nk, nt);
