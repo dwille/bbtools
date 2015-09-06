@@ -16,8 +16,8 @@
 %function track_upwell(ts, te, options);
 ts = 0;
 te = 10000;
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Sort out times
 nInd = 1:length(time);

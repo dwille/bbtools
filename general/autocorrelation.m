@@ -11,8 +11,8 @@
 %     grid_data.mat
 
 function autocorrelation(ts)
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Find stat stationary times
 tInd = find(time > ts);

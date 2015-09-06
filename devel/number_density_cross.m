@@ -14,8 +14,8 @@
 %     grid_data.mat
 
 function number_density_cross(ts, te, options);
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Sort out times
 nInd = 1:length(time);

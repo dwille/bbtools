@@ -13,8 +13,8 @@
 %     tol       -   Position tolerance as a multiple of particle radius
 
 function triad_analysis(r0, ts, te, tol)
-load part_data.mat
-load grid_data.mat
+load data/part_data.mat
+load data/grid_data.mat
 
 % Conver r0 and tol to multiples of radius
 r0 = r0*dom.r;
@@ -141,5 +141,5 @@ end
 fprintf(' ... Done!\n')
 
 % Average values over all triads (dim=2)
-save('triad_stats.mat', 'avgI1', 'avgI2', 'avgChi', 'avgRsq', 'avgtriA',...
+save('data/triad_stats.mat', 'avgI1', 'avgI2', 'avgChi', 'avgRsq', 'avgtriA',...
      'avgtriW', 'r0', 'time', 'dom')

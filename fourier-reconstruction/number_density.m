@@ -15,8 +15,8 @@
 
 ts = 0; te = 10000; order = 40;
 %function number_density(ts, te, order, options);
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Sort out times
 nInd = 1:length(time);

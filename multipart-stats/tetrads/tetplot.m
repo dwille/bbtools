@@ -1,5 +1,5 @@
 clear all; close all; clc;
-load tetrad_stats.mat
+load data/tetrad_stats.mat
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
 
 try

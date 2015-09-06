@@ -10,8 +10,8 @@
 %     grid_data.mat
 
 function  template(options)
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Sort out times
 nInd = 1:length(time);

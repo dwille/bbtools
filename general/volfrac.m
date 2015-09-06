@@ -14,8 +14,8 @@
 function volfrac(ts, te, options);
 
 % Read data
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 
 % Sort out times

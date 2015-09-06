@@ -6,12 +6,13 @@ function pull_all();
 addpath ~/bluebottle/tools/matlab
 addpath ~/bbtools/cgns_pull
 
-[files, time] = read_files();
-ROOT_DIR =(pwd);
-for ff = 1:length(time)
-  fprintf('Reading %d of %d...\n', ff, length(time))
+[files, ts, te] = read_files();
+ROOT_DIR = (pwd);
+for ff = 1:length(te)
+  fprintf('Reading %d of %d...\n', ff, length(te))
   od = cd(files{ff});
-  pull_part_data(pwd, 0, ceil(time(ff)));
+  % TODO: fix append
+  pull_part_data(pwd, 0, ceil(te(ff)));
   cd(od);
   clc;
 end

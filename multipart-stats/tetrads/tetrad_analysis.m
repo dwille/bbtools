@@ -13,8 +13,8 @@
 %     tol       -   Position tolerance as a multiple of particle radius
 
 function tetrad_analysis(r0, ts, te, tol)
-load part_data.mat
-load grid_data.mat
+load data/part_data.mat
+load data/grid_data.mat
 
 % Conver r0 and tol to multiples of radius
 r0 = r0*dom.r;
@@ -209,8 +209,12 @@ for rr = 1:length(r0)
 end
 fprintf(' ... Done!\n')
 
+try
+  mkdir data
+catch
+end
 % Save tetrad average values
-save('tetrad_stats.mat', ... 
+save('data/tetrad_stats.mat', ... 
       'avgI1', 'avgI2', 'avgI3', 'avgLambda', 'avgRsq', 'avgVol', ...
       'r0', 'time', 'dom')
 %      'avgTheta1', 'avgTheta2', 'avgTheta3', 'avgK1', 'avgK2', 'avgK3',...
