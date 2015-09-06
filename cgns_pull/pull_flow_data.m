@@ -16,6 +16,7 @@ addpath ~/bluebottle/tools/matlab
 fprintf('Initializing... \n');
 
 % go through options
+appendFlag = 0;
 if nargin == 4
   switch options
     case 'append'
@@ -26,6 +27,7 @@ if nargin == 4
       if (te <= ts)
         error('te <= ts')
       end
+    appendFlag = 1;
     otherwise
       fprintf('Unrecognized option. Current options are:\n');
       fprintf('\t append');
@@ -35,21 +37,23 @@ end
 
 % Read flow time
 [tstr tnum] = cgns_read_flow_time(dir);
-nInd = 1:length(tnum);
 
 % 'cut' the time array b/t ts and te values, inclusive
-ind = find(tnum < ts | tnum > te);
-nInd(ind) = [];
-tnum(ind) = [];
-ts = nInd(1);
-te = nInd(end);
+ind = find(tnum >= ts & tnum <= te);    % indices of values in range
+if appendFlag == 1
+  ind = ind(2:end);
+end
+tnum = tnum(ind);
+tstr = tstr(ind);
+ts = tnum(1);
+te = tnum(end);
 
 % number of time steps
-nt = length(nInd);
+nt = length(tnum);
 
 % find dimensions of flow arrays
 % -- everything interpolated to cell center, so one set of dims should be good
-temp = cgns_read_flow_vel(pwd, tstr{nInd(1)});
+temp = cgns_read_flow_vel(pwd, tstr{1});
 [ni nj nk] = size(temp);
 
 if nargin == 4
@@ -76,21 +80,25 @@ end
 fprintf('Reading data... ');
 % read part variables
 nmsg = 0;
-count = 0;
-for i = ts:te
-  count = count + 1;
+count = 1;
+for ii = ind
   % read vel
-  [Uf(:,:,:,i), Vf(:,:,:,i), Wf(:,:,:,i)] = cgns_read_flow_vel(dir, ...
-                                                tstr{nInd(count)});
+  [Uf(:,:,:,ii), Vf(:,:,:,ii), Wf(:,:,:,ii)] = cgns_read_flow_vel(dir, ...
+                                                tstr{count});
   % read phase
-  phase(:,:,:,i) = cgns_read_flow_phase(dir, tstr{nInd(count)});
+  phase(:,:,:,ii) = cgns_read_flow_phase(dir, tstr{count});
 
   msg = sprintf('%d of %d', count, nt);
   fprintf(repmat('\b', 1, nmsg));
   fprintf(msg);
   nmsg = numel(msg);
+  count = count + 1;
 end
 
-save('flow_data.mat', 'time', 'Uf', 'Vf', 'Wf', 'phase')
+try
+  mkdir data
+catch
+end
+save('data/flow_data.mat', 'time', 'Uf', 'Vf', 'Wf', 'phase')
 
 fprintf('... Done!\n');

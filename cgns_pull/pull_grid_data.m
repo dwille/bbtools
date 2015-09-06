@@ -43,6 +43,10 @@ dom.zl = dom.ze - dom.zs;
 dom.dz = mean(diff(z(1,1,:)));
 dom.N = np;
 
-save('grid_data.mat', 'dom');
+try
+  mkdir data
+catch
+end
+save('data/grid_data.mat', 'dom');
 
 fprintf('... Done!\n');     
