@@ -42,7 +42,7 @@ for n1 = 1:dom.N
   bPoss = -1;
 
 
-  for n2 = 1:Nper
+  for n2 = 1:Nper     % make sure its not the 'same' particle, flipped over
     nmod = mod(n2,N);
     if nmod == 0
       nmod = N;

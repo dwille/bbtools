@@ -22,19 +22,23 @@ tol = tol*dom.r;
 % TODO: tol should be a function of r0 -- maybe tol on angle?
 
 % Sort out desired time
-nInd = 1:length(time);
-ind = find(time < ts | time > te);
-nInd(ind) = [];
+ind = find(time >= ts & time <= te);
 % Deal with incorrect time input
-if (isempty(nInd) == 1)
+if (isempty(ind) == 1)
   fprintf('ts = %f and te = %f\n', time(1), time(end));
   error('Desired time is not within the simulation time limits.');
 end
-time(ind) = [];
-ts = nInd(1);
-te = nInd(end);
+time = time(ind);
+
+Xp = Xp(:,ind);
+Yp = Yp(:,ind);
+Zp = Zp(:,ind);
+Up = Up(:,ind);
+Vp = Vp(:,ind);
+Wp = Wp(:,ind);
 
 % Track absolute position of particles
+
 addpath ~/bbtools/general
 [X, Y, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
 
@@ -42,7 +46,7 @@ fprintf('Looping... \n')
 for rr = 1:length(r0)
   % find all tetrads that satisfy r0(rr) positioning within tol
   % TODO: Don't have explicit periodicity in funciton (i.e. z should be included if needed)
-  T = form_tetrads(r0(rr), X(:,ts), Y(:,ts), Z(:,ts), dom, tol);
+  T = form_tetrads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol);
   if isequal(T, -ones(4,1))
     fprintf('\tNo tetrads found for r0 = %.2f\n', r0(rr))
     rcount(rr) = 0;
@@ -69,66 +73,52 @@ for rr = 1:length(r0)
     p3.U = [Up(p3.n, :); Vp(p3.n, :); Wp(p3.n, :)];
     p4.U = [Up(p4.n, :); Vp(p4.n, :); Wp(p4.n, :)];
 
-    % calculate reduced vectors
-    rho_1 = (p2.X - p1.X)./sqrt(2);
-    rho_2 = (2*p3.X - p2.X - p1.X)./sqrt(6);
-    rho_3 = (3*p4.X - p3.X - p2.X - p1.X)./sqrt(12);
-
-    W_1 = (p2.U - p1.U)./sqrt(2);
-    W_2 = (2*p3.U - p2.U - p1.U)./sqrt(6);
-    W_3 = (3*p4.U - p3.U - p2.U - p1.U)./sqrt(12);
-
     % loop over time
     for tt = 1:length(time)
-      %plot3(p1.X(1,tt), p1.X(2,tt), p1.X(3,tt),'ok','MarkerSize', 5, 'MarkerFaceColor', 'k')
-      %axis([dom.xs dom.xe dom.ys dom.ye dom.zs dom.ze])
-      %xlabel('x')
-      %ylabel('y')
-      %zlabel('z')
-      %hold on
-      %plot3(p2.X(1,tt), p2.X(2,tt), p2.X(3,tt),'or','MarkerSize', 5, 'MarkerFaceColor', 'r')
-      %plot3(p3.X(1,tt), p3.X(2,tt), p3.X(3,tt),'ob','MarkerSize', 5, 'MarkerFaceColor', 'b')
-      %plot3(p4.X(1,tt), p4.X(2,tt), p4.X(3,tt),'og','MarkerSize', 5, 'MarkerFaceColor', 'g')
-      %pts12 = [p1.X(:,tt)'; p2.X(:,tt)'];
-      %pts13 = [p1.X(:,tt)'; p3.X(:,tt)'];
-      %pts14 = [p1.X(:,tt)'; p4.X(:,tt)'];
-      %pts23 = [p2.X(:,tt)'; p3.X(:,tt)'];
-      %pts24 = [p2.X(:,tt)'; p4.X(:,tt)'];
-      %pts34 = [p3.X(:,tt)'; p4.X(:,tt)'];
-      %plot3(pts12(:,1), pts12(:,2), pts12(:,3), 'k-')
-      %plot3(pts13(:,1), pts13(:,2), pts13(:,3), 'k-')
-      %plot3(pts14(:,1), pts14(:,2), pts14(:,3), 'k-')
-      %plot3(pts23(:,1), pts23(:,2), pts23(:,3), 'k-')
-      %plot3(pts24(:,1), pts24(:,2), pts24(:,3), 'k-')
-      %plot3(pts34(:,1), pts34(:,2), pts34(:,3), 'k-')
-      %hold off
-      %drawnow
-      %pause(0.25)
+      %% Geometry
+      x0 = 0.25*(p1.X(:,tt) + p2.X(:,tt) + p3.X(:,tt) + p4.X(:,tt));
 
-      G = [rho_1(:,tt), rho_2(:,tt), rho_3(:,tt)];
-      Gmom = G*transpose(G);
-      eigVal = eig(Gmom);
-      g1 = eigVal(1);
-      g2 = eigVal(2);
-      g3 = eigVal(3);
-      %[eigVec, eigVal] = eigs(Gmom);
-      %g1 = eigVal(1,1);
-      %g2 = eigVal(2,2);
-      %g3 = eigVal(3,3);
-      %gv1 = eigVec(:,1);
-      %gv2 = eigVec(:,2);
-      %gv3 = eigVec(:,3);
-      if abs(g1) < 1e-5
-        g1 = 1e-5;
-      end
-      if (g1 < 0 | g2 < 0 | g3 < 0)
-        G
-        Gmom
-        fprintf('g1 g2 g3 %f %f %f\n', g1, g2, g3);
-        error('eigs less than zero')
-      end
+      x1p = p1.X(:,tt) - x0;
+      x2p = p2.X(:,tt) - x0;
+      x3p = p3.X(:,tt) - x0;
+      x4p = p4.X(:,tt) - x0;
 
-      W = [W_1(:,tt), W_2(:,tt), W_3(:,tt)];
+      g = x1p*x1p' + x2p*x2p' + x3p*x3p' + x4p*x4p';
+
+      % Eigenvalues and vectors
+      [eigVec, eigVal] = eigs(g);
+      g3(tet,tt) = eigVal(1,1);
+      g2(tet,tt) = eigVal(2,2);
+      g1(tet,tt) = eigVal(3,3);
+      gv3 = eigVec(:,1);
+      gv2 = eigVec(:,2);
+      gv1 = eigVec(:,3);
+
+      % Radius of gyration
+      Rsq(tet,tt) = g1(tet,tt) + g2(tet,tt) + g3(tet,tt);
+
+      % volume
+      Vol(tet,tt) = (g1(tet,tt)*g2(tet,tt)*g3(tet,tt))^(1/2)/3;
+
+      % shape factors
+      I1(tet,tt) = g1(tet,tt)/Rsq(tet,tt);
+      I2(tet,tt) = g2(tet,tt)/Rsq(tet,tt);
+      I3(tet,tt) = g3(tet,tt)/Rsq(tet,tt);
+
+      % Shape factor
+      Lambda(tet,tt) = ...
+        Vol(tet,tt)^(2/3)./Rsq(tet,tt);
+
+      % Eigenvector Polar Angle
+      maxPolar(tet,tt) = acos(gv1(3)/norm(gv1));
+      medPolar(tet,tt) = acos(gv2(3)/norm(gv2));
+      minPolar(tet,tt) = acos(gv3(3)/norm(gv3));
+      % Eigenvector Azimuth Angle -- cos\phi, sin\phi, phi
+      maxAzi(tet,tt) = atan2(gv1(2), gv1(1));
+      medAzi(tet,tt) = atan2(gv2(2), gv2(1));
+      minAzi(tet,tt) = atan2(gv3(2), gv3(1));
+
+      %W = [W_1(:,tt), W_2(:,tt), W_3(:,tt)];
       %K = 0.5*(W*transpose(G) + G*transpose(W));
       %[eigVec, eigVal] = eigs(K);
       %k1 = eigVal(1,1);
@@ -137,21 +127,6 @@ for rr = 1:length(r0)
       %kv1 = eigVec(:,1);
       %kv2 = eigVec(:,2);
       %kv3 = eigVec(:,3);
-
-      % Radius of gyration
-      Rsq(tet,tt) = g1 + g2 + g3;
-
-      % volume
-      Vol(tet,tt) = (g1*g2*g3)^(1/2)/3;
-
-      % shape factors
-      I1(tet,tt) = g1/Rsq(tet,tt);
-      I2(tet,tt) = g2/Rsq(tet,tt);
-      I3(tet,tt) = g3/Rsq(tet,tt);
-
-      % lambda factor
-      Lambda(tet,tt) = ...
-        Vol(tet,tt)^(2/3)./Rsq(tet,tt);
 
       % angle between g and k
       %theta1(rr,tet,tt) = acos(dot(g1, k1)/(norm(g1)*norm(k1)));
@@ -178,13 +153,29 @@ for rr = 1:length(r0)
     end
   end
 
-  % average over all tetrads
+  str = ['r0', num2str(r0(rr)/dom.r)];
+  I.I1.(str) = I1;
+  I.I2.(str) = I2;
+  I.I3.(str) = I3;
+
+  eigVDir.maxPolar.(str) = maxPolar;
+  eigVDir.medPolar.(str) = medPolar;
+  eigVDir.minPolar.(str) = minPolar;
+  eigVDir.maxAzi.(str) = maxAzi;
+  eigVDir.medAzi.(str) = medAzi;
+  eigVDir.minAzi.(str) = minAzi;
+
+  % Average quantities over all tetrads
   avgRsq(rr,:) = mean(Rsq, 1);
   avgVol(rr,:) = mean(Vol, 1);
+  avgg1(rr,:) = mean(g1, 1);
+  avgg2(rr,:) = mean(g2, 1);
+  avgg3(rr,:) = mean(g3, 1);
   avgI1(rr,:) = mean(I1, 1);
   avgI2(rr,:) = mean(I2, 1);
   avgI3(rr,:) = mean(I3, 1);
   avgLambda(rr,:) = mean(Lambda, 1);
+
   %avgTheta1(rr,:) = mean(theta1, 1);
   %avgTheta2(rr,:) = mean(theta2, 1);
   %avgTheta3(rr,:) = mean(theta3, 1);
@@ -203,19 +194,22 @@ for rr = 1:length(r0)
   %invariants.(['r0_' num2str(r0(rr))]).Rsq = Rsq;
 
   clearvars Rsq Vol I1 I2 I3 Lambda;
+  clearvars g1 g2 g3;
+  clearvars maxPolar medPolar minPolar maxAzi medAzi minAzi;
   %clearvars kappa1 kappa2 kappa3;
   %clearvars theta1 theta2 theta3; 
   %clearvars M P Q R s Rsq;
 end
 fprintf(' ... Done!\n')
 
-try
+if ~exist('data', 'dir')
   mkdir data
-catch
 end
 % Save tetrad average values
 save('data/tetrad_stats.mat', ... 
       'avgI1', 'avgI2', 'avgI3', 'avgLambda', 'avgRsq', 'avgVol', ...
+      'avgg1', 'avgg2', 'avgg3', ...
+      'I', 'eigVDir',...
       'r0', 'time', 'dom')
 %      'avgTheta1', 'avgTheta2', 'avgTheta3', 'avgK1', 'avgK2', 'avgK3',...
 %      'theta1_percent', 'theta2_percent', 'theta3_percent', ...
