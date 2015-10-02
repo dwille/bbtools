@@ -117,9 +117,8 @@ for ii = ind
   count = count + 1;
 end
 
-try
+if ~exist('data', 'dir')
   mkdir data
-catch
 end
 save('data/part_data.mat', 'time',...
      'Xp', 'Yp', 'Zp', ...

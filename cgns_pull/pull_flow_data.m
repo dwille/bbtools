@@ -96,9 +96,8 @@ for ii = ind
   count = count + 1;
 end
 
-try
+if ~exist('data', 'dir')
   mkdir data
-catch
 end
 save('data/flow_data.mat', 'time', 'Uf', 'Vf', 'Wf', 'phase')
 

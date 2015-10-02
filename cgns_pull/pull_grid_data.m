@@ -43,9 +43,8 @@ dom.zl = dom.ze - dom.zs;
 dom.dz = mean(diff(z(1,1,:)));
 dom.N = np;
 
-try
+if ~exist('data', 'dir')
   mkdir data
-catch
 end
 save('data/grid_data.mat', 'dom');
 

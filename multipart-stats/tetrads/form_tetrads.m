@@ -1,15 +1,28 @@
-function [T] = form_tetrads(r0, X, Y, Z, dom, tol);
+function [T] = form_tetrads(r0, X, Y, Z, dom, tol, pFlag);
 
 T = -ones(4,1);
 
-% Superpose periodicity to make search easier
-% TODO: explicitly check periodicity
+% Superpose periodicity search across boundaries
 N = dom.N;
-X = [X; X + dom.xl; X - dom.xl];
-Y = [Y; Y + dom.yl; Y - dom.yl];
-Z = [Z; Z + dom.zl; Z - dom.xl];
-%Z = [Z; Z         ; Z         ];
 Nper = 3*N;
+switch pFlag
+  case 0  % no periodicity
+    X = [X; X; X];
+    Y = [Y; Y; Y];
+    Z = [Z; Z; Z];
+  case 1  % z-periodicity
+    X = [X; X; X];
+    Y = [Y; Y; Y];
+    Z = [Z; Z + dom.zl; Z - dom.xl];
+  case 2  % xy-periodicity
+    X = [X; X + dom.xl; X - dom.xl];
+    Y = [Y; Y + dom.yl; Y - dom.yl];
+    Z = [Z; Z; Z];
+  case 3  % triply-periodic
+    X = [X; X + dom.xl; X - dom.xl];
+    Y = [Y; Y + dom.yl; Y - dom.yl];
+    Z = [Z; Z + dom.zl; Z - dom.xl];
+end
 
 % Loop over ~all particles and find EW,NS,TB coordinates
 for n1 = 1:dom.N

@@ -11,15 +11,23 @@
 %     ts        -   Starting time
 %     te        -   Ending time
 %     tol       -   Position tolerance as a multiple of particle radius
+% TODO: tol should be a function of r0 -- maybe tol on angle?
+%     pFlag     -   Periodic domain flags
+%               -   0: no periodicity
+%               -   1: Z-periodicity
+%               -   2: XY periodicity
+%               -   3: triply-periodic
+%
+% TODO: append flags, so don't have to rerun everything
 
-function tetrad_analysis(r0, ts, te, tol)
+function tetrad_analysis(r0, ts, te, tol, pFlag)
 load data/part_data.mat
 load data/grid_data.mat
+addpath ~/bbtools/general
 
 % Conver r0 and tol to multiples of radius
 r0 = r0*dom.r;
 tol = tol*dom.r; 
-% TODO: tol should be a function of r0 -- maybe tol on angle?
 
 % Sort out desired time
 ind = find(time >= ts & time <= te);
@@ -39,14 +47,28 @@ Wp = Wp(:,ind);
 
 % Track absolute position of particles
 
-addpath ~/bbtools/general
-[X, Y, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+switch pFlag
+  case 0  % no periodicity
+    X = Xp;
+    Y = Yp;
+    Z = Zp;
+  case 1  % z-periodicity
+    X = Xp;
+    Y = Yp;
+    [~, ~, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+  case 2  % xy-periodicity
+    [X, Y, ~] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+    Z = Zp;
+  case 3  % triply-periodic
+    [X, Y, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+  otherwise
+    error('Wrong pFlag input');
+end
 
 fprintf('Looping... \n')
 for rr = 1:length(r0)
   % find all tetrads that satisfy r0(rr) positioning within tol
-  % TODO: Don't have explicit periodicity in funciton (i.e. z should be included if needed)
-  T = form_tetrads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol);
+  T = form_tetrads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol, pFlag);
   if isequal(T, -ones(4,1))
     fprintf('\tNo tetrads found for r0 = %.2f\n', r0(rr))
     rcount(rr) = 0;
@@ -87,12 +109,14 @@ for rr = 1:length(r0)
 
       % Eigenvalues and vectors
       [eigVec, eigVal] = eigs(g);
-      g3(tet,tt) = eigVal(1,1);
-      g2(tet,tt) = eigVal(2,2);
-      g1(tet,tt) = eigVal(3,3);
-      gv3 = eigVec(:,1);
-      gv2 = eigVec(:,2);
-      gv1 = eigVec(:,3);
+      % Sort
+      [val, ind] = sort(diag(eigVal), 'descend');
+      g1(tet,tt) = val(1);
+      g2(tet,tt) = val(2);
+      g3(tet,tt) = val(3);
+      gv1 = eigVec(:, ind(1));
+      gv2 = eigVec(:, ind(2));
+      gv3 = eigVec(:, ind(3));
 
       % Radius of gyration
       Rsq(tet,tt) = g1(tet,tt) + g2(tet,tt) + g3(tet,tt);
@@ -106,17 +130,19 @@ for rr = 1:length(r0)
       I3(tet,tt) = g3(tet,tt)/Rsq(tet,tt);
 
       % Shape factor
-      Lambda(tet,tt) = ...
-        Vol(tet,tt)^(2/3)./Rsq(tet,tt);
+      Lambda(tet,tt) = Vol(tet,tt)^(2/3)./Rsq(tet,tt);
 
-      % Eigenvector Polar Angle
-      maxPolar(tet,tt) = acos(gv1(3)/norm(gv1));
-      medPolar(tet,tt) = acos(gv2(3)/norm(gv2));
-      minPolar(tet,tt) = acos(gv3(3)/norm(gv3));
+      % Eigenvector Polar Angle 
+      % -- r = 1 due to eig normalization
+      % -- only care about [0, pi/2] (symmetry)
+      maxPolar(tet,tt) = asin(sqrt(gv1(1)^2 + gv1(2)^2)/1);
+      medPolar(tet,tt) = asin(sqrt(gv2(1)^2 + gv2(2)^2)/1);
+      minPolar(tet,tt) = asin(sqrt(gv3(1)^2 + gv3(2)^2)/1);
+
       % Eigenvector Azimuth Angle -- cos\phi, sin\phi, phi
-      maxAzi(tet,tt) = atan2(gv1(2), gv1(1));
-      medAzi(tet,tt) = atan2(gv2(2), gv2(1));
-      minAzi(tet,tt) = atan2(gv3(2), gv3(1));
+      maxAzi(tet,tt) = atan(gv1(2)/gv1(1));
+      medAzi(tet,tt) = atan(gv2(2)/gv2(1));
+      minAzi(tet,tt) = atan(gv3(2)/gv3(1));
 
       %W = [W_1(:,tt), W_2(:,tt), W_3(:,tt)];
       %K = 0.5*(W*transpose(G) + G*transpose(W));
@@ -127,16 +153,6 @@ for rr = 1:length(r0)
       %kv1 = eigVec(:,1);
       %kv2 = eigVec(:,2);
       %kv3 = eigVec(:,3);
-
-      % angle between g and k
-      %theta1(rr,tet,tt) = acos(dot(g1, k1)/(norm(g1)*norm(k1)));
-      %theta2(rr,tet,tt) = acos(dot(g2, k2)/(norm(g2)*norm(k2)));
-      %theta3(rr,tet,tt) = acos(dot(g3, k3)/(norm(g3)*norm(k3)));
-
-      % store kappa
-      %kappa1(tet,tt) = k1;
-      %kappa2(tet,tt) = k2;
-      %kappa3(tet,tt) = k3;
 
       % Coarse grained velocity gradient tensor
       %M = G.^(-1) * W - eye(3)*trace(inv(G)*W)./3;
@@ -176,16 +192,6 @@ for rr = 1:length(r0)
   avgI3(rr,:) = mean(I3, 1);
   avgLambda(rr,:) = mean(Lambda, 1);
 
-  %avgTheta1(rr,:) = mean(theta1, 1);
-  %avgTheta2(rr,:) = mean(theta2, 1);
-  %avgTheta3(rr,:) = mean(theta3, 1);
-  %avgK1(rr,:) = mean(kappa1, 1);
-  %avgK2(rr,:) = mean(kappa2, 1);
-  %avgK3(rr,:) = mean(kappa3, 1);
-  % TODO: probability as a function of theta
-  %theta1_percent(rr,:) = numel(theta1(theta1 < pi/6))/numel(theta1);
-  %theta2_percent(rr,:) = numel(theta2(theta2 < pi/6))/numel(theta2);
-  %theta3_percent(rr,:) = numel(theta3(theta3 < pi/6))/numel(theta3);
   % TODO: save M to get sym / anti sym parts
   %invariants.(['r0_' num2str(r0(rr))]).s = s;
   %invariants.(['r0_' num2str(r0(rr))]).P = P;
@@ -196,8 +202,6 @@ for rr = 1:length(r0)
   clearvars Rsq Vol I1 I2 I3 Lambda;
   clearvars g1 g2 g3;
   clearvars maxPolar medPolar minPolar maxAzi medAzi minAzi;
-  %clearvars kappa1 kappa2 kappa3;
-  %clearvars theta1 theta2 theta3; 
   %clearvars M P Q R s Rsq;
 end
 fprintf(' ... Done!\n')
