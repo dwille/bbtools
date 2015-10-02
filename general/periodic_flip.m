@@ -12,7 +12,7 @@
 function [X Y Z] = periodic_flip(X, Y, Z, dom, nt);
 
 for nn = 1:dom.N
-  for tt = 1:nt
+  for tt = 1:nt-1
     if abs(X(nn,tt) - X(nn,tt+1)) >= 0.5*dom.xl
       X(nn,tt+1:end) = X(nn,tt+1:end) + dom.xl*sign(X(nn,tt) - X(nn,tt+1));
     end

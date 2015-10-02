@@ -13,8 +13,8 @@
 %     grid_data.mat
 
 function check_sim(options);
-load part_data.mat
-load grid_data.mat
+load data/part_data.mat
+load data/grid_data.mat
 
 % Go through options
 for oo = 1:numel(options)

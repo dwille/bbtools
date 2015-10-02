@@ -13,8 +13,8 @@
 %     tol       -   Position tolerance as a multiple of particle radius
 
 function triad_analysis(r0, ts, te, tol)
-load part_data.mat
-load grid_data.mat
+load data/part_data.mat
+load data/grid_data.mat
 
 % Conver r0 and tol to multiples of radius
 r0 = r0*dom.r;
@@ -22,17 +22,20 @@ tol = tol*dom.r;
 % TODO: tol should be a function of r0 -- maybe tol on angle?
 
 % Sort out desired time
-nInd = 1:length(time);
-ind = find(time < ts | time > te);
-nInd(ind) = [];
+ind = find(time >= ts | time <= te);
 % Deal with incorrect time input
-if (isempty(nInd) == 1)
+if (isempty(ind) == 1)
   fprintf('ts = %f and te = %f\n', time(1), time(end));
   error('Desired time is not within the simulation time limits.');
 end
-time(ind) = [];
-ts = nInd(1);
-te = nInd(end);
+time = time(ind);
+
+Xp = Xp(:,ind);
+Yp = Yp(:,ind);
+Zp = Zp(:,ind);
+Up = Up(:,ind);
+Vp = Vp(:,ind);
+Wp = Wp(:,ind);
 
 % Track absolute position of particles
 addpath ~/bbtools/general
@@ -43,7 +46,7 @@ for rr = 1:length(r0)
   % find all triads that satisfy r0(rr) positioning within tol
   % TODO: Don't have explicit periodicity in function 
   % (i.e. z should be included if needed)
-  T = form_triads(r0(rr), X(:,ts), Y(:,ts), Z(:,ts), dom, tol);
+  T = form_triads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol);
   if isequal(T, -ones(3,1))
     fprintf('\tNo triads found for r0 = %.2f\n', r0(rr))
     rcount(rr) = 0;
@@ -141,5 +144,5 @@ end
 fprintf(' ... Done!\n')
 
 % Average values over all triads (dim=2)
-save('triad_stats.mat', 'avgI1', 'avgI2', 'avgChi', 'avgRsq', 'avgtriA',...
+save('data/triad_stats.mat', 'avgI1', 'avgI2', 'avgChi', 'avgRsq', 'avgtriA',...
      'avgtriW', 'r0', 'time', 'dom')

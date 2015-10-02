@@ -4,8 +4,9 @@
 %           of pair separation
 %
 %   User Inputs:
-%     ts    -   Starting Time
-%     te    -   Ending Time
+%     ts      -   Starting Time
+%     dtStep  -   number of time steps to skip (~vel autocorrelation)
+%     te      -   Ending Time
 %     options
 %           -   'periodic'  -- 3x periodic
 %           -   'xstream'   -- only cross-stream periodic
@@ -17,12 +18,13 @@
 
 clear all; close all; clc;
 ts = 650;
+dt = 50;
 te = 8000;
 options = 'periodic';
 
 %function  template(ts, te, options)
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 % Sort out times
 nInd = 1:length(time);
@@ -48,9 +50,20 @@ switch options
     error('Unrecognized option');
 end
 
-filter = 4*dom.r;       % range to check particle interactions
+% range to check particle interactions
+filter = 3*dom.r;
+
+binDom = nbody_setup(filter);
+
+% Go to each particle and find it's bin
+for nn == 1:dom.N;
+  ibin = floor(Xp(:)
+end
+
+
 count = 0;
 for tt = 1:length(time)
+  % do nbody crap
   for ii = 1:dom.N
     for jj = 1:dom.N
       x_ij = Xp(ii,tt) - Xp(jj,tt);
@@ -66,7 +79,6 @@ for tt = 1:length(time)
           y_ij = dom.yl - y_ij;
         end
         if type == 2    % check vertical direction
-        
           if z_ij >= (dom.zl - filter)
             z_ij = dom.zl - z_ij;
           end

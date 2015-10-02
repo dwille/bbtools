@@ -1,5 +1,5 @@
 clear all; close all; clc;
-load triad_stats.mat
+load data/triad_stats.mat
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
 
 % Plot aspect ratio

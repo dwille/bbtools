@@ -1,7 +1,7 @@
 clear all; clc; close all;
 set(0, 'DefaultFigureWindowStyle', 'docked')
 
-load invariants;
+load data/invariants;
 fields = fieldnames(invariants);
 
 % Append all data - take every 10th timestep (TODO: make input)

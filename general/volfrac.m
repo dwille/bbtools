@@ -14,8 +14,8 @@
 function volfrac(ts, te, options);
 
 % Read data
-load part_data.mat;
-load grid_data.mat;
+load data/part_data.mat;
+load data/grid_data.mat;
 
 
 % Sort out times
@@ -36,8 +36,7 @@ if nargin == 3
   switch options
     case 'periodic'
       % periodic flip
-      [X Y Z] = periodic_flip(Xp, Yp, Zp, dom.N, length(time), ...
-                  dom.xl, dom.yl, dom.zl);
+      [X Y Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
     otherwise
       error('unrecognized option')
   end

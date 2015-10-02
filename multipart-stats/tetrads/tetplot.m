@@ -1,126 +1,130 @@
-clear all; close all; clc;
-load tetrad_stats.mat
+function tetplot;
+load data/tetrad_stats.mat
+sim = strsplit(pwd, '/');
+sim = sim{end};
+sim = strrep(sim, '565_rho', '\rho*=');
+mainTitle = ['\fontsize{14}' sim];
+titleForm = '\newline\fontsize{10}\color{red}';
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
 
-try
+if ~exist('img', 'dir')
   mkdir img
-catch
 end
-od = cd('img');
-try 
-  mkdir tetrad
-catch
-end
-cd(od)
 
 time = time - time(1);
 
-% Plot volume
-figure
+%% Plot volume
+h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  loglog(time, avgVol(rr,:)./(4/3*pi*dom.r^3), style{rr})
+  loglog(time, avgVol(rr,:)./(4/3*pi*dom.r^3), style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
 loglog([10^2 10^4], 1e-5*[10^2 10^4].^(2), 'k--')
-xlabel('Time')
-ylabel('<V>/(4/3 \pi r^3)')
-title('Tetrad Volume')
+xlabel('\(t - t_{stat}\ [\textrm{ms}]\)', 'Interpreter', 'LaTex')
+ylabel('\(\langle V\rangle/(\frac{4}{3} \pi r^3)\)', 'Interpreter', 'LaTex')
+title([mainTitle, titleForm, 'Volume'])
 leg = [leg {'t^{2}'}];
 legend(leg, 'Location', 'SouthEast')
 clearvars leg
-set(gcf, 'PaperUnits', 'normalized')
-set(gcf, 'PaperPosition', [0 0 1 1])
-print('img/tetrad/vol', '-dpdf', '-r300')
-
-% Plot radius of gyration
-figure
+set(h, 'Units', 'Inches');
+pos = get(h, 'Position');
+set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
+%print(h, 'img/tetrad_vol', '-dpdf', '-r300')
+%
+%% Plot radius of gyration
+h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  loglog(time, avgRsq(rr,:).^(1/2)./dom.r, style{rr})
+  loglog(time, avgRsq(rr,:).^(1/2)./dom.r, style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
 loglog([10^2 10^4], 0.11*[10^2 10^4].^(2/3), 'k--')
 ylim([2*10^0, 10^(1.5)]);
-xlabel('Time')
-ylabel('<R^2>^{1/2}/r')
-title('Tetrad Radius of Gyration')
+xlabel('\(t - t_{stat}\ [\textrm{ms}]\)', 'Interpreter', 'LaTex')
+ylabel('\(\langle R^2\rangle^{1/2}/r\)', 'Interpreter', 'LaTex')
+title([mainTitle, titleForm, 'Tetrad Radius of Gyration'])
 leg = [leg {'t^{2/3}'}];
 legend(leg, 'Location', 'SouthEast')
 clearvars leg
-set(gcf, 'PaperUnits', 'normalized')
-set(gcf, 'PaperPosition', [0 0 1 1])
-print('img/tetrad/rsq', '-dpdf', '-r300')
- 
-% Plot lambda
-figure
+set(h, 'Units', 'Inches');
+pos = get(h, 'Position');
+set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
+%print(h, 'img/tetrad_rsq', '-dpdf', '-r300')
+%
+%% Plot lambda
+h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  semilogx(time, avgLambda(rr,:), style{rr})
+  semilogx(time, avgLambda(rr,:), style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-xlabel('Time [ms]')
-ylabel('\Lambda')
-title('\Lambda = V^{2/3}/R^2')
+xlabel('\(t - t_{stat}\ [\textrm{ms}]\)', 'Interpreter', 'LaTex')
+ylabel('\(\Lambda = V^{2/3}/R^2\)', 'Interpreter', 'LaTex')
+title([mainTitle, titleForm, '\Lambda - Shape Factor'])
 legend(leg)
 clearvars leg
-set(gcf, 'PaperUnits', 'normalized')
-set(gcf, 'PaperPosition', [0 0 1 1])
-print('img/tetrad/lambda', '-dpdf', '-r300')
-
-% Plot I1
-figure
-subplot(3,1,1)
+set(h, 'Units', 'Inches');
+pos = get(h, 'Position');
+set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
+%print(h, 'img/tetrad_lambda', '-dpdf', '-r300')
+%
+%% Plot I1
+h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
+subplot(3,1,3)
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  semilogx(time, avgI1(rr,:), style{rr})
+  semilogx(time, avgI1(rr,:), style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-ylabel('I1')
+ylabel('\(I_3\)', 'Interpreter', 'LaTex')
+xlabel('\(t - t_{stat}\ [\textrm{ms}]\)', 'Interpreter', 'LaTex')
 % Plot I2
 subplot(3,1,2)
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  semilogx(time, avgI2(rr,:), style{rr})
+  semilogx(time, avgI2(rr,:), style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-ylabel('I2')
+ylabel('\(I_2\)', 'Interpreter', 'LaTex')
 % Plot I3
-subplot(3,1,3)
+subplot(3,1,1)
 for rr = 1:length(r0)
   if r0(rr) == -1
     continue;
   end
-  semilogx(time, avgI3(rr,:), style{rr})
+  semilogx(time, avgI3(rr,:), style{rr}, 'LineWidth', 2)
   hold on
   leg{rr} = ['r0 = ' num2str(r0(rr))];
 end
-xlabel('Time [ms]')
-ylabel('I3')
+ylabel('\(I_1\)', 'Interpreter', 'LaTex')
+title([mainTitle, titleForm, 'Normalized Eigenvalues'])
 legend(leg, 'Location', 'NorthEast')
-set(gcf, 'PaperUnits', 'normalized')
-set(gcf, 'PaperPosition', [0 0 1 1])
-print('img/tetrad/ifactor', '-dpdf', '-r300')
+set(h, 'Units', 'Inches');
+pos = get(h, 'Position');
+set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
+%print(h, 'img/tetrad_inorm', '-dpdf', '-r300')
 
-close all
+
+%close all
 
 % % Plot theta1
-% figure
+% figure;
 % subplot(3,1,1)
 % for rr = 1:length(r0)
 %   if r0(rr) == -1

@@ -8,5 +8,8 @@ DATA_DIR="/home-1/dwillen3@jhu.edu/scratch/sims/rz_glass"
 
 cd $TOOL_PATH
 
-matlab -nodisplay -nodesktop -r "try; addpath $TOOL_PATH; $TOOL_NAME; catch; end; quit" >\
+module load matlab
+
+matlab -nodisplay -nodesktop -r "try; addpath $TOOL_PATH; $TOOL_NAME; catch; end; exit;" >\
 "$DATA_DIR/pulloutput" 2> "$DATA_DIR/pullerror"
+
