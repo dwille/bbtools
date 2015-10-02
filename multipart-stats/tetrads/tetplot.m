@@ -1,19 +1,38 @@
-function tetplot;
+%% tetplot.m
+% Usage: tetplot(printFlag)
+% Purpose: Plots the size and shape characteristics of the tracked tetrads
+%
+%   User Inputs:
+%     printFlag   -   Tells whether to print plots to pdf or not
+%                     0:  Do not print plots
+%                     1:  Print plots
+%
+%   Function Requirements
+%     tetrad_stats.mat
+
+function tetplot(printFlag);
+
+% Load data; relate time to initial time
 load data/tetrad_stats.mat
+time = time - time(1);
+
+% Create plot title based on directory
 sim = strsplit(pwd, '/');
 sim = sim{end};
 sim = strrep(sim, '565_rho', '\rho*=');
 mainTitle = ['\fontsize{14}' sim];
 titleForm = '\newline\fontsize{10}\color{red}';
+
+% Set up plotting color order
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
 
+% Create img directory if it doesn't exist
 if ~exist('img', 'dir')
   mkdir img
 end
 
-time = time - time(1);
 
-%% Plot volume
+% Plot volume
 h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
@@ -33,9 +52,13 @@ clearvars leg
 set(h, 'Units', 'Inches');
 pos = get(h, 'Position');
 set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
-%print(h, 'img/tetrad_vol', '-dpdf', '-r300')
-%
-%% Plot radius of gyration
+if printFlag == 1
+  print(h, 'img/tetrad_vol', '-dpdf', '-r300')
+  close
+end
+
+
+% Plot radius of gyration
 h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
@@ -56,9 +79,13 @@ clearvars leg
 set(h, 'Units', 'Inches');
 pos = get(h, 'Position');
 set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
-%print(h, 'img/tetrad_rsq', '-dpdf', '-r300')
-%
-%% Plot lambda
+if printFlag == 1
+  print(h, 'img/tetrad_rsq', '-dpdf', '-r300')
+  close
+end
+
+
+% Plot lambda
 h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 for rr = 1:length(r0)
   if r0(rr) == -1
@@ -76,9 +103,13 @@ clearvars leg
 set(h, 'Units', 'Inches');
 pos = get(h, 'Position');
 set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
-%print(h, 'img/tetrad_lambda', '-dpdf', '-r300')
-%
-%% Plot I1
+if printFlag == 1
+  print(h, 'img/tetrad_lambda', '-dpdf', '-r300')
+  close
+end
+
+
+% Plot I1
 h = figure('units', 'normalized', 'outerposition', [0 0 1 1]);
 subplot(3,1,3)
 for rr = 1:length(r0)
@@ -118,49 +149,13 @@ legend(leg, 'Location', 'NorthEast')
 set(h, 'Units', 'Inches');
 pos = get(h, 'Position');
 set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3), pos(4)])
-%print(h, 'img/tetrad_inorm', '-dpdf', '-r300')
+if printFlag == 1
+  print(h, 'img/tetrad_inorm', '-dpdf', '-r300')
+  close
+end
 
 
-%close all
-
-% % Plot theta1
-% figure;
-% subplot(3,1,1)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   semilogx(time, avgTheta1(rr,:), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% ylabel('\theta_1')
-% % Plot theta2
-% subplot(3,1,2)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   semilogx(time, avgTheta2(rr,:), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% ylabel('\theta_2')
-% % Plot theta2
-% subplot(3,1,3)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   semilogx(time, avgTheta3(rr,:), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% xlabel('Time [ms]')
-% ylabel('\theta_3')
-% legend(leg, 'Location', 'NorthEast')
-% %print('ifactor', '-dpdf', '-r300')
-% 
+%% Velocity characterisitcs
 % % Plot kappa1
 % figure
 % subplot(3,1,1)
@@ -198,42 +193,3 @@ set(h, 'PaperPositionMode', 'Auto', 'PaperUnits', 'Inches', 'PaperSize', [pos(3)
 % ylabel('\kappa_3')
 % legend(leg, 'Location', 'NorthEast')
 % %print('ifactor', '-dpdf', '-r300')
-% 
-% % Plot kappa1 over R
-% figure
-% subplot(3,1,1)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   loglog(avgRsq(rr,:).^(1/2)./dom.r, abs(avgK1(rr,:)), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% ylabel('\kappa_1')
-% % Plot kappa2
-% subplot(3,1,2)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   loglog(avgRsq(rr,:).^(1/2)./dom.r, abs(avgK2(rr,:)), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% ylabel('\kappa_2')
-% % Plot kappa2
-% subplot(3,1,3)
-% for rr = 1:length(r0)
-%   if r0(rr) == -1
-%     continue;
-%   end
-%   loglog(avgRsq(rr,:).^(1/2)./dom.r, abs(avgK3(rr,:)), style{rr})
-%   hold on
-%   leg{rr} = ['r0 = ' num2str(r0(rr))];
-% end
-% xlabel('R/a [mm]')
-% ylabel('\kappa_3')
-% legend(leg, 'Location', 'NorthEast')
-% %print('ifactor', '-dpdf', '-r300')
-% 
