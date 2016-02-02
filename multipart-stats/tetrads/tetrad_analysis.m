@@ -1,5 +1,5 @@
 %% tetrad_analysis.m
-% Usage: tetrad_analysis(r0, ts, te, tol)
+% Usage: tetrad_analysis(r0, ts, te, thTol, pFlag)
 % Purpose: Form all the tetrads fitting the given parameters. Track these
 %           through time and calculate
 %             -- tetrad shape characteristics
@@ -10,24 +10,23 @@
 %     r0        -   1D array of tetrad base lengths, as a multiple of the particle radius
 %     ts        -   Starting time
 %     te        -   Ending time
-%     tol       -   Position tolerance as a multiple of particle radius
-% TODO: tol should be a function of r0 -- maybe tol on angle?
+%     thTol     -   angular tolerance in radians, tol = r0*tan(thTol)
+%                   pi/16 is a good start
 %     pFlag     -   Periodic domain flags
 %               -   0: no periodicity
 %               -   1: Z-periodicity
 %               -   2: XY periodicity
 %               -   3: triply-periodic
 %
-% TODO: append flags, so don't have to rerun everything
 
-function tetrad_analysis(r0, ts, te, tol, pFlag)
+function tetrad_analysis(r0, ts, te, thTol, pFlag)
 load data/part_data.mat
 load data/grid_data.mat
 addpath ~/bbtools/general
 
-% Conver r0 and tol to multiples of radius
+% Convert r0 and tol to multiples of radius
 r0 = r0*dom.r;
-tol = tol*dom.r; 
+tol = r0.*tan(thTol);
 
 % Sort out desired time
 ind = find(time >= ts & time <= te);
@@ -46,7 +45,6 @@ Vp = Vp(:,ind);
 Wp = Wp(:,ind);
 
 % Track absolute position of particles
-
 switch pFlag
   case 0  % no periodicity
     X = Xp;
@@ -68,7 +66,7 @@ end
 fprintf('Looping... \n')
 for rr = 1:length(r0)
   % find all tetrads that satisfy r0(rr) positioning within tol
-  T = form_tetrads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol, pFlag);
+  T = form_tetrads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol(rr), pFlag);
   if isequal(T, -ones(4,1))
     fprintf('\tNo tetrads found for r0 = %.2f\n', r0(rr))
     rcount(rr) = 0;
@@ -78,6 +76,8 @@ for rr = 1:length(r0)
     fprintf('\tFound %d tetrads for r0 = %.2f\n', size(T,2), r0(rr))
     rcount(rr) = size(T,2);
   end
+  % Save number of tetrads
+  ntets(rr) = size(T,2);
 
   % loop over all tetrads
   for tet = 1:size(T,2)
@@ -214,6 +214,6 @@ save('data/tetrad_stats.mat', ...
       'avgI1', 'avgI2', 'avgI3', 'avgLambda', 'avgRsq', 'avgVol', ...
       'avgg1', 'avgg2', 'avgg3', ...
       'I', 'eigVDir',...
-      'r0', 'time', 'dom')
+      'r0', 'time', 'dom', 'ntets')
 %      'P', 'Q', 'R',... 
 %save('invariants.mat', 'invariants')
