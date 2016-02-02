@@ -1,6 +1,6 @@
 // ARRAY.C
 //
-// Contains various tools used in array multiplciation comparisons, etc
+// Contains various tools used in array multiplication comparisons, etc
 
 #include "array.h"
 
