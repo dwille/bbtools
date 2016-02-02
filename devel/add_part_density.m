@@ -1,14 +1,15 @@
-%% pull_all.m
-% Usage: pull_all(ROOT_DIR)
-% Purpose: Pulls all part data from the specified set of directories
+%% add_part_density.m
+% Usage: add_part_density()
+% Purpose: Adds part density to relevent sims
 %
 %   User Inputs:
-%     ROOT_DIR  -   Directory where pullSimTime resides
+%     ROOT_DIR  -   Directory where lastSimTime resides
 %
 %   Function Requirements:
-%     pullSimTime created from simtime.sh
+%     lastSimTime created from simtime.sh
+%     p-density/rho*
 
-function pull_all(ROOT_DIR);
+function add_part_density(ROOT_DIR);
 addpath ~/bluebottle/tools/matlab
 addpath ~/bbtools/cgns_pull
 addpath ~/bbtools/general
@@ -20,11 +21,8 @@ cd(ROOT_DIR);
 
 % Loop through and pull part data
 for ff = 1:length(files)
+  fprintf('Reading part file %s (%d of %d)...\n', files{ff}, ff, length(files))
   od = cd(files{ff});
-  name = strsplit(files{ff}, '/');
-  density = name{end-1};
-  npart = name{end - 2};
-  fprintf('Case = %s/%s, ts = %d, te = %d\n  ', npart, density, ts(ff), te(ff));
   try
     load data/part_data.mat time;
     currTS = time(end);
@@ -42,11 +40,8 @@ cd(ROOT_DIR);
 
 % Loop through and pull flow
 for ff = 1:length(files)
+  fprintf('Reading flow file %d of %d...\n', ff, length(files))
   od = cd(files{ff});
-  name = strsplit(files{ff}, '/');
-  density = name{end-1};
-  npart = name{end - 2};
-  fprintf('Case = %s/%s, ts = %d, te = %d\n  ', npart, density, ts(ff), te(ff));
   try
     load data/flow_data.mat tFlow;
     currTS = time(end);

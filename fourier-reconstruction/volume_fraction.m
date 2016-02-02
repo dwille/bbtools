@@ -1,21 +1,23 @@
-%% number_density.m
-% Usage: number_density(ts, te, options)
-% Purpose: Reconstructs the number density using a Fourier expansion
+%% volume_fraction.m
+% Usage: volume_fraction(ts, te, order)
+% Purpose: Reconstructs the volume_fraction using a Fourier expansion
 %           Treats the z-direction as different from the x-stream, which are 
 %           assumed to be periodic
 %
 %   User Inputs:
 %     ts         -   starting time
 %     te         -   ending time
-%     options    -   'periodic' TODO this is always necessary, no? bc assumption
+%     order      -   number of F-series terms to calculate
 %
 %   Function Requirements:
-%     part_data.mat
+%     part_data.mat time Zp
 %     grid_data.mat
+%
+% TODO: add scale to final plot
+% TODO: calculate 'energy' of each mode?
 
-%ts = 0; te = 10000; order = 40;
-function number_density(ts, te, order, options);
-load data/part_data.mat;
+function volume_fraction(ts, te, order);
+load data/part_data.mat time Zp;
 load data/grid_data.mat;
 
 % Sort out times
@@ -34,10 +36,9 @@ te = nInd(end);
 
 % Initialize variables
 Vp = dom.N*4/3*pi*dom.r^3;      % volume of all particles
-alpha = zeros(1,length(time));  % volume fraction at each time
 
-% Number density
-evalZ = linspace(dom.zs, dom.ze)';            % location to eval F-Series
+% Volume Fraction
+evalZ = linspace(dom.zs, dom.ze, 4*order)';            % location to eval F-Series
 n0 = dom.N/(dom.xl*dom.yl*dom.zl);            % constant term
 n0 = n0*4/3*pi*dom.r^3;                       % particle volume fraction
 n.even.k0 = n0*ones(length(evalZ), length(time));
@@ -72,20 +73,26 @@ for ll = 0:order;
   n.ces.max(ll+1,:) = max(n.ces.(field));
 end
 
-% plot f-series
+% plot total
+figure
+imagesc(time, evalZ./dom.r, n.ces.total);
+axis xy;
+title('Total Volume Fraction')
+xlabel('Time'); ylabel('z*')
+colorbar
+
+% plot first 6 wavenumbers
 figure
 subplot(3,2,1);
 set(gca, 'Position', [0.04 0.68 0.44 0.28])
-%imagesc(time, evalZ./dom.r, n_ces);
-imagesc(time, evalZ./dom.r, n.ces.total);
+imagesc(time, evalZ./dom.r, n.ces.k1);
 axis xy;
 title('Total')
-%xlabel('Time'); 
-ylabel('z*')
+xlabel('Time'); ylabel('z*')
 
 subplot(3,2,2);
 set(gca, 'Position', [0.52 0.68 0.44 0.28])
-imagesc(time, evalZ./dom.r, n.ces.k1);
+imagesc(time, evalZ./dom.r, n.ces.k2);
 axis xy;
 title('k_1')
 %xlabel('Time'); 
@@ -93,7 +100,7 @@ title('k_1')
 
 subplot(3,2,3);
 set(gca, 'Position', [0.04 0.36 0.44 0.28])
-imagesc(time, evalZ./dom.r, n.ces.k2);
+imagesc(time, evalZ./dom.r, n.ces.k3);
 axis xy;
 title('k_2')
 %xlabel('Time'); 
@@ -101,21 +108,21 @@ ylabel('z*')
 
 subplot(3,2,4);
 set(gca, 'Position', [0.52 0.36 0.44 0.28])
-imagesc(time, evalZ./dom.r, n.ces.k3);
+imagesc(time, evalZ./dom.r, n.ces.k4);
 axis xy;
 title('k_3')
 %xlabel('Time'); ylabel('z*')
 
 subplot(3,2,5);
 set(gca, 'Position', [0.04 0.04 0.44 0.28])
-imagesc(time, evalZ./dom.r, n.ces.k4);
+imagesc(time, evalZ./dom.r, n.ces.k5);
 axis xy;
 title('k_4')
 xlabel('Time'); ylabel('z*')
 
 subplot(3,2,6);
 set(gca, 'Position', [0.52 0.04 0.44 0.28])
-imagesc(time, evalZ./dom.r, n.ces.k5);
+imagesc(time, evalZ./dom.r, n.ces.k6);
 axis xy;
 title('k_5')
 xlabel('Time'); %ylabel('z*')

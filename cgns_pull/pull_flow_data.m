@@ -23,7 +23,7 @@ if nargin == 4
       % append data to pre-existing file
       fprintf('\t''append'' option enabled\n');
       try
-        load flow_data.mat
+        load data/flow_data.mat
         ts = time(end);
         appendFlag = 1;
       catch
@@ -65,7 +65,7 @@ if appendFlag == 1
   Uf = [Uf, zeros(ni, nj, nk, nt)];
   Vf = [Vf, zeros(ni, nj, nk, nt)];
   Wf = [Wf, zeros(ni, nj, nk, nt)];
-  phase = [phase, zeros(ni, nj, nk, nt)];
+  %phase = [phase, zeros(ni, nj, nk, nt)];
   time = [time, tnum];
 else
   % create new arrays

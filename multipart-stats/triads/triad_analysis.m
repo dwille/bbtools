@@ -1,5 +1,5 @@
 %% triad_analysis.m
-% Usage: triad_analysis(r0, ts, te, tol)
+% Usage: triad_analysis(r0, ts, te, tol, pFlag)
 % Purpose: Form all the triads fitting the given parameters. Track these
 %           through time and calculate
 %             -- triad shape characteristics
@@ -11,15 +11,23 @@
 %     ts        -   Starting time
 %     te        -   Ending time
 %     tol       -   Position tolerance as a multiple of particle radius
+% TODO: tol should be a function of r0 -- maybe tol on angle?
+%     pFlag     -   Periodic domain flags
+%               -   0: no periodicity
+%               -   1: Z-periodicity
+%               -   2: XY periodicity
+%               -   3: triply-periodic
+%
+% TODO: append flags, so don't have to rerun everything
 
-function triad_analysis(r0, ts, te, tol)
+function triad_analysis(r0, ts, te, tol, pFlag)
 load data/part_data.mat
 load data/grid_data.mat
+addpath ~/bbtools/general
 
 % Conver r0 and tol to multiples of radius
 r0 = r0*dom.r;
 tol = tol*dom.r;
-% TODO: tol should be a function of r0 -- maybe tol on angle?
 
 % Sort out desired time
 ind = find(time >= ts | time <= te);
@@ -38,15 +46,28 @@ Vp = Vp(:,ind);
 Wp = Wp(:,ind);
 
 % Track absolute position of particles
-addpath ~/bbtools/general
-[X, Y, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+switch pFlag
+  case 0  % no periodicity
+    X = Xp;
+    Y = Yp;
+    Z = Zp;
+  case 1  % z-periodicity
+    X = Xp;
+    Y = Yp;
+    [~, ~, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+  case 2  % xy-periodicity
+    [X, Y, ~] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+    Z = Zp;
+  case 3  % triply-periodic
+    [X, Y, Z] = periodic_flip(Xp, Yp, Zp, dom, length(time));
+  otherwise
+    error('Wrong pFlag input');
+end
 
 fprintf('Looping... \n')
 for rr = 1:length(r0)
   % find all triads that satisfy r0(rr) positioning within tol
-  % TODO: Don't have explicit periodicity in function 
-  % (i.e. z should be included if needed)
-  T = form_triads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol);
+  T = form_triads(r0(rr), Xp(:,1), Yp(:,1), Zp(:,1), dom, tol, pFlag);
   if isequal(T, -ones(3,1))
     fprintf('\tNo triads found for r0 = %.2f\n', r0(rr))
     rcount(rr) = 0;
@@ -67,60 +88,34 @@ for rr = 1:length(r0)
     p2.X = [X(p2.n, :); Y(p2.n, :); Z(p2.n, :)];
     p3.X = [X(p3.n, :); Y(p3.n, :); Z(p3.n, :)];
 
-    % calculate reduced vectors
-    rho_1 = (p2.X - p1.X)./sqrt(2);
-    rho_2 = (2*p3.X - p2.X - p1.X)./sqrt(6);
-    rho_3 = [0;0;0;];
-
     % loop over time
     for tt = 1:length(time)
-      % Plot over time
-      %plot3(p1.X(1,tt), p1.X(2,tt), p1.X(3,tt),'ok','MarkerSize', 5, 'MarkerFaceColor', 'k')
-      %axis([dom.xs dom.xe dom.ys dom.ye dom.zs dom.ze])
-      %xlabel('x')
-      %ylabel('y')
-      %zlabel('z')
-      %hold on
-      %plot3(p2.X(1,tt), p2.X(2,tt), p2.X(3,tt),'or','MarkerSize', 5, 'MarkerFaceColor', 'r')
-      %plot3(p3.X(1,tt), p3.X(2,tt), p3.X(3,tt),'ob','MarkerSize', 5, 'MarkerFaceColor', 'b')
-      %plot3(p4.X(1,tt), p4.X(2,tt), p4.X(3,tt),'og','MarkerSize', 5, 'MarkerFaceColor', 'g')
-      %pts12 = [p1.X(:,tt)'; p2.X(:,tt)'];
-      %pts13 = [p1.X(:,tt)'; p3.X(:,tt)'];
-      %pts14 = [p1.X(:,tt)'; p4.X(:,tt)'];
-      %pts23 = [p2.X(:,tt)'; p3.X(:,tt)'];
-      %pts24 = [p2.X(:,tt)'; p4.X(:,tt)'];
-      %pts34 = [p3.X(:,tt)'; p4.X(:,tt)'];
-      %plot3(pts12(:,1), pts12(:,2), pts12(:,3), 'k-')
-      %plot3(pts13(:,1), pts13(:,2), pts13(:,3), 'k-')
-      %plot3(pts14(:,1), pts14(:,2), pts14(:,3), 'k-')
-      %plot3(pts23(:,1), pts23(:,2), pts23(:,3), 'k-')
-      %plot3(pts24(:,1), pts24(:,2), pts24(:,3), 'k-')
-      %plot3(pts34(:,1), pts34(:,2), pts34(:,3), 'k-')
-      %hold off
-      %drawnow
-      %pause(0.25)
+      %% Geometry
+      x0 = 0.25*(p1.X(:,tt) + p2.X(:,tt) + p3.X(:,tt) + p4.X(:,tt));
 
-      G = [rho_1(:,tt), rho_2(:,tt), rho_3];
-      Gmom = G*transpose(G);
-      eigVal = eigs(Gmom);
-      g1 = eigVal(1);
-      g2 = eigVal(2);
-      g3 = eigVal(3);
-      if (g1 < 0 | g2 < 0)
-        error('eigs less than zero')
-      elseif (abs(g3) > 1e-10)
-        error('g3 not zero')
-      end
+      x1p = p1.X(:,tt) - x0;
+      x2p = p2.X(:,tt) - x0;
+      x3p = p3.X(:,tt) - x0;
+
+      g = x1p*x1p' + x2p*x2p' + x3p*x3p';
+
+      % Eigenvalues and vectors
+      [eigVec, eigVal] = eigs(g);
+      % Sort
+      [val, ind] = sort(diag(eigVal), 'descend');
+      g1(tet,tt) = val(1);
+      g2(tet,tt) = val(2);
+      gv1 = eigVec(:, ind(1));
+      gv2 = eigVec(:, ind(2));
 
       % avg of squared lengths of each side
-      Rsq(tet, tt) = g1 + g2;
+      Rsq(tet, tt) = g1(tet,tt) + g2(tet,tt);
 
       % area
-      triA(tet, tt) = norm(cross(rho_1(:,tt), rho_2(:,tt)));
+      triA(tet, tt) = 0.5*norm(cross(x1p, x2p));
 
       % aspect ratio -- ratio of area to that of equilateral of same scale
-      triW(tet, tt) = 4*triA(tet, tt)/(sqrt(3)*...
-                               Rsq(tet, tt));
+      triW(tet, tt) = 4*triA(tet, tt)/(sqrt(3)*Rsq(tet, tt));
 
       % shape factors
       I1(tet, tt) = g1/Rsq(tet, tt);

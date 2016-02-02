@@ -56,6 +56,7 @@ varFM = var(FM, Wt, dim);
 varXp = var(Xp, Wt, dim);
 varYp = var(Yp, Wt, dim);
 varZp = var(Zp, Wt, dim);
+% TODO: with periodicity or not?
 
 % Calculate mean
 %   - over time for each particle
@@ -137,64 +138,93 @@ for tau = 0:(nt-1)           % loop over all possible time lags
 end
 
 % Autocorrelation function, rho
-rho_Up = mean(rho_Up, 1);
-rho_Vp = mean(rho_Vp, 1);
-rho_Wp = mean(rho_Wp, 1);
-rho_UM = mean(rho_UM, 1);
+autocorr.rho_Up = mean(rho_Up, 1);
+autocorr.rho_Vp = mean(rho_Vp, 1);
+autocorr.rho_Wp = mean(rho_Wp, 1);
+autocorr.rho_UM = mean(rho_UM, 1);
 
-rho_FX = mean(rho_FX, 1);
-rho_FY = mean(rho_FY, 1);
-rho_FZ = mean(rho_FZ, 1);
-rho_FM = mean(rho_FM, 1);
+autocorr.rho_FX = mean(rho_FX, 1);
+autocorr.rho_FY = mean(rho_FY, 1);
+autocorr.rho_FZ = mean(rho_FZ, 1);
+autocorr.rho_FM = mean(rho_FM, 1);
 
-rho_Xp = mean(rho_Xp, 1);
-rho_Yp = mean(rho_Yp, 1);
-rho_Zp = mean(rho_Zp, 1);
+autocorr.rho_Xp = mean(rho_Xp, 1);
+autocorr.rho_Yp = mean(rho_Yp, 1);
+autocorr.rho_Zp = mean(rho_Zp, 1);
 
 % Find first time it goes less than zero, for integration purposes
-pos_Up = find(rho_Up < 0, 1);
-pos_Vp = find(rho_Vp < 0, 1);
-pos_Wp = find(rho_Wp < 0, 1);
-pos_UM = find(rho_UM < 0, 1);
+% TODO: This may not actually mean anything
+pos_Up = find(autocorr.rho_Up < 0, 1);
+pos_Vp = find(autocorr.rho_Vp < 0, 1);
+pos_Wp = find(autocorr.rho_Wp < 0, 1);
+pos_UM = find(autocorr.rho_UM < 0, 1);
 
-pos_FX = find(rho_FX < 0, 1);
-pos_FY = find(rho_FY < 0, 1);
-pos_FZ = find(rho_FZ < 0, 1);
-pos_FM = find(rho_FM < 0, 1);
+pos_FX = find(autocorr.rho_FX < 0, 1);
+pos_FY = find(autocorr.rho_FY < 0, 1);
+pos_FZ = find(autocorr.rho_FZ < 0, 1);
+pos_FM = find(autocorr.rho_FM < 0, 1);
 
-pos_Xp = find(rho_Xp < 0, 1);
-pos_Yp = find(rho_Yp < 0, 1);
-pos_Zp = find(rho_Zp < 0, 1);
+pos_Xp = find(autocorr.rho_Xp < 0, 1);
+pos_Yp = find(autocorr.rho_Yp < 0, 1);
+pos_Zp = find(autocorr.rho_Zp < 0, 1);
 
 % Find integral timescale
-T_Up = trapz(time(1:pos_Up), rho_Up(1:pos_Up));
-T_Vp = trapz(time(1:pos_Vp), rho_Vp(1:pos_Vp));
-T_Wp = trapz(time(1:pos_Wp), rho_Wp(1:pos_Wp));
-T_UM = trapz(time(1:pos_UM), rho_UM(1:pos_UM));
+autocorr.T_Up = trapz(time(1:pos_Up), autocorr.rho_Up(1:pos_Up));
+autocorr.T_Vp = trapz(time(1:pos_Vp), autocorr.rho_Vp(1:pos_Vp));
+autocorr.T_Wp = trapz(time(1:pos_Wp), autocorr.rho_Wp(1:pos_Wp));
+autocorr.T_UM = trapz(time(1:pos_UM), autocorr.rho_UM(1:pos_UM));
 
-T_FX = trapz(time(1:pos_FX), rho_FZ(1:pos_FX));
-T_FY = trapz(time(1:pos_FY), rho_FZ(1:pos_FY));
-T_FZ = trapz(time(1:pos_FZ), rho_FZ(1:pos_FZ));
-T_FM = trapz(time(1:pos_FM), rho_FM(1:pos_FM));
-                                              ;
-T_Xp = trapz(time(1:pos_Xp), rho_Xp(1:pos_Xp));
-T_Yp = trapz(time(1:pos_Yp), rho_Yp(1:pos_Yp));
-T_Zp = trapz(time(1:pos_Zp), rho_Zp(1:pos_Zp));
+autocorr.T_FX = trapz(time(1:pos_FX), autocorr.rho_FZ(1:pos_FX));
+autocorr.T_FY = trapz(time(1:pos_FY), autocorr.rho_FZ(1:pos_FY));
+autocorr.T_FZ = trapz(time(1:pos_FZ), autocorr.rho_FZ(1:pos_FZ));
+autocorr.T_FM = trapz(time(1:pos_FM), autocorr.rho_FM(1:pos_FM));
+
+autocorr.T_Xp = trapz(time(1:pos_Xp), autocorr.rho_Xp(1:pos_Xp));
+autocorr.T_Yp = trapz(time(1:pos_Yp), autocorr.rho_Yp(1:pos_Yp));
+autocorr.T_Zp = trapz(time(1:pos_Zp), autocorr.rho_Zp(1:pos_Zp));
+
+% Find 'Taylor microscale' based on second derivative at two points
+% rho = A + Bt + Ct2; rho(0) = 1; rho'(0) = 0
+% rho''(0) = 2(rho_k+1 - 1)/dt^2 (from central difference method
+% rho is zero at t = sqrt(dt^2/(1 - rho_k+1))
+dt2 = (time(2) - time(1))^2;
+autocorr.tau_Up = sqrt(dt2/(1 - autocorr.rho_Up(2)));
+autocorr.tau_Vp = sqrt(dt2/(1 - autocorr.rho_Vp(2)));
+autocorr.tau_Wp = sqrt(dt2/(1 - autocorr.rho_Wp(2)));
+autocorr.tau_UM = sqrt(dt2/(1 - autocorr.rho_UM(2)));
+
+autocorr.tau_FX = sqrt(dt2/(1 - autocorr.rho_FX(2)));
+autocorr.tau_FY = sqrt(dt2/(1 - autocorr.rho_FY(2)));
+autocorr.tau_FZ = sqrt(dt2/(1 - autocorr.rho_FZ(2)));
+autocorr.tau_FM = sqrt(dt2/(1 - autocorr.rho_FM(2)));
+
+autocorr.tau_Xp = sqrt(dt2/(1 - autocorr.rho_Xp(2)));
+autocorr.tau_Yp = sqrt(dt2/(1 - autocorr.rho_Yp(2)));
+autocorr.tau_Zp = sqrt(dt2/(1 - autocorr.rho_Zp(2)));
+
+% Relate to t_0
+autocorr.time = time;
+% save
+if exist('data/stats.mat') == 2
+  save('data/stats.mat', 'autocorr', '-append');
+else
+  save('data/stats.mat', 'autocorr');
+end
 
 % print them
-fprintf('\tT: Vx = %.3f\n', T_Up);
-fprintf('\tT: Vy = %.2f\n', T_Vp);
-fprintf('\tT: Vz = %.2f\n', T_Wp);
-
-fprintf('\tT: Fx = %.2f\n', T_FX);
-fprintf('\tT: Fy = %.2f\n', T_FY);
-fprintf('\tT: Fz = %.2f\n', T_FZ);
-
-fprintf('\tT: Xp = %.2f\n', T_Xp);
-fprintf('\tT: Yp = %.2f\n', T_Yp);
-fprintf('\tT: Zp = %.2f\n', T_Zp);
-% Relate to t_0
-time = time - time(1);
+%fprintf('\tT: Vx = %.3f\n', autocorr.T_Up);
+%fprintf('\tT: Vy = %.2f\n', autocorr.T_Vp);
+%fprintf('\tT: Vz = %.2f\n', autocorr.T_Wp);
+%fprintf('\tT: Vm = %.2f\n', autocorr.T_UM);
+%
+%fprintf('\tT: Fx = %.2f\n', autocorr.T_FX);
+%fprintf('\tT: Fy = %.2f\n', autocorr.T_FY);
+%fprintf('\tT: Fz = %.2f\n', autocorr.T_FZ);
+%fprintf('\tT: Fm = %.2f\n', autocorr.T_FM);
+%
+%fprintf('\tT: Xp = %.2f\n', autocorr.T_Xp);
+%fprintf('\tT: Yp = %.2f\n', autocorr.T_Yp);
+%fprintf('\tT: Zp = %.2f\n', autocorr.T_Zp);
 
 %figure
 %h1 = plot(time(1:end), rho_Up, 'b-');

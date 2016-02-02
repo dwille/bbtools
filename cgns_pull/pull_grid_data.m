@@ -5,10 +5,8 @@
 %
 %   User Inputs
 %     dir   -   the simulation directory you wish to work with
-%     ts    -   the starting time to pull
-%     te    -   the ending time to pull
-%     options
-%             -- 'append': append data to an existing .mat file (NOT FUNCTIONAL)
+%
+% TODO: add NX,NY,NZ
 
 function pull_grid_data(dir)
 addpath ~/bluebottle/tools/matlab
@@ -33,14 +31,19 @@ dom.xs = min(x(:,1,1));
 dom.xe = max(x(:,1,1));
 dom.xl = dom.xe - dom.xs;
 dom.dx = mean(diff(x(:,1,1)));
+dom.xn = dom.xl/dom.dx;
+
 dom.ys = min(y(1,:,1));
 dom.ye = max(y(1,:,1));
 dom.yl = dom.ye - dom.ys;
 dom.dy = mean(diff(y(1,:,1)));
+dom.yn = dom.yl/dom.dy;
+
 dom.zs = min(z(1,1,:));
 dom.ze = max(z(1,1,:));
 dom.zl = dom.ze - dom.zs;
 dom.dz = mean(diff(z(1,1,:)));
+dom.zn = dom.zl/dom.dz;
 dom.N = np;
 
 if ~exist('data', 'dir')
