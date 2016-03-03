@@ -19,12 +19,22 @@ load data/tetrad_vel_stats.mat
 load data/grid_data.mat
 timeShift = time - time(1);
 
+% Find r0 with > 0 tetrads
+rCount = 1;
+for rr = 1:length(r0)
+  if ntets(rr) > 50
+    tmpR(rCount) = r0(rr);
+    tmpN(rCount) = ntets(rr);
+    rCount = rCount + 1;
+  end
+end
+r0 = tmpR;
+ntets = tmpN;
+
 % Create plot title based on directory
 sim = strsplit(pwd, '/');
-sim = sim{end};
-sim = strrep(sim, '565_rho', '\rho*=');
-mainTitle = ['\fontsize{14}' sim];
-titleForm = '\newline\fontsize{10}\color{red}';
+simRho = sim{end};
+simN = sim{end-1};
 
 % Set up plotting color order
 style = {'k', 'b', 'r', 'g', 'm', 'c'};
@@ -42,9 +52,6 @@ edges = linspace(0,1,nBins);
 centers = edges(1:end-1) + mean(diff(edges));
 for tt = 1:length(time)
   for rr = 1:length(r0)
-    if r0(rr) < 0
-      continue;
-    end
     rString = ['r0', num2str(r0(rr)/dom.r)];
 
     % Alignment of shape and vorticity
@@ -97,336 +104,193 @@ end
 
 % Alignment of shape and vorticity
 hGW = figure;
-suptitle('Alignment of principle directions and vorticity')
 
-subplot(3,2,1)
-hold on
-imagesc(timeShift, centers, hist_g1w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r08')
+nPlot = 1;
+for rr = 1:length(r0)
+  rString = ['r0', num2str(r0(rr)/dom.r)];
 
-subplot(3,2,3)
-hold on
-imagesc(timeShift, centers, hist_g2w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
+  subplot(3, length(r0), nPlot);
+  hold on;
+  imagesc(timeShift, centers, hist_g1w.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{I1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+    colorbar;
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+  title([rString ' (Nt = ', num2str(ntets(rr)) ')']);
 
-subplot(3,2,5)
-hold on
-imagesc(timeShift, centers, hist_g3w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
 
-subplot(3,2,2)
-hold on
-imagesc(timeShift, centers, hist_g1w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r012')
+  subplot(3, length(r0), nPlot + length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_g2w.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{I2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
 
-subplot(3,2,4)
-hold on
-imagesc(timeShift, centers, hist_g2w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,6)
-hold on
-imagesc(timeShift, centers, hist_g3w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{I3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-%for rr = 1:length(r0);
-%  rString = ['r0', num2str(r0(rr)/dom.r)];
-%
-%  subplot(3,1,1)
-%  hold on
-%  plot(centers, hist_g1w.(rString), '-', 'Marker', markerStyle{rr});
-%  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
-%
-%  subplot(3,1,2)
-%  hold on
-%  plot(centers, hist_g2w.(rString), '-', 'Marker', markerStyle{rr});
-%
-%  subplot(3,1,3)
-%  hold on
-%  plot(centers, hist_g3w.(rString), '-', 'Marker', markerStyle{rr});
-%end
-
-%legend(leg, 'Location', 'NorthWest', 'Interpreter', 'Latex', 'FontSize', 14)
+  subplot(3, length(r0), nPlot + 2*length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_g3w.(rString));
+  axis xy
+  xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
+  if rr == 1
+    ylabel('\(|e_{I3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+  
+  nPlot = nPlot + 1;
+end
+suptitle(['Alignment of principle directions and vorticity - ', num2str(simN), num2str(simRho)]);
 
 % Alignment of vorticity and strain
 hSW = figure;
-suptitle('Alignment of strain and vorticity');
 
-subplot(3,2,1)
-hold on
-imagesc(timeShift, centers, hist_s1w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r08')
+nPlot = 1;
+for rr = 1:length(r0)
+  rString = ['r0', num2str(r0(rr)/dom.r)];
 
-subplot(3,2,3)
-hold on
-imagesc(timeShift, centers, hist_s2w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
+  subplot(3, length(r0), nPlot);
+  hold on;
+  imagesc(timeShift, centers, hist_s1w.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{s1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+    colorbar;
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+  title([rString ' (Nt = ', num2str(ntets(rr)) ')']);
 
-subplot(3,2,5)
-hold on
-imagesc(timeShift, centers, hist_s3w.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,2)
-hold on
-imagesc(timeShift, centers, hist_s1w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s1} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r012')
-
-subplot(3,2,4)
-hold on
-imagesc(timeShift, centers, hist_s2w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,6)
-hold on
-imagesc(timeShift, centers, hist_s3w.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-%for rr = 1:length(r0);
-%  rString = ['r0', num2str(r0(rr)/dom.r)];
-%
-%  subplot(3,1,1)
-%  plot(centers, hist_s1w.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
-%
-%  subplot(3,1,2)
-%  plot(centers, hist_s2w.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%
-%  subplot(3,1,3)
-%  plot(centers, hist_s3w.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%end
-%legend(leg, 'Location', 'NorthWest', 'Interpreter', 'Latex', 'FontSize', 14)
+  subplot(3, length(r0), nPlot + length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_s2w.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{s2} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
 
 
+  subplot(3, length(r0), nPlot + 2*length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_s3w.(rString));
+  axis xy
+  xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
+  if rr == 1
+    ylabel('\(|e_{s3} \cdot e_{\omega}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
 
-% Alignment of strain and coord axes
-hWAX = figure;
-suptitle('Alignment of strain and z-axis');
-
-subplot(3,2,1)
-hold on
-imagesc(timeShift, centers, hist_s1z.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s1} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r08')
-
-subplot(3,2,3)
-hold on
-imagesc(timeShift, centers, hist_s2z.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s2} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,5)
-hold on
-imagesc(timeShift, centers, hist_s3z.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s3} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,2)
-hold on
-imagesc(timeShift, centers, hist_s1z.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s1} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r012')
-
-subplot(3,2,4)
-hold on
-imagesc(timeShift, centers, hist_s2z.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s2} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-
-subplot(3,2,6)
-hold on
-imagesc(timeShift, centers, hist_s3z.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{s3} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-%for rr = 1:length(r0);
-%  rString = ['r0', num2str(r0(rr)/dom.r)];
-%
-%  subplot(3,1,1)
-%  plot(centers, hist_s1z.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
-%
-%  subplot(3,1,2)
-%  plot(centers, hist_s2z.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%
-%  subplot(3,1,3)
-%  plot(centers, hist_s3z.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%end
-%legend(leg, 'Location', 'NorthWest', 'Interpreter', 'Latex', 'FontSize', 14)
+  nPlot = nPlot + 1;
+end
+suptitle(['Alignment of vorticity and strain - ', num2str(simN), num2str(simRho)]);
 
 % Alignment of vorticity and coord axes
+hWAX = figure;
+
+nPlot = 1;
+for rr = 1:length(r0)
+  rString = ['r0', num2str(r0(rr)/dom.r)];
+
+  subplot(3, length(r0), nPlot);
+  hold on;
+  imagesc(timeShift, centers, hist_wx.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{w} \cdot e_{x}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+    colorbar;
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+  title([rString ' (Nt = ', num2str(ntets(rr)) ')']);
+
+  subplot(3, length(r0), nPlot + length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_wy.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{w} \cdot e_{y}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+
+
+  subplot(3, length(r0), nPlot + 2*length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_wz.(rString));
+  axis xy
+  xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
+  if rr == 1
+    ylabel('\(|e_{w} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+
+  nPlot = nPlot + 1;
+end
+suptitle(['Alignment of vorticity and coordinate axes - ', num2str(simN), num2str(simRho)]);
+
+% Alignment of strain and coord axes
 hSAX = figure;
-suptitle('Alignment of vorticity and coordinate axes');
 
-subplot(3,2,1)
-hold on
-imagesc(timeShift, centers, hist_wx.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{x}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r08')
+nPlot = 1;
+for rr = 1:length(r0)
+  rString = ['r0', num2str(r0(rr)/dom.r)];
 
-subplot(3,2,3)
-hold on
-imagesc(timeShift, centers, hist_wy.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{y}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
+  subplot(3, length(r0), nPlot);
+  hold on;
+  imagesc(timeShift, centers, hist_s1z.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{s1} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+    colorbar;
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
+  title([rString ' (Nt = ', num2str(ntets(rr)) ')']);
 
-subplot(3,2,5)
-hold on
-imagesc(timeShift, centers, hist_wz.r08);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
+  subplot(3, length(r0), nPlot + length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_s2z.(rString));
+  axis xy
+  if rr == 1;
+    ylabel('\(|e_{s2} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
 
-subplot(3,2,2)
-hold on
-imagesc(timeShift, centers, hist_wx.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{x}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-title('r012')
 
-subplot(3,2,4)
-hold on
-imagesc(timeShift, centers, hist_wy.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{y}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
+  subplot(3, length(r0), nPlot + 2*length(r0));
+  hold on;
+  imagesc(timeShift, centers, hist_s3z.(rString));
+  axis xy
+  xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
+  if rr == 1
+    ylabel('\(|e_{s3} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
+  end
+  xlim([0, timeShift(end)]);
+  ylim([0 1]);
+  caxis([0 0.10])
 
-subplot(3,2,6)
-hold on
-imagesc(timeShift, centers, hist_wz.r012);
-axis xy
-xlabel('Time [ms]', 'Interpreter', 'Latex', 'FontSize', 14)
-ylabel('\(|e_{w} \cdot e_{z}|\)', 'Interpreter', 'Latex', 'FontSize', 14)
-xlim([0, timeShift(end)]);
-ylim([0 1]);
-caxis([0 0.10])
-%for rr = 1:length(r0);
-%  rString = ['r0', num2str(r0(rr)/dom.r)];
-%
-%  subplot(3,1,1)
-%  plot(centers, hist_w1x.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
-%
-%  subplot(3,1,2)
-%  plot(centers, hist_w1y.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%
-%  subplot(3,1,3)
-%  plot(centers, hist_w1z.(rString), '-', 'Marker', markerStyle{rr});
-%  hold on
-%end
-%legend(leg, 'Location', 'NorthWest', 'Interpreter', 'Latex', 'FontSize', 14)
+  nPlot = nPlot + 1;
+end
+suptitle('');
+suptitle(['Alignment of strain and z-axis - ', num2str(simN), num2str(simRho)]);
