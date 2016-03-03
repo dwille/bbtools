@@ -40,6 +40,7 @@ end
 % Alignment of tetrad pricipal axis with eigenvectors of strain
 % Longest axis
 hLong = figure;
+rCount = 1;
 for rr = 1:length(r0);
   Rstring = ['r0', num2str(r0(rr)/dom.r)];
   if r0(rr) == -1
@@ -48,12 +49,14 @@ for rr = 1:length(r0);
   plot(timeShift, gsAlign.g1s1.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'r')
   hold on
-  hP1(rr) = plot(timeShift, gsAlign.g1s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
+  hP1(rCount) = plot(timeShift, gsAlign.g1s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'k');
   plot(timeShift, gsAlign.g1s3.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'b')
 
-  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+  leg{rCount} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+
+  rCount = rCount + 1;
 end
 plot(timeShift, ones(size(timeShift))/3, 'k--')
 
@@ -73,6 +76,7 @@ clearvars leg;
 
 % Intermediate axis
 hInt = figure;
+rCount = 1;
 for rr = 1:length(r0);
   Rstring = ['r0', num2str(r0(rr)/dom.r)];
   if r0(rr) == -1
@@ -81,12 +85,13 @@ for rr = 1:length(r0);
   plot(timeShift, gsAlign.g2s1.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'r')
   hold on
-  hP1(rr) = plot(timeShift, gsAlign.g2s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
+  hP1(rCount) = plot(timeShift, gsAlign.g2s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'k');
   plot(timeShift, gsAlign.g2s3.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'b')
 
-  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+  leg{rCount} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+  rCount = rCount + 1;
 end
 plot(timeShift, ones(size(timeShift))/3, 'k--')
 
@@ -105,6 +110,7 @@ clearvars leg;
 
 % Shortest axis
 hShort = figure;
+rCount = 1;
 for rr = 1:length(r0);
   Rstring = ['r0', num2str(r0(rr)/dom.r)];
   if r0(rr) == -1
@@ -113,12 +119,13 @@ for rr = 1:length(r0);
   plot(timeShift, gsAlign.g3s1.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'r')
   hold on
-  hP1(rr) = plot(timeShift, gsAlign.g3s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
+  hP1(rCount) = plot(timeShift, gsAlign.g3s2.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'k');
   plot(timeShift, gsAlign.g3s3.(Rstring), '-', 'Marker', markerStyle{rr}, ...
     'Color', 'b')
 
-  leg{rr} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+  leg{rCount} = ['\(r_0^* = ' num2str(r0(rr)/dom.r) '\)'];
+  rCount = rCount + 1;
 end
 plot(timeShift, ones(size(timeShift))/3, 'k--')
 
