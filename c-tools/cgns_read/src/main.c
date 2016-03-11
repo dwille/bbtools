@@ -8,6 +8,9 @@ int tt;
 
 int main(void) 
 {
+  // Read input file
+  main_read_input();
+
   // Read and sort output directory for finding files within our time limits
   init_part_files();
   init_flow_files();

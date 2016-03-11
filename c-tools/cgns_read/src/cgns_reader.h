@@ -100,6 +100,9 @@ extern BC bc;
 extern BC *_bc;
 
 /**** FUNCTIONS ****/
+// read input file
+void main_read_input(void);
+
 // read and sort part/flow files
 void init_part_files(void);
 void init_flow_files(void);

@@ -26,6 +26,23 @@ double *_wf;
 int *phase;
 int *_phase;
 
+// Read main.config input file
+void main_read_input(void)
+{
+  int fret = 0;
+  fret = fret;
+
+  // open config file for reading
+  char fname[CHAR_BUF_SIZE] = "";
+  sprintf(fname, "%s/main.config", ROOT_DIR);
+  FILE *infile = fopen(fname, "r");
+  
+  // read input
+  fret = fscanf(infile, "tStart %lf\n", &tStart);
+  fret = fscanf(infile, "tEnd %lf\n", &tEnd);
+  fclose(infile);
+}
+
 // read and sort part files directory
 void init_part_files(void) {
   DIR *dir;
