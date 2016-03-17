@@ -4,7 +4,7 @@
 __global__ void bin_fill(int *partInd, int *partBin, int nparts,
   part_struct *parts, dom_struct *binDom, BC bc) 
 {
-  int pp = threadIdx.x + blockIdx.x*blockDim.x;;
+  int pp = threadIdx.x + blockIdx.x*blockDim.x;
 
   int c;
   int ibin, jbin, kbin;
@@ -340,22 +340,140 @@ __global__ void pull_unique(int *uniqueNodes, int *nodes, int *isUnique,
   }
 }
 
-__global__ void fill_nodes(tetrad_struct *tetrads, int *uniqueNodes, 
-  int nUnique)
+__global__ void fill_nodes(tetrad_struct *allTetrads, int *uniqueNodes, 
+  int *isRegular, int nTetrads)
 {
   int i = threadIdx.x + blockIdx.x*blockDim.x;
 
-  if (i < nUnique) {
-    tetrads[i].N1 = uniqueNodes[4*i];    
-    tetrads[i].N2 = uniqueNodes[4*i + 1];    
-    tetrads[i].N3 = uniqueNodes[4*i + 2];    
-    tetrads[i].N4 = uniqueNodes[4*i + 3];    
-    tetrads[i].tolCheck = 0;
+  if (i < nTetrads) {
+    allTetrads[i].N1 = uniqueNodes[4*i];    
+    allTetrads[i].N2 = uniqueNodes[4*i + 1];    
+    allTetrads[i].N3 = uniqueNodes[4*i + 2];    
+    allTetrads[i].N4 = uniqueNodes[4*i + 3];    
+    isRegular[i] = 0;
   }
 }
 
-__global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
-  dom_struct *dom, int nUnique)
+__global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
+  dom_struct *dom, int *isRegular, int nTetrads, double varCutLow,
+  double varCutHigh, double shapeCutLow, double shapeCutHigh)
+{
+  int tet = threadIdx.x + blockIdx.x*blockDim.x;
+
+  /* Tetrahedron Geometry Variables */
+  double XCM = 0;       // Tetrad center of mass -- x
+  double YCM = 0;       // Tetrad center of mass -- y
+  double ZCM = 0;       // Tetrad center of mass -- x
+  double r1[nDim];      // Node 1 relative coordinates
+  double r2[nDim];      // Node 2 relative coordinates
+  double r3[nDim];      // Node 3 relative coordinates
+  double r4[nDim];      // Node 4 relative coordinates
+
+  /* Shape Tensor Variables */
+  double g[nDim2];      // Gyration tensor
+  double avgLambda;     // Average eigenvalue of g = trace(g)/3 
+  double g_hat[nDim2];  // Deviatoric part of g
+
+  /* Shape measures */
+  double R2;
+  double var;
+  double shape;
+
+  if (tet < nTetrads) {
+    /*  POSITION  */
+    // Fix periodicity issues
+    periodic_flip(r1, r2, r3, r4, allTetrads[tet], parts, dom->xl, dom->yl, 
+      dom->zl);
+
+    // Calculate tetrad center of mass
+    // reference all of them to N1, if > dom.size, flip it
+    XCM = 0.25*(r1[0] + r2[0] + r3[0] + r4[0]);
+    YCM = 0.25*(r1[1] + r2[1] + r3[1] + r4[1]);
+    ZCM = 0.25*(r1[2] + r2[2] + r3[2] + r4[2]);
+
+    // Relate nodes to center of mass
+    r1[0] -= XCM;
+    r1[1] -= YCM;
+    r1[2] -= ZCM;
+            
+    r2[0] -= XCM;
+    r2[1] -= YCM;
+    r2[2] -= ZCM;
+            
+    r3[0] -= XCM;
+    r3[1] -= YCM;
+    r3[2] -= ZCM;
+            
+    r4[0] -= XCM;
+    r4[1] -= YCM;
+    r4[2] -= ZCM;
+
+    // Gyration tensor
+    for (int i = 0; i < nDim; i++) {
+      for (int j = 0; j < nDim; j++) {
+        g[nDim*i + j] = 0.25*(r1[i]*r1[j] + r2[i]*r2[j] 
+                            + r3[i]*r3[j] + r4[i]*r4[j]);
+      }
+    }
+    R2 = matrixTrace3(g);
+    double iR2 = 1./R2;
+
+    // Calculate average eigenvalue of g
+    avgLambda = R2/3.;
+
+    // Calculate deviatoric part of g, g_hat
+    for (int i = 0; i < nDim; i++) {
+      for (int j = 0; j < nDim; j++) {
+        int c = nDim*i + j;
+        g_hat[c] = g[c] - avgLambda*(i == j);
+      }
+    }
+
+    // Calculate variance of g's eigenvalues, var = trace(g_hat^2)
+    var = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
+
+    // Calculate shape of g using det(g_hat)
+    shape = 27.*matrixDet3(g_hat) * iR2 * iR2 * iR2;
+
+
+    isRegular[tet] = (var >= varCutLow &&
+                      var <= varCutHigh &&
+                      shape >= shapeCutLow &&
+                      shape <= shapeCutHigh);
+  }
+}
+
+__global__ void pull_regular(int *regularTetrads, int *isRegular, 
+  int *regularPrefix, int nUnique, int nRegular)
+{
+  int TID = threadIdx.x + blockIdx.x*blockDim.x;
+  int ind;
+  if (TID < nUnique) {
+    // ind becomes regularPrefix[TID] - 1 iff (isRegular == 1)
+    // ind becomes nRegular iff (isRegular == 0)
+    ind = (regularPrefix[TID] - 1) * isRegular[TID]
+        + nRegular*(1 - isRegular[TID]);
+
+    regularTetrads[ind] = TID;
+  }
+}
+
+__global__ void copy_regular(tetrad_struct *tetrads, tetrad_struct *allTetrads,
+  int *regularTetrads, int nRegular, int *isRegular)
+{
+  int tet = threadIdx.x + blockIdx.x*blockDim.x;
+  if (tet < nRegular) {
+    tetrads[tet].N1 = allTetrads[regularTetrads[tet]].N1;
+    tetrads[tet].N2 = allTetrads[regularTetrads[tet]].N2;
+    tetrads[tet].N3 = allTetrads[regularTetrads[tet]].N3;
+    tetrads[tet].N4 = allTetrads[regularTetrads[tet]].N4;
+  }
+}
+
+__global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
+  dom_struct *dom, double *R2, double *var, double *shape, double *gEigVal,
+  double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
+  double *vortMag, int nTetrads)
 {
   int tet = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -391,7 +509,7 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
   double S[nDim2];      // Symmetric part of M
   double O[nDim2];      // Anti-Symmetric part of M
 
-  if (tet < nUnique) {
+  if (tet < nTetrads) {
     /*  POSITION  */
     // Fix periodicity issues
     periodic_flip(r1, r2, r3, r4, tetrads[tet], parts, dom->xl, dom->yl, 
@@ -427,10 +545,11 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
                             + r3[i]*r3[j] + r4[i]*r4[j]);
       }
     }
-    tetrads[tet].R2 = matrixTrace3(g);
+    R2[tet] = matrixTrace3(g);
+    double iR2 = 1./R2[tet];
 
     // Calculate average eigenvalue of g
-    avgLambda = tetrads[tet].R2/3.;
+    avgLambda = R2[tet]/3.;
 
     // Calculate deviatoric part of g, g_hat
     for (int i = 0; i < nDim; i++) {
@@ -441,13 +560,18 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     }
 
     // Calculate variance of g's eigenvalues, var = trace(g_hat^2)
-    tetrads[tet].var = matrixSquaredTrace3(g_hat);
+    var[tet] = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
 
     // Calculate shape of g using det(g_hat)
-    tetrads[tet].det = matrixDet3(g_hat);
+    shape[tet] = 27.*matrixDet3(g_hat) * iR2 * iR2 * iR2;
 
     // Calculate I1, I2, I3 and principal directions of shape tensor
-    jacobiEig3(g, tetrads[tet].gEigVal, tetrads[tet].gEigVec, &nrot);
+    jacobiEig3(g, &(gEigVal[nDim*tet]), &(gEigVec[nDim2*tet]), &nrot);
+
+    // Normalize I1, I2, I3 by R2 = I1 + I2 + I3
+    for (int i = 0; i < nDim; i++) {
+      gEigVal[nDim*tet + i] *= iR2;
+    }
 
     /* Velocity */
     // Reinit g since it was overwritten in last step
@@ -489,8 +613,8 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     u4[2] = parts[N4].w - WCM;
 
     // Vel tensor
-    for (int i = 0; i < 2; i++) {
-      for (int j = 0; j < 2; j++) {
+    for (int i = 0; i < nDim; i++) {
+      for (int j = 0; j < nDim; j++) {
         W[3*i + j] = r1[i]*u1[j] + r2[i]*u2[j] + r3[i]*u3[j] + r4[i]*u4[j];
       }
     }
@@ -499,37 +623,33 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     matrixMult3(gInv, W, M);
 
     // Decompose M
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
+    for (int i = 0; i < nDim; i++) {
+      for (int j = 0; j < nDim; j++) {
         S[3*i + j] = 0.5*(M[3*i + j] + M[3*j + i]);
         O[3*i + j] = 0.5*(M[3*i + j] - M[3*j + i]);
       }
     }
+
+    // TODO: also output S11, S22, S33 before diagonalizing
+
     // Find princpal directions and values of strain tensor
-    jacobiEig3(S, tetrads[tet].sEigVal, tetrads[tet].sEigVec, &nrot);
+    jacobiEig3(S, &(sEigVal[nDim*tet]), &(sEigVec[nDim2*tet]), &nrot);
+
+    // TODO: norm sEigVal by trace(S)
 
     // pull vorticity vector:
     // See AP, Fluid Dynamics, pages 38 + 40 -- O is -(7.53) bc (8.9)
-    // TODO: need to check
-    tetrads[tet].vorticity[0] = 2*O[3];
-    tetrads[tet].vorticity[1] = 2*O[2];
-    tetrads[tet].vorticity[2] = 2*O[7];
+    double w1, w2, w3;
+    w1 = 2.*O[7];
+    w2 = 2.*O[2];
+    w3 = 2.*O[3];
 
-  }
-}
+    vortMag[nDim*tet] = sqrt(w1*w1 + w2*w2 + w3*w3);
+    double iVortMag = 1./vortMag[nDim*tet];
 
-__global__ void check_tolerances(tetrad_struct *tetrads, double varCutLow,
-  double varCutHigh, double shapeCutLow, double shapeCutHigh, int nUnique)
-{
-  int tet = threadIdx.x + blockIdx.x*blockDim.x;
-  if (tet < nUnique) {
-    double eigVar = 1.5*tetrads[tet].var/(tetrads[tet].R2*tetrads[tet].R2);
-    double shape = 27.*tetrads[tet].det/(tetrads[tet].R2*tetrads[tet].R2*
-                                          tetrads[tet].R2);
-    tetrads[tet].tolCheck = (eigVar >= varCutLow &&
-                             eigVar <= varCutHigh &&
-                             shape >= shapeCutLow &&
-                             shape <= shapeCutHigh);
+    vorticity[nDim*tet] = w1 * iVortMag;
+    vorticity[nDim*tet + 1] = w2 * iVortMag;
+    vorticity[nDim*tet + 2] = w3 * iVortMag;
   }
 }
 
@@ -546,9 +666,9 @@ __global__ void matrixTests(void)
     int nrot = 0;
 
   // INITIALIZE MATRICES
-    A[0] = 3.; A[1] = 3.; A[2] = 5.; 
-    A[3] = 3.; A[4] = 4.; A[5] = 6.;
-    A[6] = 5.; A[7] = 6.; A[8] = -6.;
+    A[0] = 0.1875; A[1] = -0.0625; A[2] = -0.0625; 
+    A[3] = -0.0625; A[4] = 0.1875; A[5] = -0.0625;
+    A[6] = -0.0625; A[7] = -0.0625; A[8] = 0.1875;
 
     B[0] = 2; B[1] = 6; B[2] = 1; 
     B[3] = 2; B[4] = 6; B[5] = 1;
@@ -872,4 +992,139 @@ __device__ void eigsrt(double *d, double *v)
       }
     }
   }
+}
+
+__global__ void scalar_std(double *R2, double *var, double *shape, 
+  double meanR2, double meanVar, double meanShape, int nTetrads)
+{
+  int tet = threadIdx.x + blockIdx.x*blockDim.x;
+  double inTetrads = 1./nTetrads;
+  if (tet < nTetrads) {
+    R2[tet] = (R2[tet] - meanR2) * (R2[tet] - meanR2) * inTetrads;
+    var[tet] = (var[tet] - meanVar) * (var[tet] - meanVar) * inTetrads;
+    shape[tet] = (shape[tet] - meanShape) * (shape[tet] - meanShape) * inTetrads;
+  } 
+}
+
+__global__ void  align_vectors(double *gEigVec, double *sEigVec,
+  double *vorticity, double *gEigVecInit, double *sEigVecInit, 
+  int nRegular,
+    double *g1_s1, double *g1_s2, double *g1_s3,
+    double *g2_s1, double *g2_s2, double *g2_s3,
+    double *g3_s1, double *g3_s2, double *g3_s3,
+    double *g1_z, double *g2_z, double *g3_z,
+    double *s1_z, double *s2_z, double *s3_z,
+    double *w_z,
+    double *w_g1, double *w_g2, double *w_g3,
+    double *w_s1, double *w_s2, double *w_s3)
+{
+  // cos(theta) = (a,b)
+  #define dot3(a,b) a[0]*b[0]+a[1]*b[1]+a[2]*b[2]
+
+  int tet = threadIdx.x + blockIdx.x*blockDim.x;
+
+  double g1[3];
+  double g2[3];
+  double g3[3];
+  double s1[3];
+  double s2[3];
+  double s3[3];
+  double g1_0[3];
+  double g2_0[3];
+  double g3_0[3];
+  double s1_0[3];
+  double s2_0[3];
+  double s3_0[3];
+  double z[3];
+
+  if (tet < nRegular) {
+    for (int i = 0; i < nDim; i++) {
+      // Current vectors
+      g1[i] = gEigVec[nDim2*tet + i*nDim];
+      g2[i] = gEigVec[nDim2*tet + i*nDim + 1];
+      g3[i] = gEigVec[nDim2*tet + i*nDim + 2];
+
+      s1[i] = sEigVec[nDim2*tet + i*nDim];
+      s2[i] = sEigVec[nDim2*tet + i*nDim + 1];
+      s3[i] = sEigVec[nDim2*tet + i*nDim + 2];
+
+      // Initial vectors
+      g1_0[i] = gEigVecInit[nDim2*tet + i*nDim];
+      g2_0[i] = gEigVecInit[nDim2*tet + i*nDim + 1];
+      g3_0[i] = gEigVecInit[nDim2*tet + i*nDim + 2];
+                                                     
+      s1_0[i] = sEigVecInit[nDim2*tet + i*nDim];
+      s2_0[i] = sEigVecInit[nDim2*tet + i*nDim + 1];
+      s3_0[i] = sEigVecInit[nDim2*tet + i*nDim + 2];
+    }
+    z[0] = 0.; z[1] = 0.; z[2] = 1.;
+
+  
+    // Alignment of shape axes with initial strain axes
+    g1_s1[tet] = dot3(g1,s1_0);
+    g1_s2[tet] = dot3(g1,s2_0);
+    g1_s3[tet] = dot3(g1,s3_0);
+
+    g2_s1[tet] = dot3(g2, s1_0);
+    g2_s2[tet] = dot3(g2, s2_0);
+    g2_s3[tet] = dot3(g2, s3_0);
+
+    g3_s1[tet] = dot3(g3, s1_0);
+    g3_s2[tet] = dot3(g3, s2_0);
+    g3_s3[tet] = dot3(g3, s3_0);
+
+    // Alignment of shape,strain,vorticity with z axis
+    g1_z[tet] = dot3(g1, z);
+    g2_z[tet] = dot3(g2, z);
+    g3_z[tet] = dot3(g3, z);
+
+    s1_z[tet] = dot3(s1, z);
+    s2_z[tet] = dot3(s2, z);
+    s3_z[tet] = dot3(s3, z);
+
+    w_z[tet] = dot3(vorticity, z);
+
+    // Alignment of vorticity with initial shape, strain
+    w_g1[tet] = dot3(vorticity, g1_0);
+    w_g2[tet] = dot3(vorticity, g2_0);
+    w_g3[tet] = dot3(vorticity, g3_0);
+
+    w_s1[tet] = dot3(vorticity, s1_0);
+    w_s2[tet] = dot3(vorticity, s2_0);
+    w_s3[tet] = dot3(vorticity, s3_0);
+
+    // Square them all
+//    g1_s1[tet] *= g1_s1[tet];
+//    g1_s2[tet] *= g1_s2[tet];
+//    g1_s3[tet] *= g1_s3[tet];
+//
+//    g2_s1[tet] *= g2_s1[tet];
+//    g2_s2[tet] *= g2_s2[tet];
+//    g2_s3[tet] *= g2_s3[tet];
+//
+//    g3_s1[tet] *= g3_s1[tet];
+//    g3_s2[tet] *= g3_s2[tet];
+//    g3_s3[tet] *= g3_s3[tet];
+//
+//    g1_z[tet]  *= g1_z[tet];
+//    g2_z[tet]  *= g2_z[tet];
+//    g3_z[tet]  *= g3_z[tet];
+//
+//    s1_z[tet]  *= s1_z[tet];
+//    s2_z[tet]  *= s2_z[tet];
+//    s3_z[tet]  *= s3_z[tet];
+//
+//    w_z[tet]   *= w_z[tet];
+//
+//    w_g1[tet]  *= w_g1[tet];
+//    w_g2[tet]  *= w_g2[tet];
+//    w_g3[tet]  *= w_g3[tet];
+//
+//    w_s1[tet]  *= w_s1[tet];
+//    w_s2[tet]  *= w_s2[tet];
+//    w_s3[tet]  *= w_s3[tet];
+
+
+  }
+  #undef dot3
 }

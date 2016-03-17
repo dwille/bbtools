@@ -3,7 +3,8 @@
 import sys
 import glob
 import matplotlib.pyplot as plt
-from matplotlib import cm, colors
+from matplotlib import cm, colors, gridspec
+from matplotlib.ticker import AutoMinorLocator
 import numpy as np
 import re
 
@@ -41,34 +42,61 @@ print ""
 #te = raw_input("Desired end time: ")
 root = "../sim/"
 ts = "500"
-te = "501"
+te = "1000"
 
 ## Sort output files and find number within time range
-files = sorted_nicely(glob.glob(root + "data-tetrads/tetrad-data-*"))
+files = sorted_nicely(glob.glob(root + "data-tetrads/raw-data-*"))
+inRange = np.zeros(len(files))
+n = 0
+for fname in files:
+  ftime = fname.split('/')[-1]
+  
+  if ftime.startswith('raw-data-'):
+    time = ftime[9:]
+
+  if float(time) >= float(ts) and float(time) <= float(te):
+    inRange[n] = 1
+    n += 1
+
+nFiles = n
+
+print "Found " + str(nFiles) + " files in time range"
+print ""
 
 # Find number of tetrads
 nTetrads = file_len(files[0])
 
 # Initialize numpy arrays
-det = np.zeros(nTetrads)
-var = np.zeros(nTetrads)
-trace = np.zeros(nTetrads)
-eigVals = np.zeros((nTetrads, 3))
+data = [ structtype() for i in range(nFiles) ]
+
+for i in range(nFiles):
+  data[i].I1 = np.zeros(nTetrads)
+  data[i].I2 = np.zeros(nTetrads)
+  data[i].I3 = np.zeros(nTetrads)
+  data[i].shape = np.zeros(nTetrads)
+  data[i].var = np.zeros(nTetrads)
+  data[i].R2 = np.zeros(nTetrads)
+
+time = np.zeros(nFiles)
 
 # Enumerate the columns
-detCol = (0)
+R2Col = (0)
 varCol = (1)
-traceCol = (2)
-gEigValsCols = (3,4,5)
+shapeCol = (2)
+maxEig = (3)
+medEig = (4)
+minEig = (5)
 
 # Loop over all output files, pull data to structures
+i = 0;
 for fname in files:
   ftime = fname.split('/')[-1]
 
-  if ftime.startswith('tetrad-data-'):
-    ftime = ftime[12:]
+  if ftime.startswith('raw-data-'):
+    ftime = ftime[9:]
 
   if float(ftime) >= float(ts) and float(ftime) <= float(te):
+    time[i] = float(ftime)
     ifile = open(fname)
     ifile.readline()
 
@@ -76,72 +104,167 @@ for fname in files:
     # -- stackoverlfow 8956832 -- python out of memory on large csv file numpy
     # -- "  " 18259393 -- numpy loading csv too slow compared to matlab
     # -- "  " 26482209 -- fastest way to load huge dat into array
-    det = np.genfromtxt(fname, skip_header=1, usecols=detCol)
-    var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
-    trace = np.genfromtxt(fname, skip_header=1, usecols=traceCol)
-    eigVals = np.genfromtxt(fname, skip_header=1, usecols=gEigValsCols)
+    data[i].R2 = np.genfromtxt(fname, skip_header=1, usecols=R2Col)
+    data[i].var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
+    data[i].shape = np.genfromtxt(fname, skip_header=1, usecols=shapeCol)
 
-tetradShape = 27*det / (trace*trace*trace)
-tetradVar = 1.5*var / (trace*trace)
-principalAxes= eigVals / trace[:,None]
+    data[i].I1 = np.genfromtxt(fname, skip_header=1, usecols=maxEig)
+    data[i].I2 = np.genfromtxt(fname, skip_header=1, usecols=medEig)
+    data[i].I3 = np.genfromtxt(fname, skip_header=1, usecols=minEig)
+
+    i += 1
 
 # Initialize histogram bins
 nBins = float(25)
-iEdges = np.linspace(0,1,nBins + 1)
-sEdges = np.linspace(-0.25, 2.0, nBins + 1)
+weights = np.ones(nTetrads)/nTetrads
 
-weights = np.ones_like(det)/float(len(det))
+initial = plt.figure(figsize=(12,8))
+initial.suptitle('Tetrad Regularity at Initialization', fontsize=16)
+gs = gridspec.GridSpec(2,3)
 
-pdf = plt.figure()
+# Initial Timestep
+axEig = initial.add_subplot(gs[0,:])
 
-# I1
-axI1 = pdf.add_subplot(321)
-axI1 = pdf.subplot2grid((2,3), (0,0), colspan=3)
-plt.hist(principalAxes[:,0], bins=nBins, weights=weights, normed=False, color="blue", alpha=0.6)
-plt.hist(principalAxes[:,1], bins=nBins, weights=weights, normed=False, color="green", alpha=0.6)
-plt.hist(principalAxes[:,2], bins=nBins, weights=weights, normed=False, color="red", alpha=0.6)
+n0, bins0, tmp0 = plt.hist(data[0].I1, bins=nBins, weights=weights, 
+  normed=False, color="blue", alpha=0.6)
+n1, bins1, tmp1 = plt.hist(data[0].I2, bins=nBins, weights=weights, 
+  normed=False, color="green", alpha=0.6)
+n2, bins2, tmp2 = plt.hist(data[0].I3, bins=nBins, weights=weights, 
+  normed=False, color="red", alpha=0.6)
 
-axI1.set_xlim([0,1])
-axI1.set_ylabel('I1')
+axEig.set_xlim([0,1])
+axEig.set_ylim([0,0.12])
+axEig.set_xlabel('I_k')
+axEig.set_ylabel('Probability')
+axEig.legend(['I_1', 'I_2', 'I_3'])
+axEig.set_xticks(np.linspace(0, 1, 11))
+axEig.xaxis.set_minor_locator(AutoMinorLocator())
+axEig.yaxis.set_minor_locator(AutoMinorLocator())
+axEig.tick_params(which='major', length=6)
+axEig.tick_params(which='minor', length=3)
 
-# I2
-axI2 = pdf.add_subplot(323)
-plt.hist(principalAxes[:,1], bins=nBins, weights=weights, normed=False)
+x0 = bins0[np.argmax(n0)]
+y0 = np.max(n0)
+axEig.plot(x0, y0, 'o')
+axEig.text(x0, y0 + 0.005, '(%.2f' % x0 + ', %.2f' % y0 + ')')
 
-axI2.set_xlim([0,1])
-axI2.set_ylabel('I2')
+x1 = bins1[np.argmax(n1)]
+y1 = np.max(n1)
+axEig.plot(x1, y1, 'o')
+axEig.text(x1, y1 + 0.005, '(%.2f' % x1 + ', %.2f' % y1 + ')')
 
-# I3
-axI3 = pdf.add_subplot(325)
-plt.hist(principalAxes[:,2], bins=nBins, weights=weights, normed=False)
-
-axI3.set_xlim([0,1])
-axI3.set_ylabel('I3')
+x2 = bins2[np.argmax(n2)]
+y2 = np.max(n2)
+axEig.plot(x2, y2, 'o')
+axEig.text(x2, y2 + 0.005, '(%.2f' % x2 + ', %.2f' % y2 + ')')
 
 # shape
-axShape = pdf.add_subplot(322)
-plt.hist(tetradShape, bins=sEdges, weights=weights, normed=False)
+axShape = plt.subplot(gs[1,0])
+plt.hist(data[0].shape, weights=weights, normed=False, color='black', alpha=0.6)
 
-axShape.set_xlim([-0.25, 2])
-axShape.set_ylabel('Shape')
+axShape.set_xlabel('Shape')
+axShape.set_ylabel('Probability')
+axShape.locator_params(nbins=6)
+axShape.xaxis.set_minor_locator(AutoMinorLocator())
+axShape.yaxis.set_minor_locator(AutoMinorLocator())
+axShape.tick_params(which='major', length=6)
+axShape.tick_params(which='minor', length=3)
 
 # var
-axVar = pdf.add_subplot(324)
-plt.hist(tetradVar, bins=nBins, weights=weights, normed=False)
+axVar = plt.subplot(gs[1,1])
+plt.hist(data[0].var, weights=weights, normed=False, color='black', alpha=0.6)
 
-axVar.set_xlim([0,1])
-axVar.set_ylabel('Var')
+axVar.set_xlabel('Variance')
+axVar.locator_params(nbins=6)
+axVar.xaxis.set_minor_locator(AutoMinorLocator())
+axVar.yaxis.set_minor_locator(AutoMinorLocator())
+axVar.tick_params(which='major', length=6)
+axVar.tick_params(which='minor', length=3)
 
 # rog
-axR = pdf.add_subplot(326)
-plt.hist(np.sqrt(trace), bins=nBins, weights=weights, normed=False)
+axR = plt.subplot(gs[1,2])
+plt.hist(np.sqrt(data[0].R2), weights=weights, normed=False, 
+  color='black', alpha=0.6)
 
-axR.set_ylabel('R')
+axR.set_xlabel('R_g')
+axR.locator_params(nbins=6)
+axR.xaxis.set_minor_locator(AutoMinorLocator())
+axR.yaxis.set_minor_locator(AutoMinorLocator())
+axR.tick_params(which='major', length=6)
+axR.tick_params(which='minor', length=3)
 
 
+# Time evolution of principal axes
+timePrAx = plt.figure(figsize=(12,8))
+timePrAx.suptitle('Time Evolution of Principal Axes', fontsize=16)
 
+color = np.linspace(1, 0.2, num=5)
 
+i1_ax = timePrAx.add_subplot(311)
+for nn in np.arange(0,5):
+  y,edges = np.histogram(data[nn].I1, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  i1_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
 
+i1_ax.set_xlim([0,1])
+i1_ax.set_ylabel('P(I_1)')
+i1_ax.legend([str(time[0]), str(time[1]), str(time[2]), str(time[3]), 
+  str(time[4])])
+
+i2_ax = timePrAx.add_subplot(312)
+for nn in np.arange(0,5):
+  y,edges = np.histogram(data[nn].I2, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  i2_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
+
+i2_ax.set_xlim([0,1])
+i2_ax.set_ylabel('P(I_2)')
+
+i3_ax = timePrAx.add_subplot(313)
+for nn in np.arange(0,5):
+  y,edges = np.histogram(data[nn].I3, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  i3_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
+
+i3_ax.set_xlim([0,1])
+i3_ax.set_ylabel('P(I_3)')
+i3_ax.set_xlabel('I_k')
+
+# Time evolution of shape
+timeShape = plt.figure(figsize=(12,8))
+timeShape.suptitle('Time Evolution of Principal Axes', fontsize=16)
+
+color = np.linspace(1, 0.4, num=6)
+
+shape_ax = timeShape.add_subplot(311)
+for i,nn in enumerate(np.arange(0,50,10)):
+  y,edges = np.histogram(data[nn].shape, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  shape_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+
+shape_ax.set_xlim([-0.25,2])
+shape_ax.set_xlabel('shape')
+shape_ax.set_ylabel('P(shape)')
+shape_ax.legend([str(time[0]), str(time[1]), str(time[2]), str(time[3]), 
+  str(time[4])])
+
+var_ax = timeShape.add_subplot(312)
+for i,nn in enumerate(np.arange(0,50,10)):
+  y,edges = np.histogram(data[nn].var, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  var_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+
+var_ax.set_xlim([0,1])
+var_ax.set_xlabel('var')
+var_ax.set_ylabel('P(var)')
+
+rg_ax = timeShape.add_subplot(313)
+for i,nn in enumerate(np.arange(0,50,10)):
+  y,edges = np.histogram(np.sqrt(data[nn].R2), weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  rg_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+
+rg_ax.set_xlabel('R_g')
+rg_ax.set_ylabel('P(R_g)')
 
 plt.show()
-

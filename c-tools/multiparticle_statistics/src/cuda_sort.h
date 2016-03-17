@@ -44,16 +44,27 @@ __global__ void pull_unique(int *uniqueNodes, int *nodes, int *isUnique,
   int nPerms, int *uniquePrefix, int nUnique);
 
 // fill nodes
-__global__ void fill_nodes(tetrad_struct *tetrads, int *uniqueNodes, 
-  int nUnique);
+__global__ void fill_nodes(tetrad_struct *allTetrads, int *uniqueNodes, 
+  int *isRegular, int nTetrads);
+
+// pull regular
+__global__ void pull_regular(int *regularTetrads, int *isRegular, 
+  int *regularPrefix, int nUnique, int nRegular);
+
+// copy regular
+__global__ void copy_regular(tetrad_struct *tetrads, tetrad_struct *allTetrads,
+  int *regularTetrads, int nRegular, int *isRegular);
+
+// check tolerances
+__global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
+  dom_struct *dom, int *isRegular, int nTetrads, double varCutLow,
+  double varCutHigh, double shapeCutLow, double shapeCutHigh);
 
 // tetrad geometry
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
-  dom_struct *dom, int nUnique);
-
-// check tolerances
-__global__ void check_tolerances(tetrad_struct *tetrads, double varCutLow,
-  double varCutHigh, double shapeCutLow, double shapeCutHigh, int nUnique);
+  dom_struct *dom, double *R2, double *var, double *shape, double *gEigVal,
+  double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
+  double *vortMag, int nTetrads);
 
 // matrix tests if necessary
 __global__ void matrixTests(void);
@@ -91,5 +102,22 @@ __device__ void rot(double *a, double s, double tau, int i, int j, int k,
 
 // eigenvalue sort for jacobi eigenvalue method
 __device__ void eigsrt(double *d, double *v);
+
+// calculate std of scalars
+__global__ void scalar_std(double *R2, double *var, double *shape, 
+  double meanR2, double meanVar, double meanShape, int nTetrads);
+
+// Calculate alignment of vectors
+__global__ void  align_vectors(double *gEigVec, double *sEigVec,
+  double *vorticity, double *gEigVecInit, double *sEigVecInit, 
+  int nRegular,
+    double *g1_s1, double *g1_s2, double *g1_s3,
+    double *g2_s1, double *g2_s2, double *g2_s3,
+    double *g3_s1, double *g3_s2, double *g3_s3,
+    double *g1_z, double *g2_z, double *g3_z,
+    double *s1_z, double *s2_z, double *s3_z,
+    double *w_z,
+    double *w_g1, double *w_g2, double *w_g3,
+    double *w_s1, double *w_s2, double *w_s3);
 
 #endif

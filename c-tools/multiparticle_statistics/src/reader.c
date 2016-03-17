@@ -4,6 +4,7 @@
 int nFiles;
 char **partFiles;
 double *partFileTime;
+double *simTime;
 int *fileMap;
 int sigFigPre;
 int sigFigPost;
@@ -20,6 +21,27 @@ BC bc;
 BC *_bc;
 tetrad_struct *tetrads;
 tetrad_struct *_tetrads;
+
+double *R2;
+double *var;
+double *shape;
+double *gEigVal;
+double *gEigVec;
+double *sEigVal;
+double *sEigVec;
+double *vorticity;
+
+double *_R2;
+double *_var;
+double *_shape;
+double *_gEigVal;
+double *_gEigVec;
+double *_sEigVal;
+double *_sEigVec;
+double *_vorticity;
+
+double *_gEigVecInit;
+double *_sEigVecInit;
 
 // Read tetrad.config input file
 void tetrad_read_input(void)
@@ -47,7 +69,8 @@ void tetrad_read_input(void)
 }
 
 // read and sort output directory
-void init_input_files(void) {
+void init_input_files(void) 
+{
   DIR *dir;
   struct dirent *ent;
   char output_path[FILE_NAME_SIZE] = "";
@@ -123,6 +146,7 @@ void init_input_files(void) {
 
   merge_sort(partFileTime, nFiles, fileMap);
   printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
+  simTime = (double*) malloc(nFiles * sizeof(double));
 }
 
 // entry point for mergesort
@@ -175,6 +199,45 @@ void merge(double *A, int n, int m, int *A2)
   free(B2);
 }
 
+// Create output directory for data
+void create_output_dir (void) {
+  // Create output directory if it doesn't exist
+  // From stackoverflow-7430248
+  struct stat st = {0};
+  char buf[CHAR_BUF_SIZE];
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  if (stat(buf, &st) == -1) {
+    mkdir(buf, 0700);
+  }
+}
+
+// Initialize stat.dat output file and align.dat
+void init_stat_output(void)
+{
+  char path[FILE_NAME_SIZE] = "";
+  sprintf(path, "%s/%s/stat.dat", ROOT_DIR, DATA_OUT_DIR);
+  FILE *rec = fopen(path, "w");
+  if (rec == NULL) {
+    printf("Could not open file %s\n", path);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(rec, "time meanR2 meanVar meanShape stdR2 stdVar stdShape\n"); 
+  fclose(rec);
+
+  char path2[FILE_NAME_SIZE] = "";
+  sprintf(path2, "%s/%s/align.dat", ROOT_DIR, DATA_OUT_DIR);
+  FILE *rec2 = fopen(path2, "w");
+  if (rec2 == NULL) {
+    printf("Could not open file %s\n", path2);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(rec2, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
+  fprintf(rec2, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
+  fprintf(rec2, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3");
+  fprintf(rec2, "vortMag\n");
+  fclose(rec2);
+}
+
 // read CUDA_VISIBLE_DEVICES from slurm and set dev_start
 int read_devices(void)
 {
@@ -217,8 +280,31 @@ int read_devices(void)
   return dev_start;
 }
 
+// read number of particles from cgns file
+int cgns_read_nparts(void)
+{
+  // Open cgns file and get cgns file index number fn
+  char buf[FILE_NAME_SIZE];
+  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
+  int fn;
+  cg_open(buf, CG_MODE_READ, &fn);
+
+  // Set base index nuber and zone index number (only one, so is 1)
+  int bn = 1;
+  int zn = 1;
+
+  // Read zone to find cgsize_t *size, or nparts
+  char zonename[FILE_NAME_SIZE] = "";
+  cgsize_t nparts = 0;
+  cg_zone_read(fn, bn, zn, zonename, &nparts);
+
+  cg_close(fn);
+
+  return nparts;
+}
+
 // initialize part_struct
-void parts_init(int nparts)
+void parts_init(void)
 {
   parts = (part_struct*) malloc(nparts * sizeof(part_struct));
 
@@ -231,18 +317,7 @@ void parts_init(int nparts)
     parts[p].u = -1;
     parts[p].v = -1;
     parts[p].w = -1;
-
-    // Allocate space for tetrad statistic arrays
-    parts[p].g_lambda1 = malloc(nFiles * sizeof(double));
-    parts[p].g_lambda2 = malloc(nFiles * sizeof(double));
-    parts[p].g_lambda3 = malloc(nFiles * sizeof(double));
-    for (int n = 0; n < nFiles; n++) {
-      parts[p].g_lambda1[n] = -1; 
-      parts[p].g_lambda2[n] = -1; 
-      parts[p].g_lambda3[n] = -1; 
-    }
   }
-
 
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
@@ -531,93 +606,19 @@ void domain_init(void)
   #endif
 }
 
-// read number of particles from cgns file
-int cgns_read_nparts(void)
+// Allocate memory for tetrad statistics
+void alloc_tetrad_arrays(void)
 {
-  // Open cgns file and get cgns file index number fn
-  char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
-  int fn;
-  cg_open(buf, CG_MODE_READ, &fn);
+  // Shape measures
+  R2 = malloc(sizeof(double) * nRegular);
+  var = malloc(sizeof(double) * nRegular);
+  shape = malloc(sizeof(double) * nRegular);
 
-  // Set base index nuber and zone index number (only one, so is 1)
-  int bn = 1;
-  int zn = 1;
-
-  // Read zone to find cgsize_t *size, or nparts
-  char zonename[FILE_NAME_SIZE] = "";
-  cgsize_t nparts = 0;
-  cg_zone_read(fn, bn, zn, zonename, &nparts);
-
-  cg_close(fn);
-
-  return nparts;
-}
-
-// Read part_struct data
-void cgns_fill_part_struct(int nparts)
-{
-  // Open cgns file and get cgns file index number fn
-  char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[tt]]);
-  int fn;
-  cg_open(buf, CG_MODE_READ, &fn);
-  
-  // Set base, zone, and solutions index numbers
-  int bn = 1;
-  int zn = 1;
-  int sn = 1;
-
-  // Read part coords
-  double *x = malloc(nparts * sizeof(double));
-  double *y = malloc(nparts * sizeof(double));
-  double *z = malloc(nparts * sizeof(double));
-  for (int p = 0; p < nparts; p++) {
-    x[p] = 0;
-    y[p] = 0;
-    z[p] = 0;
-  }
-
-  cgsize_t range_min = 1;
-  cgsize_t range_max = nparts;
-
-  cg_coord_read(fn,bn,zn, "CoordinateX", RealDouble, &range_min, &range_max, x);
-  cg_coord_read(fn,bn,zn, "CoordinateY", RealDouble, &range_min, &range_max, y);
-  cg_coord_read(fn,bn,zn, "CoordinateZ", RealDouble, &range_min, &range_max, z);
-
-  for (int p = 0; p < nparts; p++) {
-    parts[p].x = x[p];
-    parts[p].y = y[p];
-    parts[p].z = z[p];
-  }
-
-  // Read part vel
-  double *u = malloc(nparts * sizeof(double));
-  double *v = malloc(nparts * sizeof(double));
-  double *w = malloc(nparts * sizeof(double));
-  for (int p = 0; p < nparts; p++) {
-    w[p] = 0;
-    v[p] = 0;
-    w[p] = 0;
-  }
-  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, &range_min, &range_max, u);
-  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, &range_min, &range_max, v);
-  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, &range_min, &range_max, w);
-
-  for (int p = 0; p < nparts; p++) {
-    parts[p].u = u[p];
-    parts[p].v = v[p];
-    parts[p].w = w[p];
-  }
-
-  free(x);
-  free(y);
-  free(z);
-  free(u);
-  free(v);
-  free(w);
-  
-  cg_close(fn);
+  gEigVal = malloc(3 * sizeof(double) * nRegular);
+  gEigVec = malloc(9 * sizeof(double) * nRegular);
+  sEigVal = malloc(3 * sizeof(double) * nRegular);
+  sEigVec = malloc(9 * sizeof(double) * nRegular);
+  vorticity = malloc(3 * sizeof(double) * nRegular);
 }
 
 // Show binDom
@@ -682,15 +683,82 @@ void show_domain(void)
   printf("  Max parts per shell = %d\n", nMax);
 }
 
+// Read part_struct data
+void cgns_fill_part_struct(void)
+{
+  // Open cgns file and get cgns file index number fn
+  char buf[FILE_NAME_SIZE];
+  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[tt]]);
+  int fn;
+  cg_open(buf, CG_MODE_READ, &fn);
+  
+  // Set base, zone, and solutions index numbers
+  int bn = 1;
+  int zn = 1;
+  int sn = 1;
+
+  // Read part coords
+  double *x = malloc(nparts * sizeof(double));
+  double *y = malloc(nparts * sizeof(double));
+  double *z = malloc(nparts * sizeof(double));
+  for (int p = 0; p < nparts; p++) {
+    x[p] = 0;
+    y[p] = 0;
+    z[p] = 0;
+  }
+
+  cgsize_t range_min = 1;
+  cgsize_t range_max = nparts;
+
+  cg_coord_read(fn,bn,zn, "CoordinateX", RealDouble, &range_min, &range_max, x);
+  cg_coord_read(fn,bn,zn, "CoordinateY", RealDouble, &range_min, &range_max, y);
+  cg_coord_read(fn,bn,zn, "CoordinateZ", RealDouble, &range_min, &range_max, z);
+
+  for (int p = 0; p < nparts; p++) {
+    parts[p].x = x[p];
+    parts[p].y = y[p];
+    parts[p].z = z[p];
+  }
+
+  // Read part vel
+  double *u = malloc(nparts * sizeof(double));
+  double *v = malloc(nparts * sizeof(double));
+  double *w = malloc(nparts * sizeof(double));
+  for (int p = 0; p < nparts; p++) {
+    w[p] = 0;
+    v[p] = 0;
+    w[p] = 0;
+  }
+  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, &range_min, &range_max, u);
+  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, &range_min, &range_max, v);
+  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, &range_min, &range_max, w);
+
+  for (int p = 0; p < nparts; p++) {
+    parts[p].u = u[p];
+    parts[p].v = v[p];
+    parts[p].w = w[p];
+  }
+
+  // Read actual time
+  cg_goto(fn, bn, "Zone_t", zn, "Etc", 0, "end");
+  cg_array_read(1, &simTime[tt]);
+
+  free(x);
+  free(y);
+  free(z);
+  free(u);
+  free(v);
+  free(w);
+  
+  cg_close(fn);
+}
+
 // Write nodes
 void write_nodes(void)
 {
-  int count = 0;
-  printf("\tWriting to file ""uniqueNodes""... ");
-
   // Set up output file name
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s/uniqueNodes", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/regularNodes", ROOT_DIR, DATA_OUT_DIR);
   FILE *fnode = fopen(fname, "w");
   if (fnode == NULL) {
     printf("Error opening file!\n");
@@ -698,27 +766,11 @@ void write_nodes(void)
   }
 
   fprintf(fnode, "n1 n2 n3 n4\n");
-  for (int i = 0; i < nUnique; i++) {
-    if (tetrads[i].tolCheck == 1) {
+  for (int i = 0; i < nRegular; i++) {
         fprintf(fnode, "%d %d %d %d\n",
           tetrads[i].N1, tetrads[i].N2, tetrads[i].N3, tetrads[i].N4);
-        count++;
-    }
   }
   fclose(fnode);
-
-  printf("Wrote %d tetrads\n", count);
-}
-
-void create_output_dir (void) {
-  // Create output directory if it doesn't exist
-  // From stackoverflow-7430248
-  struct stat st = {0};
-  char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
-  if (stat(buf, &st) == -1) {
-    mkdir(buf, 0700);
-  }
 }
 
 void get_sigfigs(void) {
@@ -742,12 +794,14 @@ void get_sigfigs(void) {
 // Write data at each timestep
 void write_timestep(void)
 {
+
+  // Print raw data
   // Set up the filename
   char format[CHAR_BUF_SIZE] = "";
   char fnameall[CHAR_BUF_SIZE] = "";
   char fnameall2[CHAR_BUF_SIZE] = "";
   sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
-  sprintf(fnameall2, "%s/%s/tetrad-data-%s", ROOT_DIR, DATA_OUT_DIR, format);
+  sprintf(fnameall2, "%s/%s/raw-data-%s", ROOT_DIR, DATA_OUT_DIR, format);
   sprintf(fnameall, fnameall2, partFileTime[tt]);
 
 
@@ -757,51 +811,86 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
 
-  fprintf(fdat, "det var R2 ");
+  fprintf(fdat, "R2 var shape ");
   fprintf(fdat, "gEigVal_1 gEigVal_2 gEigVal_3 ");
   fprintf(fdat, "gEigVec_1x gEigVec_1y gEigVec_1z ");
   fprintf(fdat, "gEigVec_2x gEigVec_2y gEigVec_2z ");
   fprintf(fdat, "gEigVec_3x gEigVec_3y gEigVec_3z ");
   fprintf(fdat, "sEigVal_1 sEigVal_2 sEigVal_3 ");
-  fprintf(fdat, "gEigVec_1x gEigVec_1y gEigVec_1z ");
-  fprintf(fdat, "gEigVec_2x gEigVec_2y gEigVec_2z ");
-  fprintf(fdat, "gEigVec_3x gEigVec_3y gEigVec_3z ");
+  fprintf(fdat, "sEigVec_1x sEigVec_1y sEigVec_1z ");
+  fprintf(fdat, "sEigVec_2x sEigVec_2y sEigVec_2z ");
+  fprintf(fdat, "sEigVec_3x sEigVec_3y sEigVec_3z ");
   fprintf(fdat, "vorticity_x vorticity_y vorticity_z\n");
-  for (int i = 0; i < nUnique; i++) {
-    if (tetrads[i].tolCheck == 1) {
-        // Need to check if outputing vecs in correct format...
+  for (int i = 0; i < nRegular; i++) {
+        int p3 = nDim * i;    // index for 3-scalar arrays
+        int p9 = nDim2 * i;   // index for 3-vector arrays
+        
         fprintf(fdat, "%lf %lf %lf ",
-          tetrads[i].det, tetrads[i].var, tetrads[i].R2);
+          R2[i], var[i], shape[i]);
+
         fprintf(fdat, "%lf %lf %lf ",
-          tetrads[i].gEigVal[0], tetrads[i].gEigVal[1], tetrads[i].gEigVal[2]);
+          gEigVal[p3], gEigVal[p3 + 1], gEigVal[p3 + 2]);
+
         fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
-          tetrads[i].gEigVec[0], tetrads[i].gEigVec[3], tetrads[i].gEigVec[6], 
-          tetrads[i].gEigVec[1], tetrads[i].gEigVec[4], tetrads[i].gEigVec[7], 
-          tetrads[i].gEigVec[2], tetrads[i].gEigVec[5], tetrads[i].gEigVec[8]);
+          gEigVec[p9 + 0], gEigVec[p9 + 3], gEigVec[p9 + 6], 
+          gEigVec[p9 + 1], gEigVec[p9 + 4], gEigVec[p9 + 7], 
+          gEigVec[p9 + 2], gEigVec[p9 + 5], gEigVec[p9 + 8]);
+          
         fprintf(fdat, "%lf %lf %lf ",
-          tetrads[i].sEigVal[0], tetrads[i].sEigVal[1], tetrads[i].sEigVal[2]);
+          sEigVal[p3 + 0], sEigVal[p3 + 1], sEigVal[p3 + 2]);
+          
         fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
-          tetrads[i].sEigVec[0], tetrads[i].sEigVec[3], tetrads[i].sEigVec[6], 
-          tetrads[i].sEigVec[1], tetrads[i].sEigVec[4], tetrads[i].sEigVec[7], 
-          tetrads[i].sEigVec[2], tetrads[i].sEigVec[5], tetrads[i].sEigVec[8]);
+          sEigVec[p9 + 0], sEigVec[p9 + 3], sEigVec[p9 + 6], 
+          sEigVec[p9 + 1], sEigVec[p9 + 4], sEigVec[p9 + 7], 
+          sEigVec[p9 + 2], sEigVec[p9 + 5], sEigVec[p9 + 8]);
+          
         fprintf(fdat, "%lf %lf %lf\n",
-          tetrads[i].vorticity[0], tetrads[i].vorticity[1], 
-          tetrads[i].vorticity[2]);
-    }
+          vorticity[p3 + 0], vorticity[p3 + 1], vorticity[p3 + 2]);
   }
   fclose(fdat);
+
+  // Print statistics of scalars
+  char path[FILE_NAME_SIZE] = "";
+  sprintf(path, "%s/%s/stat.dat", ROOT_DIR, DATA_OUT_DIR);
+  FILE *rec = fopen(path, "a");
+  if (rec == NULL) {
+    printf("Could not open file %s\n", path);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(rec, "%lf ", simTime[tt]);
+  fprintf(rec, "%lf %lf %lf ", meanR2, meanVar, meanShape); 
+  fprintf(rec, "%lf %lf %lf\n", stdR2, stdVar, stdShape); 
+  fclose(rec);
+
+  // Print alignment stats
+  char path2[FILE_NAME_SIZE] = "";
+  sprintf(path2, "%s/%s/align.dat", ROOT_DIR, DATA_OUT_DIR);
+  FILE *rec2 = fopen(path2, "a");
+  if (rec2 == NULL) {
+    printf("Could not open file %s\n", path2);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(rec2, "%lf ", simTime[tt]);
+  fprintf(rec2, "%lf %lf %lf ", mean_g1_s1, mean_g1_s2, mean_g1_s3);
+  fprintf(rec2, "%lf %lf %lf ", mean_g2_s1, mean_g2_s2, mean_g2_s3);
+  fprintf(rec2, "%lf %lf %lf ", mean_g3_s1, mean_g3_s2, mean_g3_s3);
+
+  fprintf(rec2, "%lf %lf %lf ", mean_g1_z, mean_g2_z, mean_g3_z);
+  fprintf(rec2, "%lf %lf %lf ", mean_s1_z, mean_s2_z, mean_s3_z);
+  fprintf(rec2, "%lf ", mean_w_z);
+
+  fprintf(rec2, "%lf %lf %lf ", mean_w_g1, mean_w_g2, mean_w_g3);
+  fprintf(rec2, "%lf %lf %lf ", mean_w_s1, mean_w_s2, mean_w_s3);
+  fprintf(rec2, "%lf\n", mean_vortMag);
+
+  fclose(rec2);
+
 }
 
 // Free parts
 void free_parts(void)
 {
-  for (int p = 0; p < nparts; p++) {
-    free(parts[p].g_lambda1);
-    free(parts[p].g_lambda2);
-    free(parts[p].g_lambda3);
-  }
   free(parts);
-  free(uniqueNodes);
   free(tetrads);
   for (int i = 0; i < nFiles; i++) {
     free(partFiles[i]);
@@ -809,5 +898,15 @@ void free_parts(void)
   free(partFiles);
   free(fileMap);
   free(partFileTime);
+  free(simTime);
+
+  free(R2);
+  free(var);
+  free(shape);
+  free(gEigVal);
+  free(gEigVec);
+  free(sEigVal);
+  free(sEigVec);
+  free(vorticity);
 }
 

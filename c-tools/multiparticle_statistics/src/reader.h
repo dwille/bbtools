@@ -16,9 +16,6 @@ typedef struct part_struct {
   double v;
   double w;
   int bin;
-  double *g_lambda1;
-  double *g_lambda2;
-  double *g_lambda3;
 } part_struct;
 
 // grid_info
@@ -73,15 +70,6 @@ typedef struct tetrad_struct {
   int N2;
   int N3;
   int N4;
-  double R2;
-  double det;
-  double var;
-  double gEigVal[3];
-  double gEigVec[9];
-  double sEigVal[3];
-  double sEigVec[9];
-  double vorticity[3];
-  int tolCheck;
 } tetrad_struct;
 
 /**** VARIABLES ****/
@@ -89,6 +77,7 @@ typedef struct tetrad_struct {
 extern int nFiles;
 extern char **partFiles;
 extern double *partFileTime;
+extern double *simTime;
 extern int *fileMap;
 extern int sigFigPre;
 extern int sigFigPost;
@@ -122,6 +111,28 @@ extern BC *_bc;
 extern tetrad_struct *tetrads;
 extern tetrad_struct *_tetrads;
 
+// Host and Dev tetrad data
+extern double *R2;
+extern double *var;
+extern double *shape;
+extern double *gEigVal;
+extern double *gEigVec;
+extern double *sEigVal;
+extern double *sEigVec;
+extern double *vorticity;
+
+extern double *_R2;
+extern double *_var;
+extern double *_shape;
+extern double *_gEigVal;
+extern double *_gEigVec;
+extern double *_sEigVal;
+extern double *_sEigVec;
+extern double *_vorticity;
+
+extern double *_gEigVecInit;
+extern double *_sEigVecInit;
+
 /**** FUNCTIONS ****/
 // read tetrad.config input file
 void tetrad_read_input(void);
@@ -139,20 +150,44 @@ void create_output_dir(void);
 // read CUDA_VISIBLE_DEVICES
 int read_devices(void);
 
-// initialize part_struct
-void parts_init(int nparts);
+// Read nparts
+int cgns_read_nparts(void);
 
-// initialize dom_struct binDom
-void domain_init(void);
+/**** FUNCTIONS ****/
+// read tetrad.config input file
+void tetrad_read_input(void);
+
+// read and sort output directory
+void init_input_files(void);
+
+// Merge sort
+void merge_sort(double *A, int n, int *A2);
+void merge(double *A, int n, int m, int *A2);
+
+// create output dir and init files
+void create_output_dir(void);
+void init_stat_output(void);
+
+// read CUDA_VISIBLE_DEVICES
+int read_devices(void);
 
 // Read nparts
 int cgns_read_nparts(void);
 
-// Read part_struct data
-void cgns_fill_part_struct(int nparts);
+// initialize part_struct
+void parts_init(void);
+
+// initialize dom_struct binDom
+void domain_init(void);
 
 // show binDom and bc structures
 void show_domain(void);
+
+// Allocate memory for tetrad arrays
+void alloc_tetrad_arrays(void);
+
+// Read part_struct data
+void cgns_fill_part_struct(void);
 
 // get sigfigs of last file 
 void get_sigfigs(void);

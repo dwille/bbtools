@@ -39,15 +39,15 @@ nFiles = np.zeros(16)
 for pp, part in enumerate(partList):
   for dd, dens in enumerate(densList):
     dirName = root + part + "/" + dens + "/"
-    dataDir = dirName + "/" + "data-tetads/tetrad-data-*"
+    dataDir = dirName + "/" + "data-tetads/raw-data-*"
     
     # Sort output files and find number within range
-    files = sorted_nicely(glob.glob(root + "data-tetrads/tetrad-data-*"))
+    files = sorted_nicely(glob.glob(root + "data-tetrads/raw-data-*"))
 
     for fname in files:
       ftime = fname.split('/')[-1]
-      if ftime.startswith('tetrad-data-'):
-        time = ftime[12:]
+      if ftime.startswith('raw-data-'):
+        time = ftime[9:]
 
       if float(time) >= float(ts) and float(time) <= float(te):
         ind = 4*pp + dd
@@ -94,8 +94,8 @@ for pp, part in enumerate(partList):
     # Loop over all output files
     for ff, fname in enumerate(files):
       ftime = fname.split('/')[-1]
-      if ftime.startwith('tetrad-data-'):
-        time = ftime[12:]
+      if ftime.startwith('raw-data-'):
+        time = ftime[9:]
 
       if float(ftime) >= float(ts) and float(ftime) <= float(te):
         time[stride + ff] = float(ftime)
