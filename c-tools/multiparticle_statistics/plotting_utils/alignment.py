@@ -316,12 +316,12 @@ g1s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
 g1s_Ax.tick_params(which='major', length=6)
 g1s_Ax.tick_params(which='minor', length=3)
 
+# middle
 g2s_Ax = g_s.add_subplot(312)
 g2s_Ax.plot(time, alignment[0].g2_s1[:], 'ko-', linewidth=1.5)
 g2s_Ax.plot(time, alignment[0].g2_s2[:], 'bo-', linewidth=1.5)
 g2s_Ax.plot(time, alignment[0].g2_s3[:], 'ro-', linewidth=1.5)
 
-# middle
 g2s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_2 \cdot \mathbf{s(0)}_i)$', 
   fontsize=15)
 g2s_Ax.set_ylim([0,0.6])
@@ -330,12 +330,12 @@ g2s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
 g2s_Ax.tick_params(which='major', length=6)
 g2s_Ax.tick_params(which='minor', length=3)
 
+# minor
 g3s_Ax = g_s.add_subplot(313)
 g3s_Ax.plot(time, alignment[0].g3_s1[:], 'ko-', linewidth=1.5)
 g3s_Ax.plot(time, alignment[0].g3_s2[:], 'bo-', linewidth=1.5)
 g3s_Ax.plot(time, alignment[0].g3_s3[:], 'ro-', linewidth=1.5)
 
-# minor
 g3s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_3 \cdot \mathbf{s(0)}_i)$', 
   fontsize=15)
 g3s_Ax.set_ylim([0,0.6])

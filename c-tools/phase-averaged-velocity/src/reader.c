@@ -31,7 +31,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/main.config", ROOT_DIR);
+  sprintf(fname, "%s/phasevel.config", ROOT_DIR);
   FILE *infile = fopen(fname, "r");
   
   // read input

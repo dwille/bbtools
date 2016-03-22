@@ -15,6 +15,12 @@ addpath ~/bluebottle/tools/matlab
 
 fprintf('Initializing... \n');
 
+% MAke sure correct current director is sued
+if strcmp(DIR, '.') == 1
+  DIR = pwd;
+  fprintf('Using pwd instead of . as a sim directory\n');
+end
+
 % go through options
 appendFlag = 0;
 if nargin == 4

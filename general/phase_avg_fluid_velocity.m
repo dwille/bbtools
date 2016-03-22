@@ -47,8 +47,6 @@ end
 % Read flow time
 [tfstr tfnum] = cgns_read_flow_time(DIR);
 
-fprintf('test\n')
-
 % Sort out times - flow
 ind = find(tfnum >= ts & tfnum <= te);    % indices of values in range
 % Deal with incorrect time input
