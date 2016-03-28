@@ -23,7 +23,7 @@ dom_struct *_dom;
 BC bc;
 BC *_bc;
 
-// Read main.config input file
+// Read config input file
 void main_read_input(void)
 {
   int fret = 0;

@@ -232,14 +232,15 @@ __global__ void sort_combos(int *nodes, int nPerms)
     for (int v = 0; v < 4; v++) {
       vals[v] = nodes[startInd + v];
     }
+    int a, b;
     // Adapated from stackoverflow.com 2786899, 
     //  "Fastest sort of fixed length 6 int array"
     // and "pages.ripco.net/~jgamble/nw.html"
     // and perhaps "Bit Twiddling Hacks" by Sean Eron Anderson @ Stanford
     #define min(x, y) (x*(x < y) + y*(y < x) + x*(x == y))
     #define max(x, y) (x*(x > y) + y*(y > x) + y*(x == y))
-    #define SWAP(x,y) { const int a = min(vals[x], vals[y]); \
-                        const int b = max(vals[x], vals[y]); \
+    #define SWAP(x,y) { a = min(vals[x], vals[y]); \
+                        b = max(vals[x], vals[y]); \
                         vals[x] = a; vals[y] = b; }
     SWAP(0,1);
     SWAP(2,3);
@@ -350,13 +351,30 @@ __global__ void fill_nodes(tetrad_struct *allTetrads, int *uniqueNodes,
     allTetrads[i].N2 = uniqueNodes[4*i + 1];    
     allTetrads[i].N3 = uniqueNodes[4*i + 2];    
     allTetrads[i].N4 = uniqueNodes[4*i + 3];    
+
+    allTetrads[i].N1_initFlip_X = 0;
+    allTetrads[i].N1_initFlip_Y = 0;
+    allTetrads[i].N1_initFlip_Z = 0;
+
+    allTetrads[i].N2_initFlip_X = 0;
+    allTetrads[i].N2_initFlip_Y = 0;
+    allTetrads[i].N2_initFlip_Z = 0;
+
+    allTetrads[i].N3_initFlip_X = 0;
+    allTetrads[i].N3_initFlip_Y = 0;
+    allTetrads[i].N3_initFlip_Z = 0;
+
+    allTetrads[i].N4_initFlip_X = 0;
+    allTetrads[i].N4_initFlip_Y = 0;
+    allTetrads[i].N4_initFlip_Z = 0;
+
     isRegular[i] = 0;
   }
 }
 
 __global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
-  dom_struct *dom, int *isRegular, int nTetrads, double varCutLow,
-  double varCutHigh, double shapeCutLow, double shapeCutHigh)
+  dom_struct *dom, int *isRegular, int nTetrads, double EVarCutLow,
+  double EVarCutHigh, double shapeCutLow, double shapeCutHigh)
 {
   int tet = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -376,13 +394,14 @@ __global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
 
   /* Shape measures */
   double R2;
-  double var;
+  double EVar;
   double shape;
 
   if (tet < nTetrads) {
     /*  POSITION  */
-    // Fix periodicity issues
-    periodic_flip(r1, r2, r3, r4, allTetrads[tet], parts, dom->xl, dom->yl, 
+    // Fix periodicity issues for first timestep 
+    // Save an initial flip if one is needed
+    periodic_flip(r1, r2, r3, r4, &allTetrads[tet], parts, dom->xl, dom->yl, 
       dom->zl);
 
     // Calculate tetrad center of mass
@@ -429,15 +448,15 @@ __global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
       }
     }
 
-    // Calculate variance of g's eigenvalues, var = trace(g_hat^2)
-    var = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
+    // Calculate variance of g's eigenvalues, EVar = trace(g_hat^2)
+    EVar = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
 
     // Calculate shape of g using det(g_hat)
     shape = 27.*matrixDet3(g_hat) * iR2 * iR2 * iR2;
 
 
-    isRegular[tet] = (var >= varCutLow &&
-                      var <= varCutHigh &&
+    isRegular[tet] = (EVar >= EVarCutLow &&
+                      EVar <= EVarCutHigh &&
                       shape >= shapeCutLow &&
                       shape <= shapeCutHigh);
   }
@@ -462,18 +481,87 @@ __global__ void copy_regular(tetrad_struct *tetrads, tetrad_struct *allTetrads,
   int *regularTetrads, int nRegular, int *isRegular)
 {
   int tet = threadIdx.x + blockIdx.x*blockDim.x;
+  int pp;
+
   if (tet < nRegular) {
-    tetrads[tet].N1 = allTetrads[regularTetrads[tet]].N1;
-    tetrads[tet].N2 = allTetrads[regularTetrads[tet]].N2;
-    tetrads[tet].N3 = allTetrads[regularTetrads[tet]].N3;
-    tetrads[tet].N4 = allTetrads[regularTetrads[tet]].N4;
+    pp = regularTetrads[tet];
+    tetrads[tet].N1 = allTetrads[pp].N1;
+    tetrads[tet].N2 = allTetrads[pp].N2;
+    tetrads[tet].N3 = allTetrads[pp].N3;
+    tetrads[tet].N4 = allTetrads[pp].N4;
+
+    tetrads[tet].N1_initFlip_X = allTetrads[pp].N1_initFlip_X;
+    tetrads[tet].N1_initFlip_Y = allTetrads[pp].N1_initFlip_Y;
+    tetrads[tet].N1_initFlip_Z = allTetrads[pp].N1_initFlip_Z;
+
+    tetrads[tet].N2_initFlip_X = allTetrads[pp].N2_initFlip_X;
+    tetrads[tet].N2_initFlip_Y = allTetrads[pp].N2_initFlip_Y;
+    tetrads[tet].N2_initFlip_Z = allTetrads[pp].N2_initFlip_Z;
+
+    tetrads[tet].N3_initFlip_X = allTetrads[pp].N3_initFlip_X;
+    tetrads[tet].N3_initFlip_Y = allTetrads[pp].N3_initFlip_Y;
+    tetrads[tet].N3_initFlip_Z = allTetrads[pp].N3_initFlip_Z;
+
+    tetrads[tet].N4_initFlip_X = allTetrads[pp].N4_initFlip_X;
+    tetrads[tet].N4_initFlip_Y = allTetrads[pp].N4_initFlip_Y;
+    tetrads[tet].N4_initFlip_Z = allTetrads[pp].N4_initFlip_Z;
+  }
+}
+
+__global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
+  dom_struct *dom, int nparts)
+{
+  // I almost wonder if the old version of this would be 
+  //  fine as long as the initialization flip is taken
+  //  care of on a tetrad-by-tetrad case -- do timestep 
+  //  flip here, and then correct for tetrads if need be?
+
+  int n = threadIdx.x + blockIdx.x*blockDim.x;
+  double dx; double dy; double dz;
+  int cmpX; int cmpY; int cmpZ;
+  int sgnDx; int sgnDy; int sgnDz;
+
+  if (n < nparts) {
+    // Before comparison, correct particle position with old flip count
+    parts[n].x += dom->xl*parts[n].flipCountX;
+    parts[n].y += dom->yl*parts[n].flipCountY;
+    parts[n].z += dom->zl*parts[n].flipCountZ;
+
+    // Set up dx,dy,dz
+    dx = partsPrev[n].x - parts[n].x;
+    dy = partsPrev[n].y - parts[n].y;
+    dz = partsPrev[n].z - parts[n].z;
+
+    // See if particle has crossed domain since last timestep
+    //  1 iff it did
+    //  0 iff it did not
+    cmpX = (fabs(dx) >= 0.5*dom->xl);
+    cmpY = (fabs(dy) >= 0.5*dom->yl);
+    cmpZ = (fabs(dz) >= 0.5*dom->zl);
+
+    // Get sign of dx,dy,dz
+    //  -- if (prev - curr) > 0, went R->L, (+) a domain length
+    //  -- if (prev - curr) < 0, went L->R, (-) a domain length
+    sgnDx = (dx > 0.) - (dx < 0.);
+    sgnDy = (dy > 0.) - (dy < 0.);
+    sgnDz = (dz > 0.) - (dz < 0.);
+
+    // increment or decrement the appropriate flipcount if so
+    parts[n].flipCountX += cmpX*sgnDx;
+    parts[n].flipCountY += cmpY*sgnDy;
+    parts[n].flipCountZ += cmpZ*sgnDz;
+
+    // Perform one more flip if necssary
+    parts[n].x += dom->xl*cmpX*sgnDx;
+    parts[n].y += dom->yl*cmpY*sgnDy;
+    parts[n].z += dom->zl*cmpZ*sgnDz;
   }
 }
 
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
-  dom_struct *dom, double *R2, double *var, double *shape, double *gEigVal,
+  dom_struct *dom, double *RoG, double *EVar, double *shape, double *gEigVal,
   double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
-  double *vortMag, int nTetrads)
+  double *S11, double *S22, double *S33, double *vortMag, int nTetrads, int tt)
 {
   int tet = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -487,14 +575,13 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
   double r4[nDim];      // Node 4 relative coordinates
 
   /* Shape Tensor Variables */
+  double R2, iR2;       // Square of radius of gyration and 1/
   double g[nDim2];      // Gyration tensor
   double avgLambda;     // Average eigenvalue of g = trace(g)/3 
   double g_hat[nDim2];  // Deviatoric part of g
 
   /* Velocity variables */
-
   double gInv[nDim2];   // Gyration tensor inverse
-  int nrot;
 
   double UCM = 0;       // Tetrad center of vel -- u
   double VCM = 0;       // Tetrad center of vel -- v
@@ -508,15 +595,45 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
   double M[nDim2];      // Coarse-grained vel grad tensor
   double S[nDim2];      // Symmetric part of M
   double O[nDim2];      // Anti-Symmetric part of M
+  double trS, itrS;       // Trace of S and its inverse
+
+  /* Misc */
+  int N1, N2, N3, N4;   // tetrad nodes
+  int nrot;             // number of jacobi rotations
 
   if (tet < nTetrads) {
     /*  POSITION  */
-    // Fix periodicity issues
-    periodic_flip(r1, r2, r3, r4, tetrads[tet], parts, dom->xl, dom->yl, 
-      dom->zl);
+    N1 = tetrads[tet].N1;
+    N2 = tetrads[tet].N2;
+    N3 = tetrads[tet].N3;
+    N4 = tetrads[tet].N4;
+    
+    // Pull particle positions
+    //  -- These have been corrected for periodicity between tsteps, but not
+    //      yet for the initialization
+    r1[0] = parts[N1].x; r1[1] = parts[N1].y; r1[2] = parts[N1].z;
+    r2[0] = parts[N2].x; r2[1] = parts[N2].y; r2[2] = parts[N2].z;
+    r3[0] = parts[N3].x; r3[1] = parts[N3].y; r3[2] = parts[N3].z;
+    r4[0] = parts[N4].x; r4[1] = parts[N4].y; r4[2] = parts[N4].z;
+
+    // Fix periodicity issues for tetrads that were initialized over a boundary
+    r1[0] += dom->xl * tetrads[tet].N1_initFlip_X;
+    r1[1] += dom->yl * tetrads[tet].N1_initFlip_Y;
+    r1[2] += dom->zl * tetrads[tet].N1_initFlip_Z;
+
+    r2[0] += dom->xl * tetrads[tet].N2_initFlip_X;
+    r2[1] += dom->yl * tetrads[tet].N2_initFlip_Y;
+    r2[2] += dom->zl * tetrads[tet].N2_initFlip_Z;
+
+    r3[0] += dom->xl * tetrads[tet].N3_initFlip_X;
+    r3[1] += dom->yl * tetrads[tet].N3_initFlip_Y;
+    r3[2] += dom->zl * tetrads[tet].N3_initFlip_Z;
+
+    r4[0] += dom->xl * tetrads[tet].N4_initFlip_X;
+    r4[1] += dom->yl * tetrads[tet].N4_initFlip_Y;
+    r4[2] += dom->zl * tetrads[tet].N4_initFlip_Z;
 
     // Calculate tetrad center of mass
-    // reference all of them to N1, if > dom.size, flip it
     XCM = 0.25*(r1[0] + r2[0] + r3[0] + r4[0]);
     YCM = 0.25*(r1[1] + r2[1] + r3[1] + r4[1]);
     ZCM = 0.25*(r1[2] + r2[2] + r3[2] + r4[2]);
@@ -545,11 +662,11 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
                             + r3[i]*r3[j] + r4[i]*r4[j]);
       }
     }
-    R2[tet] = matrixTrace3(g);
-    double iR2 = 1./R2[tet];
+    R2 = matrixTrace3(g);
+    iR2 = 1./R2;
 
     // Calculate average eigenvalue of g
-    avgLambda = R2[tet]/3.;
+    avgLambda = R2/3.;
 
     // Calculate deviatoric part of g, g_hat
     for (int i = 0; i < nDim; i++) {
@@ -559,8 +676,11 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
       }
     }
 
-    // Calculate variance of g's eigenvalues, var = trace(g_hat^2)
-    var[tet] = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
+    // Calculate actual radius of gyration
+    RoG[tet] = sqrt(R2);
+
+    // Calculate variance of g's eigenvalues, EVar = trace(g_hat^2)
+    EVar[tet] = 1.5*matrixSquaredTrace3(g_hat) * iR2 * iR2;
 
     // Calculate shape of g using det(g_hat)
     shape[tet] = 27.*matrixDet3(g_hat) * iR2 * iR2 * iR2;
@@ -586,11 +706,6 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     matrixInverse3(g, gInv);
 
     // Calculate tetrad center of vel
-    int N1 = tetrads[tet].N1;
-    int N2 = tetrads[tet].N2;
-    int N3 = tetrads[tet].N3;
-    int N4 = tetrads[tet].N4;
-
     UCM = 0.25*(parts[N1].u + parts[N2].u + parts[N3].u + parts[N4].u);
     VCM = 0.25*(parts[N1].v + parts[N2].v + parts[N3].v + parts[N4].v);
     WCM = 0.25*(parts[N1].w + parts[N2].w + parts[N3].w + parts[N4].w);
@@ -630,12 +745,21 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
       }
     }
 
-    // TODO: also output S11, S22, S33 before diagonalizing
+    trS = matrixTrace3(S);
+    itrS = 1./trS;
 
-    // Find princpal directions and values of strain tensor
+    // S11, S22, S33 before diagonalizing -- compressibility in xyz frame
+    S11[tet] = S[0];
+    S22[tet] = S[4];
+    S33[tet] = S[8];
+
+    // Find principal directions and values of strain tensor
     jacobiEig3(S, &(sEigVal[nDim*tet]), &(sEigVec[nDim2*tet]), &nrot);
 
-    // TODO: norm sEigVal by trace(S)
+    // norm sEigVal by trace(S)
+    for (int i = 0; i < nDim; i++) {
+      sEigVal[nDim*tet + i] *= itrS;
+    }
 
     // pull vorticity vector:
     // See AP, Fluid Dynamics, pages 38 + 40 -- O is -(7.53) bc (8.9)
@@ -644,8 +768,8 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     w2 = 2.*O[2];
     w3 = 2.*O[3];
 
-    vortMag[nDim*tet] = sqrt(w1*w1 + w2*w2 + w3*w3);
-    double iVortMag = 1./vortMag[nDim*tet];
+    vortMag[tet] = sqrt(w1*w1 + w2*w2 + w3*w3);
+    double iVortMag = 1./vortMag[tet];
 
     vorticity[nDim*tet] = w1 * iVortMag;
     vorticity[nDim*tet + 1] = w2 * iVortMag;
@@ -726,51 +850,63 @@ __global__ void matrixTests(void)
 }
 
 __device__ void periodic_flip(double *r1, double *r2, double *r3, double *r4, 
-  tetrad_struct tetrads, part_struct *parts, double xl, double yl, double zl)
+  tetrad_struct *tetrads, part_struct *parts, double xl, double yl, double zl)
 {
-    int N1 = tetrads.N1;
-    int N2 = tetrads.N2;
-    int N3 = tetrads.N3;
-    int N4 = tetrads.N4;
-    // branchless min
-    #define flip(s1,s2,l,i) \
-      {const double standard = s1[i] - s2[i]; \
-       const double standard2 = standard*standard; \
-       const double var1 = s1[i] - (s2[i] + l); \
-       const double var2 = s1[i] - (s2[i] - l); \
-       s2[i] += l*((var1*var1 < standard2) - (var2*var2 < standard2)); }
+  // For first timestep, correct tetrads that have crossed periodic boundaries
+  //  but don't know it.
+  // Also, increment initial flip counter if a specific node needs to be
+  //  permanently flipped down the line
 
-    // Set up position vectors to each particle from origin
-    r1[0] = parts[N1].x;
-    r1[1] = parts[N1].y;
-    r1[2] = parts[N1].z;
+  int N1 = tetrads->N1;
+  int N2 = tetrads->N2;
+  int N3 = tetrads->N3;
+  int N4 = tetrads->N4;
 
-    r2[0] = parts[N2].x;
-    r2[1] = parts[N2].y;
-    r2[2] = parts[N2].z;
+  double dx, dx2;
+  double flipL, flipR;
+  int flipFlag;
 
-    r3[0] = parts[N3].x;
-    r3[1] = parts[N3].y;
-    r3[2] = parts[N3].z;
+  // branchless min
+  #define flip(s1,s2,l,i,count) \
+    {dx = s1[i] - s2[i]; \
+     dx2 = dx*dx; \
+     flipL = s1[i] - (s2[i] + l); \
+     flipR = s1[i] - (s2[i] - l); \
+     flipFlag = (flipL*flipL < dx2) - (flipR*flipR < dx2); \
+     s2[i] += l*(flipFlag); \
+     count += flipFlag; }
 
-    r4[0] = parts[N4].x;
-    r4[1] = parts[N4].y;
-    r4[2] = parts[N4].z;
+  // Set up position vectors to each particle from origin
+  r1[0] = parts[N1].x;
+  r1[1] = parts[N1].y;
+  r1[2] = parts[N1].z;
 
-    /* X direction */
-    flip(r1, r2, xl, 0);
-    flip(r1, r3, xl, 0);
-    flip(r1, r4, xl, 0);
+  r2[0] = parts[N2].x;
+  r2[1] = parts[N2].y;
+  r2[2] = parts[N2].z;
 
-    /* Y direction */
-    flip(r1, r2, yl, 1);
-    flip(r1, r3, yl, 1);
-    flip(r1, r4, yl, 1);
+  r3[0] = parts[N3].x;
+  r3[1] = parts[N3].y;
+  r3[2] = parts[N3].z;
 
-    /* Z direction */
-    flip(r1, r2, zl, 2);
-    flip(r1, r3, zl, 2);
-    flip(r1, r4, zl, 2);
+  r4[0] = parts[N4].x;
+  r4[1] = parts[N4].y;
+  r4[2] = parts[N4].z;
+
+  /* X direction */
+  flip(r1, r2, xl, 0, tetrads->N2_initFlip_X);
+  flip(r1, r3, xl, 0, tetrads->N3_initFlip_X);
+  flip(r1, r4, xl, 0, tetrads->N4_initFlip_X);
+
+  /* Y direction */
+  flip(r1, r2, yl, 1, tetrads->N2_initFlip_Y);
+  flip(r1, r3, yl, 1, tetrads->N3_initFlip_Y);
+  flip(r1, r4, yl, 1, tetrads->N4_initFlip_Y);
+
+  /* Z direction */
+  flip(r1, r2, zl, 2, tetrads->N2_initFlip_Z);
+  flip(r1, r3, zl, 2, tetrads->N3_initFlip_Z);
+  flip(r1, r4, zl, 2, tetrads->N4_initFlip_Z);
 
   #undef flip
 }
@@ -813,7 +949,7 @@ __device__ void matrixInverse3(double *A, double *invA)
   //     | A31 A32 A33 |   | A[6] A[7] A[8] |
   double detA = matrixDet3(A);
 
-  double invDETA = 1/detA;             
+  double invDETA = 1./detA;             
 
   // If it's bigger than this, the matrix is probably singular
   // 1 if okay, 0 if not
@@ -994,15 +1130,16 @@ __device__ void eigsrt(double *d, double *v)
   }
 }
 
-__global__ void scalar_std(double *R2, double *var, double *shape, 
-  double meanR2, double meanVar, double meanShape, int nTetrads)
+__global__ void higher_moments_kernel(double *array, double mean, int length,
+  double *diff, double *diff2, double *skew, double *kurt)
 {
-  int tet = threadIdx.x + blockIdx.x*blockDim.x;
-  double inTetrads = 1./nTetrads;
-  if (tet < nTetrads) {
-    R2[tet] = (R2[tet] - meanR2) * (R2[tet] - meanR2) * inTetrads;
-    var[tet] = (var[tet] - meanVar) * (var[tet] - meanVar) * inTetrads;
-    shape[tet] = (shape[tet] - meanShape) * (shape[tet] - meanShape) * inTetrads;
+  int n = threadIdx.x + blockIdx.x*blockDim.x;
+
+  if (n < length) {
+    diff[n] = array[n] - mean;    // xi - x_bar
+    diff2[n] = diff[n]*diff[n];   // (xi - x_bar)^2
+    skew[n] = diff2[n]*diff[n];   // (xi - x_bar)^3
+    kurt[n] = diff2[n]*diff2[n];  // (xi - xbar)^4
   } 
 }
 
@@ -1035,6 +1172,7 @@ __global__ void  align_vectors(double *gEigVec, double *sEigVec,
   double s1_0[3];
   double s2_0[3];
   double s3_0[3];
+  double vort[3];
   double z[3];
 
   if (tet < nRegular) {
@@ -1047,6 +1185,8 @@ __global__ void  align_vectors(double *gEigVec, double *sEigVec,
       s1[i] = sEigVec[nDim2*tet + i*nDim];
       s2[i] = sEigVec[nDim2*tet + i*nDim + 1];
       s3[i] = sEigVec[nDim2*tet + i*nDim + 2];
+
+      vort[i] = vorticity[nDim*tet + i];
 
       // Initial vectors
       g1_0[i] = gEigVecInit[nDim2*tet + i*nDim];
@@ -1082,49 +1222,16 @@ __global__ void  align_vectors(double *gEigVec, double *sEigVec,
     s2_z[tet] = dot3(s2, z);
     s3_z[tet] = dot3(s3, z);
 
-    w_z[tet] = dot3(vorticity, z);
+    w_z[tet] = dot3(vort, z);
 
     // Alignment of vorticity with initial shape, strain
-    w_g1[tet] = dot3(vorticity, g1_0);
-    w_g2[tet] = dot3(vorticity, g2_0);
-    w_g3[tet] = dot3(vorticity, g3_0);
+    w_g1[tet] = dot3(vort, g1_0);
+    w_g2[tet] = dot3(vort, g2_0);
+    w_g3[tet] = dot3(vort, g3_0);
 
-    w_s1[tet] = dot3(vorticity, s1_0);
-    w_s2[tet] = dot3(vorticity, s2_0);
-    w_s3[tet] = dot3(vorticity, s3_0);
-
-    // Square them all
-//    g1_s1[tet] *= g1_s1[tet];
-//    g1_s2[tet] *= g1_s2[tet];
-//    g1_s3[tet] *= g1_s3[tet];
-//
-//    g2_s1[tet] *= g2_s1[tet];
-//    g2_s2[tet] *= g2_s2[tet];
-//    g2_s3[tet] *= g2_s3[tet];
-//
-//    g3_s1[tet] *= g3_s1[tet];
-//    g3_s2[tet] *= g3_s2[tet];
-//    g3_s3[tet] *= g3_s3[tet];
-//
-//    g1_z[tet]  *= g1_z[tet];
-//    g2_z[tet]  *= g2_z[tet];
-//    g3_z[tet]  *= g3_z[tet];
-//
-//    s1_z[tet]  *= s1_z[tet];
-//    s2_z[tet]  *= s2_z[tet];
-//    s3_z[tet]  *= s3_z[tet];
-//
-//    w_z[tet]   *= w_z[tet];
-//
-//    w_g1[tet]  *= w_g1[tet];
-//    w_g2[tet]  *= w_g2[tet];
-//    w_g3[tet]  *= w_g3[tet];
-//
-//    w_s1[tet]  *= w_s1[tet];
-//    w_s2[tet]  *= w_s2[tet];
-//    w_s3[tet]  *= w_s3[tet];
-
-
+    w_s1[tet] = dot3(vort, s1_0);
+    w_s2[tet] = dot3(vort, s2_0);
+    w_s3[tet] = dot3(vort, s3_0);
   }
   #undef dot3
 }

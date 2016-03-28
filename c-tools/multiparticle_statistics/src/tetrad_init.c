@@ -6,68 +6,14 @@ double tStart;
 double tEnd;
 double R0_a;
 double eps_a;
-double varCutLow;
-double varCutHigh;
+double EVarCutLow;
+double EVarCutHigh;
 double shapeCutLow;
 double shapeCutHigh;
 int findTets;
+int multRuns;
 int nRegular;
 int tt;
-
-double meanR2;
-double meanVar;
-double meanShape;
-double stdR2;
-double stdVar;
-double stdShape;
-
-double mean_g1_s1;   // Alignment of principal shape axes with initial strain axes
-double mean_g2_s1;
-double mean_g3_s1;
-double mean_g1_s2;
-double mean_g2_s2;
-double mean_g3_s2;
-double mean_g1_s3;
-double mean_g2_s3;
-double mean_g3_s3;
-double mean_g1_z;    // Alignment of shape, strain, vorticity with gravity
-double mean_g2_z;
-double mean_g3_z;
-double mean_s1_z;
-double mean_s2_z;
-double mean_s3_z;
-double mean_w_z;
-double mean_w_g1;    // Alignment of vorticity with initial shape, strain axes
-double mean_w_g2;
-double mean_w_g3;
-double mean_w_s1;
-double mean_w_s2;
-double mean_w_s3;
-double mean_vortMag;
-
-double *_g1_s1;   // Alignment of principal shape axes with initial strain axes
-double *_g2_s1;
-double *_g3_s1;
-double *_g1_s2;
-double *_g2_s2;
-double *_g3_s2;
-double *_g1_s3;
-double *_g2_s3;
-double *_g3_s3;
-double *_g1_z;    // Alignment of shape, strain, vorticity with gravity
-double *_g2_z;
-double *_g3_z;
-double *_s1_z;
-double *_s2_z;
-double *_s3_z;
-double *_w_z;
-double *_w_g1;    // Alignment of vorticity with initial shape, strain axes
-double *_w_g2;
-double *_w_g3;
-double *_w_s1;
-double *_w_s2;
-double *_w_s3;
-double *_vortMag;
 
 int main(void) 
 {
@@ -77,6 +23,9 @@ int main(void)
   // Read and sort output directory for finding files within our time limits
   // and also initialize time array
   init_input_files();
+
+  // get sig figs for writing
+  get_sigfigs();
 
   // Create output directory and init mean output file
   create_output_dir();
@@ -103,7 +52,7 @@ int main(void)
   if (findTets == 1) {
     cuda_find_tetrads();
   } else {
-    printf("  uniqueNodes already exists, reading in file.\n");
+    printf("  regularNodes already exists, reading in file.\n");
     printf("  Except this feature doesn't exist yet.\n");
     printf("  See so-18737117, 12733105\n");
     exit(EXIT_FAILURE);
@@ -115,24 +64,34 @@ int main(void)
   // Allocate device memory for tetrads
   cuda_tetrad_malloc();
 
-  // get sig figs for writing
-  get_sigfigs();
-
   // Calculate tetrad stats
   for (tt = 0; tt < nFiles; tt++) {
     // Read in new data and push to device
     cgns_fill_part_struct();
     cuda_part_push();
 
+    // Take care of periodicity
+    //  -- Tetrads that are intialized over periodic boundaries need an
+    //      extra flip -- this is determined in check tolerances, and
+    //      done in tetrad_geometry
+    //  -- All particles need to be checked at tt > 0 to see if they
+    //      went over a periodic boundary -- this is done in cuda_periodic_flip
+    if (tt > 0) {
+      cuda_periodic_flip();
+    }
+
     // Calculate tetrads
     cuda_tetrad_stats();
     
-    //  Write to file
+    // Write to file
     write_timestep();
+
+    // Save current partstruct data to previous timestep
+    cuda_save_parts_prev();
   }
 
-  // write uniqueNodes to file
-  write_nodes();
+  // write regular nodes to file, as well as nTetrads and nTsteps
+  write_info();
    
   // Free and exit
   free_parts();
@@ -140,4 +99,57 @@ int main(void)
   return EXIT_SUCCESS;
 }
 
+double m_RoG[4];
+double m_EVar[4];
+double m_Shape[4];
+double m_S11[4];
+double m_S22[4];
+double m_S33[4];
 
+double m_g1_s1[4];  // Alignment of principal shape axes with initial 
+double m_g2_s1[4];  // strain axes
+double m_g3_s1[4];
+double m_g1_s2[4];
+double m_g2_s2[4];
+double m_g3_s2[4];
+double m_g1_s3[4];
+double m_g2_s3[4];
+double m_g3_s3[4];
+double m_g1_z[4];    // Alignment of shape, strain, vorticity with gravity
+double m_g2_z[4];
+double m_g3_z[4];
+double m_s1_z[4];
+double m_s2_z[4];
+double m_s3_z[4];
+double m_w_z[4];
+double m_w_g1[4];    // Alignment of vorticity with initial shape, strain axes
+double m_w_g2[4];
+double m_w_g3[4];
+double m_w_s1[4];
+double m_w_s2[4];
+double m_w_s3[4];
+double m_vortMag[4];
+
+double *_g1_s1;   // Alignment of principal shape axes with initial strain axes
+double *_g2_s1;
+double *_g3_s1;
+double *_g1_s2;
+double *_g2_s2;
+double *_g3_s2;
+double *_g1_s3;
+double *_g2_s3;
+double *_g3_s3;
+double *_g1_z;    // Alignment of shape, strain, vorticity with gravity
+double *_g2_z;
+double *_g3_z;
+double *_s1_z;
+double *_s2_z;
+double *_s3_z;
+double *_w_z;
+double *_w_g1;    // Alignment of vorticity with initial shape, strain axes
+double *_w_g2;
+double *_w_g3;
+double *_w_s1;
+double *_w_s2;
+double *_w_s3;
+double *_vortMag;

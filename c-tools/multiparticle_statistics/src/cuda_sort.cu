@@ -40,6 +40,7 @@ void cuda_dev_malloc(void)
   cudaSetDevice(dev_start);
 
   cudaMalloc((void**) &(_parts), sizeof(part_struct) * nparts);
+  cudaMalloc((void**) &(_partsPrev), sizeof(part_struct) * nparts);
   cudaMalloc((void**) &(_dom), sizeof(dom_struct));
   cudaMalloc((void**) &(_binDom), sizeof(dom_struct));
 }
@@ -255,7 +256,7 @@ void cuda_find_tetrads()
 
     // Tolerance check on all tetrads
     check_tolerances<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_parts, 
-      _allTetrads, _dom, _isRegular, nUnique, varCutLow, varCutHigh,
+      _allTetrads, _dom, _isRegular, nUnique, EVarCutLow, EVarCutHigh,
       shapeCutLow, shapeCutHigh);
 
     // Find number of tetrads that meet the regularity tolerance
@@ -329,8 +330,8 @@ void cuda_tetrad_malloc(void)
 
   cudaSetDevice(dev_start);
 
-  cudaMalloc((void**) &(_R2), sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_var), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_RoG), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_EVar), sizeof(double) * nRegular);
   cudaMalloc((void**) &(_shape), sizeof(double) * nRegular);
 
   cudaMalloc((void**) &(_gEigVal), 3 * sizeof(double) * nRegular);
@@ -338,6 +339,9 @@ void cuda_tetrad_malloc(void)
   cudaMalloc((void**) &(_sEigVal), 3 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_sEigVec), 9 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_vorticity), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S11), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S22), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S33), 3 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_vortMag), sizeof(double) * nRegular);
   
   cudaMalloc((void**) &(_gEigVecInit), 9 * sizeof(double) * nRegular);
@@ -370,14 +374,37 @@ void cuda_tetrad_malloc(void)
   cudaMalloc((void**) &(_w_s3), sizeof(double) * nRegular);
 }
 
+void cuda_periodic_flip(void)
+{
+  // Parallize over tetrads
+  int threads = MAX_THREADS_1D;
+  int blocks = (int) ceil((double) nparts / (double) threads);
+  if (threads > nparts) {
+    threads = nparts;
+    blocks = 1;
+  }
+  dim3 numBlocks(blocks);
+  dim3 dimBlocks(threads);
+
+  // Fix periodicity
+  flip_kernel<<<numBlocks, dimBlocks>>>(_parts, _partsPrev, _dom, nparts);
+}
+
+void cuda_save_parts_prev(void)
+{
+  cudaMemcpy(_partsPrev, _parts, sizeof(part_struct) * nparts,
+    cudaMemcpyDeviceToDevice);
+}
+
 void cuda_tetrad_stats(void)
 { 
   // Matrix tests
-  #ifdef DEBUG
-    if (tt == 0) {
-      matrixTests<<<1,1>>>();
-    }
-  #endif
+  //#ifdef DEBUG
+  //  if (tt == 0) {
+  //    matrixTests<<<1,1>>>();
+  //  }
+  //#endif
+
   // Parallelize over each tetrad
   int threads_tetrads = MAX_THREADS_1D;
   int blocks_tetrads = (int) ceil((double) nRegular / (double) threads_tetrads);
@@ -390,8 +417,8 @@ void cuda_tetrad_stats(void)
 
   // Calculate tetrad geometry and velocity measures
   tetrad_geometry<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_parts, _tetrads,
-    _dom, _R2, _var, _shape, _gEigVal, _gEigVec, _sEigVal, _sEigVec, 
-    _vorticity, _vortMag, nRegular);
+    _dom, _RoG, _EVar, _shape, _gEigVal, _gEigVec, _sEigVal, _sEigVec, 
+    _vorticity, _S11, _S22, _S33, _vortMag, nRegular, tt);
 
   // If first timestep, save vectors for later comparison
   if (tt == 0) {
@@ -401,121 +428,160 @@ void cuda_tetrad_stats(void)
       cudaMemcpyDeviceToDevice);
   }
 
-  // Copy back to host for writing to file
-  cudaMemcpy(R2, _R2, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
-  cudaMemcpy(var, _var, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
+  // Copy back raw data to host for writing to file
+  cudaMemcpy(RoG, _RoG, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
+  cudaMemcpy(EVar, _EVar, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
   cudaMemcpy(shape, _shape, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
 
-  cudaMemcpy(gEigVal, _gEigVal, 3 * sizeof(double) * nRegular, 
+  cudaMemcpy(gEigVal,_gEigVal,3*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
+  cudaMemcpy(gEigVec,_gEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
+  cudaMemcpy(sEigVal,_sEigVal,3*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
+  cudaMemcpy(sEigVec,_sEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
+  cudaMemcpy(vorticity, _vorticity, 3*sizeof(double)*nRegular, 
     cudaMemcpyDeviceToHost);
-  cudaMemcpy(gEigVec, _gEigVec, 9 * sizeof(double) * nRegular, 
-    cudaMemcpyDeviceToHost);
-  cudaMemcpy(sEigVal, _sEigVal, 3 * sizeof(double) * nRegular, 
-    cudaMemcpyDeviceToHost);
-  cudaMemcpy(sEigVec, _sEigVec, 9 * sizeof(double) * nRegular, 
-    cudaMemcpyDeviceToHost);
-  cudaMemcpy(vorticity, _vorticity, 3 * sizeof(double) * nRegular, 
-    cudaMemcpyDeviceToHost);
-
-  // Calculate means of scalar parameters
-  double inRegular = 1./nRegular;
-
-  thrust::device_ptr<double> ptr_R2(_R2);
-  thrust::device_ptr<double> ptr_var(_var);
-  thrust::device_ptr<double> ptr_shape(_shape);
-  thrust::device_ptr<double> ptr_vortMag(_vortMag);
-
-  meanR2 = thrust::reduce(ptr_R2, ptr_R2 + nRegular) * inRegular;
-  meanVar = thrust::reduce(ptr_var, ptr_var + nRegular) * inRegular;
-  meanShape = thrust::reduce(ptr_shape, ptr_shape + nRegular) * inRegular;
-  mean_vortMag= thrust::reduce(ptr_vortMag, ptr_vortMag+nRegular)*inRegular; 
-
-  // Calculate std of scalar parameters
-  scalar_std<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_R2, _var, _shape,
-    meanR2, meanVar, meanShape, nRegular);
-
-  stdR2 = sqrt(thrust::reduce(ptr_R2, ptr_R2 + nRegular));
-  stdVar = sqrt(thrust::reduce(ptr_var, ptr_var + nRegular));
-  stdShape = sqrt(thrust::reduce(ptr_shape, ptr_shape + nRegular));
+  cudaMemcpy(S11, _S11, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
+  cudaMemcpy(S22, _S22, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
+  cudaMemcpy(S33, _S33, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
 
   // Calculate alignment of vectors
   align_vectors<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_gEigVec, _sEigVec,
     _vorticity, _gEigVecInit, _sEigVecInit, nRegular,
-    _g1_s1, _g1_s2, _g1_s3,
-    _g2_s1, _g2_s2, _g2_s3,
-    _g3_s1, _g3_s2, _g3_s3,
-    _g1_z, _g2_z, _g3_z,
-    _s1_z, _s2_z, _s3_z,
-    _w_z,
-    _w_g1, _w_g2, _w_g3,
-    _w_s1, _w_s2, _w_s3);
+    _g1_s1, _g1_s2, _g1_s3, _g2_s1, _g2_s2, _g2_s3, _g3_s1, _g3_s2, _g3_s3,
+    _g1_z, _g2_z, _g3_z, _s1_z, _s2_z, _s3_z, _w_z,
+    _w_g1, _w_g2, _w_g3, _w_s1, _w_s2, _w_s3);
 
-  // Calculate alignment means
-  thrust::device_ptr<double> ptr_g1_s1(_g1_s1);
-  thrust::device_ptr<double> ptr_g1_s2(_g1_s2);
-  thrust::device_ptr<double> ptr_g1_s3(_g1_s3);
-  thrust::device_ptr<double> ptr_g2_s1(_g2_s1);
-  thrust::device_ptr<double> ptr_g2_s2(_g2_s2);
-  thrust::device_ptr<double> ptr_g2_s3(_g2_s3);
-  thrust::device_ptr<double> ptr_g3_s1(_g3_s1);
-  thrust::device_ptr<double> ptr_g3_s2(_g3_s2);
-  thrust::device_ptr<double> ptr_g3_s3(_g3_s3);
+  /* Higher order statistics */
+  // Calculate higher stat moments of RoG, EVar, Shape, and Sii
+  cuda_higher_moments(_RoG, nRegular, m_RoG);
+  cuda_higher_moments(_EVar, nRegular, m_EVar);
+  cuda_higher_moments(_shape, nRegular, m_Shape);
+  cuda_higher_moments(_S11, nRegular, m_S11);
+  cuda_higher_moments(_S22, nRegular, m_S22);
+  cuda_higher_moments(_S33, nRegular, m_S33);
 
-  thrust::device_ptr<double> ptr_g1_z(_g1_z);
-  thrust::device_ptr<double> ptr_g2_z(_g2_z);
-  thrust::device_ptr<double> ptr_g3_z(_g3_z);
-  thrust::device_ptr<double> ptr_s1_z(_s1_z);
-  thrust::device_ptr<double> ptr_s2_z(_s2_z);
-  thrust::device_ptr<double> ptr_s3_z(_s3_z);
-  thrust::device_ptr<double> ptr_w_z(_w_z);
+  // Calculate higher stat moments of alignments
 
-  thrust::device_ptr<double> ptr_w_g1(_w_g1);
-  thrust::device_ptr<double> ptr_w_g2(_w_g2);
-  thrust::device_ptr<double> ptr_w_g3(_w_g3);
-  thrust::device_ptr<double> ptr_w_s1(_w_s1);
-  thrust::device_ptr<double> ptr_w_s2(_w_s2);
-  thrust::device_ptr<double> ptr_w_s3(_w_s3);
+  cuda_higher_moments(_g1_s1, nRegular, m_g1_s1); 
+  cuda_higher_moments(_g1_s2, nRegular, m_g1_s2); 
+  cuda_higher_moments(_g1_s3, nRegular, m_g1_s3); 
+  cuda_higher_moments(_g2_s1, nRegular, m_g2_s1); 
+  cuda_higher_moments(_g2_s2, nRegular, m_g2_s2); 
+  cuda_higher_moments(_g2_s3, nRegular, m_g2_s3); 
+  cuda_higher_moments(_g3_s1, nRegular, m_g3_s1); 
+  cuda_higher_moments(_g3_s2, nRegular, m_g3_s2); 
+  cuda_higher_moments(_g3_s3, nRegular, m_g3_s3); 
 
-  mean_g1_s1 = thrust::reduce(ptr_g1_s1, ptr_g1_s1 + nRegular) * inRegular; 
-  mean_g1_s2 = thrust::reduce(ptr_g1_s2, ptr_g1_s2 + nRegular) * inRegular; 
-  mean_g1_s3 = thrust::reduce(ptr_g1_s3, ptr_g1_s3 + nRegular) * inRegular; 
-  mean_g2_s1 = thrust::reduce(ptr_g2_s1, ptr_g2_s1 + nRegular) * inRegular; 
-  mean_g2_s2 = thrust::reduce(ptr_g2_s2, ptr_g2_s2 + nRegular) * inRegular; 
-  mean_g2_s3 = thrust::reduce(ptr_g2_s3, ptr_g2_s3 + nRegular) * inRegular; 
-  mean_g3_s1 = thrust::reduce(ptr_g3_s1, ptr_g3_s1 + nRegular) * inRegular; 
-  mean_g3_s2 = thrust::reduce(ptr_g3_s2, ptr_g3_s2 + nRegular) * inRegular; 
-  mean_g3_s3 = thrust::reduce(ptr_g3_s3, ptr_g3_s3 + nRegular) * inRegular; 
+  cuda_higher_moments(_g1_z, nRegular, m_g1_z); 
+  cuda_higher_moments(_g2_z, nRegular, m_g2_z); 
+  cuda_higher_moments(_g3_z, nRegular, m_g3_z); 
+  cuda_higher_moments(_s1_z, nRegular, m_s1_z); 
+  cuda_higher_moments(_s2_z, nRegular, m_s2_z); 
+  cuda_higher_moments(_s3_z, nRegular, m_s3_z); 
+  cuda_higher_moments(_w_z, nRegular, m_w_z);
 
-  mean_g1_z  = thrust::reduce(ptr_g1_z, ptr_g1_z + nRegular) * inRegular; 
-  mean_g2_z  = thrust::reduce(ptr_g2_z, ptr_g2_z + nRegular) * inRegular; 
-  mean_g3_z  = thrust::reduce(ptr_g3_z, ptr_g3_z + nRegular) * inRegular; 
-  mean_s1_z  = thrust::reduce(ptr_s1_z, ptr_s1_z + nRegular) * inRegular; 
-  mean_s2_z  = thrust::reduce(ptr_s2_z, ptr_s2_z + nRegular) * inRegular; 
-  mean_s3_z  = thrust::reduce(ptr_s3_z, ptr_s3_z + nRegular) * inRegular; 
-  mean_w_z   = thrust::reduce(ptr_w_z, ptr_w_z + nRegular) * inRegular; 
+  cuda_higher_moments(_w_g1, nRegular, m_w_g1); 
+  cuda_higher_moments(_w_g2, nRegular, m_w_g2); 
+  cuda_higher_moments(_w_g3, nRegular, m_w_g3); 
+  cuda_higher_moments(_w_s1, nRegular, m_w_s1); 
+  cuda_higher_moments(_w_s2, nRegular, m_w_s2); 
+  cuda_higher_moments(_w_s3, nRegular, m_w_s3); 
 
-  mean_w_g1  = thrust::reduce(ptr_w_g1, ptr_w_g1 + nRegular) * inRegular; 
-  mean_w_g2  = thrust::reduce(ptr_w_g2, ptr_w_g2 + nRegular) * inRegular; 
-  mean_w_g3  = thrust::reduce(ptr_w_g3, ptr_w_g3 + nRegular) * inRegular; 
-  mean_w_s1  = thrust::reduce(ptr_w_s1, ptr_w_s1 + nRegular) * inRegular; 
-  mean_w_s2  = thrust::reduce(ptr_w_s2, ptr_w_s2 + nRegular) * inRegular; 
-  mean_w_s3  = thrust::reduce(ptr_w_s3, ptr_w_s3 + nRegular) * inRegular; 
+  cuda_higher_moments(_vortMag, nRegular, m_vortMag);
+}
 
-  // Copy back alignment sructure -- will be necessary for hist, but not now
-//  cudaMemcpy(tetAlign, _tetAlign, sizeof(align_struct) * nRegular,
-//    cudaMemcpyDeviceToHost);
+void cuda_higher_moments(double *_array, int length, double *moments)
+{
+  // Adapted from Numerical Recipes, 14.1
+  double mean, ep, var, sdev, skew, kurt;
+  double N = (double) length;
+  double iN = 1./N;
+
+  // Calculate Mean
+  thrust::device_ptr<double> ptr_array(_array);
+  mean = thrust::reduce(ptr_array, ptr_array + length) * iN;
+
+  // Allocate arrays for higher order stats calcs
+  double *_diff;
+  double *_diff2;
+  double *_skew;
+  double *_kurt;
+  cudaMalloc((void**) &(_diff), sizeof(double) * nRegular);  // xi - x_bar
+  cudaMalloc((void**) &(_diff2), sizeof(double) * nRegular); // (xi - x_bar)^2
+  cudaMalloc((void**) &(_skew), sizeof(double) * nRegular);  // (xi - x_bar)^3
+  cudaMalloc((void**) &(_kurt), sizeof(double) * nRegular);  // (xi - xbar)^4
+
+  // Parallelize over each tetrad
+  int threads = MAX_THREADS_1D;
+  int blocks = (int) ceil((double) length / (double) threads);
+  if (threads > length) {
+    threads = length;
+    blocks = 1;
+  }
+  dim3 numBlocks(blocks);
+  dim3 dimBlocks(threads);
+
+  // Parallelize calculation
+  higher_moments_kernel<<<numBlocks, dimBlocks>>>(_array, mean, length,
+    _diff, _diff2, _skew, _kurt);
+  
+  // cuda ptr to arrays
+  thrust::device_ptr<double> ptr_diff(_diff);
+  thrust::device_ptr<double> ptr_diff2(_diff2);
+  thrust::device_ptr<double> ptr_skew(_skew);
+  thrust::device_ptr<double> ptr_kurt(_kurt);
+
+  // Parallel reduce arrays
+  ep = thrust::reduce(ptr_diff, ptr_diff + length);
+  var = thrust::reduce(ptr_diff2, ptr_diff2 + length);
+  skew = thrust::reduce(ptr_skew, ptr_skew + length);
+  kurt = thrust::reduce(ptr_kurt, ptr_kurt + length);
+
+  // Correct them
+  var = (var - ep*ep*iN)/(N - 1.);
+  sdev = sqrt(var);
+
+  double iVAR = 1./var;
+  double iSDEV = 1./sdev;
+  if (var != 0.) {
+    skew *= iN*iVAR*iSDEV;
+    kurt = kurt*iN*iVAR*iVAR - 3.;
+  } else {
+    skew = DBL_MAX;  
+    kurt = DBL_MAX;  
+  }
+
+  // Assign to array
+  moments[0] = mean;
+  moments[1] = sdev;
+  moments[2] = skew;
+  moments[3] = kurt;
+
+  // Free arrays
+  cudaFree(_diff);
+  cudaFree(_diff2);
+  cudaFree(_skew);
+  cudaFree(_kurt);
+}
+
+extern "C"
+double cuda_sum(double *_array, int N)
+{
+  thrust::device_ptr<double> ptr_array(_array);
+  double sum = thrust::reduce(ptr_array, ptr_array + N);
+  return sum;
 }
 
 extern "C"
 void cuda_dev_free(void)
 {
   cudaFree(_parts);
+  cudaFree(_partsPrev);
   cudaFree(_dom);
   cudaFree(_binDom);
   cudaFree(_tetrads);
 
-  cudaFree(_R2);
-  cudaFree(_var);
+  cudaFree(_RoG);
+  cudaFree(_EVar);
   cudaFree(_shape);
   cudaFree(_gEigVal);
   cudaFree(_gEigVec);
@@ -523,6 +589,9 @@ void cuda_dev_free(void)
   cudaFree(_sEigVec);
   cudaFree(_vorticity);
   cudaFree(_vortMag);
+  cudaFree(_S11);
+  cudaFree(_S22);
+  cudaFree(_S33);
 
   cudaFree(_gEigVecInit);
   cudaFree(_sEigVecInit);

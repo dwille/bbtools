@@ -16,6 +16,9 @@ typedef struct part_struct {
   double v;
   double w;
   int bin;
+  int flipCountX;
+  int flipCountY;
+  int flipCountZ;
 } part_struct;
 
 // grid_info
@@ -70,6 +73,18 @@ typedef struct tetrad_struct {
   int N2;
   int N3;
   int N4;
+  int N1_initFlip_X;
+  int N1_initFlip_Y;
+  int N1_initFlip_Z;
+  int N2_initFlip_X;
+  int N2_initFlip_Y;
+  int N2_initFlip_Z;
+  int N3_initFlip_X;
+  int N3_initFlip_Y;
+  int N3_initFlip_Z;
+  int N4_initFlip_X;
+  int N4_initFlip_Y;
+  int N4_initFlip_Z;
 } tetrad_struct;
 
 /**** VARIABLES ****/
@@ -81,6 +96,7 @@ extern double *simTime;
 extern int *fileMap;
 extern int sigFigPre;
 extern int sigFigPost;
+extern char runDir[256];
 
 // nparts
 extern int nparts;
@@ -94,6 +110,7 @@ extern int nMax;
 // host and dev part_struct parts;
 extern part_struct *parts;
 extern part_struct *_parts;
+extern part_struct *_partsPrev;
 
 // host and dev dom_struct doms
 extern dom_struct dom;
@@ -112,23 +129,29 @@ extern tetrad_struct *tetrads;
 extern tetrad_struct *_tetrads;
 
 // Host and Dev tetrad data
-extern double *R2;
-extern double *var;
+extern double *RoG;
+extern double *EVar;
 extern double *shape;
 extern double *gEigVal;
 extern double *gEigVec;
 extern double *sEigVal;
 extern double *sEigVec;
 extern double *vorticity;
+extern double *S11;
+extern double *S22;
+extern double *S33;
 
-extern double *_R2;
-extern double *_var;
+extern double *_RoG;
+extern double *_EVar;
 extern double *_shape;
 extern double *_gEigVal;
 extern double *_gEigVec;
 extern double *_sEigVal;
 extern double *_sEigVec;
 extern double *_vorticity;
+extern double *_S11;
+extern double *_S22;
+extern double *_S33;
 
 extern double *_gEigVecInit;
 extern double *_sEigVecInit;
@@ -193,7 +216,7 @@ void cgns_fill_part_struct(void);
 void get_sigfigs(void);
 
 // write nodes
-void write_nodes(void);
+void write_info(void);
 
 // write each timestep
 void write_timestep(void);

@@ -60,18 +60,22 @@ __global__ void check_tolerances(part_struct *parts, tetrad_struct *allTetrads,
   dom_struct *dom, int *isRegular, int nTetrads, double varCutLow,
   double varCutHigh, double shapeCutLow, double shapeCutHigh);
 
+// Fix periodicity
+__global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
+  dom_struct *dom, int nparts);
+
 // tetrad geometry
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
-  dom_struct *dom, double *R2, double *var, double *shape, double *gEigVal,
+  dom_struct *dom, double *RoG, double *var, double *shape, double *gEigVal,
   double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
-  double *vortMag, int nTetrads);
+  double *S11, double *S22, double *S33, double *vortMag, int nTetrads, int tt);
 
 // matrix tests if necessary
 __global__ void matrixTests(void);
 
 // fix periodicity
 __device__ void periodic_flip(double *r1, double *r2, double *r3, double *r4,
-  tetrad_struct tetrads, part_struct *parts, double xl, double yl, double zl);
+  tetrad_struct *tetrads, part_struct *parts, double xl, double yl, double zl);
 
 // matrix determinat
 __device__ double matrixDet3(double *A);
@@ -103,9 +107,9 @@ __device__ void rot(double *a, double s, double tau, int i, int j, int k,
 // eigenvalue sort for jacobi eigenvalue method
 __device__ void eigsrt(double *d, double *v);
 
-// calculate std of scalars
-__global__ void scalar_std(double *R2, double *var, double *shape, 
-  double meanR2, double meanVar, double meanShape, int nTetrads);
+// calculate statistical moments of scalar arrays
+__global__ void higher_moments_kernel(double *array, double mean, int length,
+  double *diff, double *diff2, double *skew, double *kurt);
 
 // Calculate alignment of vectors
 __global__ void  align_vectors(double *gEigVec, double *sEigVec,

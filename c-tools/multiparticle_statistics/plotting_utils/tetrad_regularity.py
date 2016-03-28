@@ -115,7 +115,7 @@ for fname in files:
     i += 1
 
 # Initialize histogram bins
-nBins = float(25)
+nBins = float(35)
 weights = np.ones(nTetrads)/nTetrads
 
 initial = plt.figure(figsize=(12,8))
@@ -198,33 +198,35 @@ axR.tick_params(which='minor', length=3)
 timePrAx = plt.figure(figsize=(12,8))
 timePrAx.suptitle('Time Evolution of Principal Axes', fontsize=16)
 
-color = np.linspace(1, 0.2, num=5)
+color = np.linspace(1, 0.2, num=6)
+tstepplot = np.arange(0,nFiles,25)
+legText = ['']*np.size(tstepplot)
 
 i1_ax = timePrAx.add_subplot(311)
-for nn in np.arange(0,5):
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].I1, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
-  i1_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
+  i1_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+  legText[i] = str(time[nn])
 
 i1_ax.set_xlim([0,1])
 i1_ax.set_ylabel('P(I_1)')
-i1_ax.legend([str(time[0]), str(time[1]), str(time[2]), str(time[3]), 
-  str(time[4])])
 
 i2_ax = timePrAx.add_subplot(312)
-for nn in np.arange(0,5):
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].I2, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
-  i2_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
+  i2_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
 
 i2_ax.set_xlim([0,1])
 i2_ax.set_ylabel('P(I_2)')
+i2_ax.legend(legText)
 
 i3_ax = timePrAx.add_subplot(313)
-for nn in np.arange(0,5):
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].I3, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
-  i3_ax.plot(centers, y, 'ko-', alpha=color[nn], linewidth=2.0)
+  i3_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
 
 i3_ax.set_xlim([0,1])
 i3_ax.set_ylabel('P(I_3)')
@@ -232,24 +234,22 @@ i3_ax.set_xlabel('I_k')
 
 # Time evolution of shape
 timeShape = plt.figure(figsize=(12,8))
-timeShape.suptitle('Time Evolution of Principal Axes', fontsize=16)
+timeShape.suptitle('Time Evolution of Shape Measures', fontsize=16)
 
-color = np.linspace(1, 0.4, num=6)
-
-shape_ax = timeShape.add_subplot(311)
-for i,nn in enumerate(np.arange(0,50,10)):
+shape_ax = timeShape.add_subplot(313)
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].shape, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   shape_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+  legText[i] = str(time[nn])
 
 shape_ax.set_xlim([-0.25,2])
 shape_ax.set_xlabel('shape')
 shape_ax.set_ylabel('P(shape)')
-shape_ax.legend([str(time[0]), str(time[1]), str(time[2]), str(time[3]), 
-  str(time[4])])
+shape_ax.legend(legText)
 
 var_ax = timeShape.add_subplot(312)
-for i,nn in enumerate(np.arange(0,50,10)):
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].var, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   var_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
@@ -258,8 +258,8 @@ var_ax.set_xlim([0,1])
 var_ax.set_xlabel('var')
 var_ax.set_ylabel('P(var)')
 
-rg_ax = timeShape.add_subplot(313)
-for i,nn in enumerate(np.arange(0,50,10)):
+rg_ax = timeShape.add_subplot(311)
+for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(np.sqrt(data[nn].R2), weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   rg_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
