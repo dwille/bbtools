@@ -8,7 +8,8 @@ import numpy as np
 import re
 
 ## Get info
-print "Mean Measures plotting utility"
+print ""
+print " ---- Mean Measures plotting utility ---- "
 print ""
 #root = raw_input("Simulation root: ")
 #if not root.endswith('/'):
@@ -18,34 +19,54 @@ print ""
 root = "../sim/"
 ts = "500"
 te = "1000"
-statFile = root + "data-tetrads/stat.dat"
+statMean = root + "data-tetrads/stat.mean"
+statSdev = root + "data-tetrads/stat.sdev"
+statSkew = root + "data-tetrads/stat.skew"
+statKurt = root + "data-tetrads/stat.kurt"
 
 # Find means and time from stat.dat
-time = np.genfromtxt(statFile, skip_header=1, usecols = 0)
-meanR= np.genfromtxt(statFile, skip_header=1, usecols = 1)
-meanEVar= np.genfromtxt(statFile, skip_header=1, usecols = 2)
-meanShape = np.genfromtxt(statFile, skip_header=1, usecols = 3)
-meanS11 = np.genfromtxt(statFile, skip_header=1, usecols = 4)
-meanS22 = np.genfromtxt(statFile, skip_header=1, usecols = 5)
-meanS33 = np.genfromtxt(statFile, skip_header=1, usecols = 6)
-sdevR = np.genfromtxt(statFile, skip_header=1, usecols = 7)
-sdevEVar = np.genfromtxt(statFile, skip_header=1, usecols = 8)
-sdevShape = np.genfromtxt(statFile, skip_header=1, usecols = 9)
-sdevS11 = np.genfromtxt(statFile, skip_header=1, usecols = 10)
-sdevS22 = np.genfromtxt(statFile, skip_header=1, usecols = 11)
-sdevS33 = np.genfromtxt(statFile, skip_header=1, usecols = 12)
-skewR = np.genfromtxt(statFile, skip_header=1, usecols = 13);
-skewEVar = np.genfromtxt(statFile, skip_header=1, usecols = 14);
-skewShape = np.genfromtxt(statFile, skip_header=1, usecols = 15);
-skewS11 = np.genfromtxt(statFile, skip_header=1, usecols = 16)
-skewS22 = np.genfromtxt(statFile, skip_header=1, usecols = 17)
-skewS33 = np.genfromtxt(statFile, skip_header=1, usecols = 18)
-kurtR = np.genfromtxt(statFile, skip_header=1, usecols = 19);
-kurtEVar = np.genfromtxt(statFile, skip_header=1, usecols = 20);
-kurtShape = np.genfromtxt(statFile, skip_header=1, usecols = 21);
-kurtS11 = np.genfromtxt(statFile, skip_header=1, usecols = 22)
-kurtS22 = np.genfromtxt(statFile, skip_header=1, usecols = 23)
-kurtS33 = np.genfromtxt(statFile, skip_header=1, usecols = 24)
+time = np.genfromtxt(statMean, skip_header=1, usecols = 0)
+time = time - time[0]
+
+meanR= np.genfromtxt(statMean, skip_header=1, usecols = 1)
+meanEVar= np.genfromtxt(statMean, skip_header=1, usecols = 2)
+meanShape = np.genfromtxt(statMean, skip_header=1, usecols = 3)
+meanI1 = np.genfromtxt(statMean, skip_header=1, usecols = 4)
+meanI2 = np.genfromtxt(statMean, skip_header=1, usecols = 5)
+meanI3 = np.genfromtxt(statMean, skip_header=1, usecols = 6)
+meanS11 = np.genfromtxt(statMean, skip_header=1, usecols = 7)
+meanS22 = np.genfromtxt(statMean, skip_header=1, usecols = 8)
+meanS33 = np.genfromtxt(statMean, skip_header=1, usecols = 9)
+
+sdevR= np.genfromtxt(statSdev, skip_header=1, usecols = 1)
+sdevEVar= np.genfromtxt(statSdev, skip_header=1, usecols = 2)
+sdevShape = np.genfromtxt(statSdev, skip_header=1, usecols = 3)
+sdevI1 = np.genfromtxt(statSdev, skip_header=1, usecols = 4)
+sdevI2 = np.genfromtxt(statSdev, skip_header=1, usecols = 5)
+sdevI3 = np.genfromtxt(statSdev, skip_header=1, usecols = 6)
+sdevS11 = np.genfromtxt(statSdev, skip_header=1, usecols = 7)
+sdevS22 = np.genfromtxt(statSdev, skip_header=1, usecols = 8)
+sdevS33 = np.genfromtxt(statSdev, skip_header=1, usecols = 9)
+
+skewR= np.genfromtxt(statSkew, skip_header=1, usecols = 1)
+skewEVar= np.genfromtxt(statSkew, skip_header=1, usecols = 2)
+skewShape = np.genfromtxt(statSkew, skip_header=1, usecols = 3)
+skewI1 = np.genfromtxt(statSkew, skip_header=1, usecols = 4)
+skewI2 = np.genfromtxt(statSkew, skip_header=1, usecols = 5)
+skewI3 = np.genfromtxt(statSkew, skip_header=1, usecols = 6)
+skewS11 = np.genfromtxt(statSkew, skip_header=1, usecols = 7)
+skewS22 = np.genfromtxt(statSkew, skip_header=1, usecols = 8)
+skewS33 = np.genfromtxt(statSkew, skip_header=1, usecols = 9)
+
+kurtR= np.genfromtxt(statKurt, skip_header=1, usecols = 1)
+kurtEVar= np.genfromtxt(statKurt, skip_header=1, usecols = 2)
+kurtShape = np.genfromtxt(statKurt, skip_header=1, usecols = 3)
+kurtI1 = np.genfromtxt(statKurt, skip_header=1, usecols = 4)
+kurtI2 = np.genfromtxt(statKurt, skip_header=1, usecols = 5)
+kurtI3 = np.genfromtxt(statKurt, skip_header=1, usecols = 6)
+kurtS11 = np.genfromtxt(statKurt, skip_header=1, usecols = 7)
+kurtS22 = np.genfromtxt(statKurt, skip_header=1, usecols = 8)
+kurtS33 = np.genfromtxt(statKurt, skip_header=1, usecols = 9)
 
 # Plot over time
 fs = 14
@@ -53,6 +74,7 @@ measures = plt.figure(figsize=(12,8))
 measures.suptitle('Anisotropy Measures', fontsize=20)
 labelx = -0.05
 
+## SHAPE MEASURES ##
 # Radius of Gyration
 rg_ax = measures.add_subplot(311)
 rg_ax.plot(time, meanR, 'ko-', linewidth=1.5, markevery=10)
@@ -99,18 +121,18 @@ higher_measures = plt.figure(figsize=(12,8))
 
 # Radius of gyration
 rg_ax_2a = higher_measures.add_subplot(311)
-rg_ax_2a.plot(time, skewR, 'ko-', linewidth=1.5, markevery=10)
-rg_ax_2a.plot(time, kurtR, 'bo-', linewidth=1.5, markevery=10)
+rg_ax_2a.plot(time, skewR, 'ko-', linewidth=1.5, markevery=5)
+rg_ax_2a.plot(time, kurtR, 'bo-', linewidth=1.5, markevery=5)
 rg_ax_2a.set_xlabel('Time [ms]')
 rg_ax_2a.set_ylabel('R', color='k')
 rg_ax_2a.set_xlim([time[0], time[-1]])
-#for t1 in rg_ax_2a.get_yticklabels():
-#  t1.set_color('k')
-rg_ax_2a.legend(['Skewness', 'Kurtosis'], loc='upper left', ncol=2)
+
+rg_ax_2a.legend(['Skewness', 'Excess Kurtosis'], loc='upper left', ncol=2)
 rg_ax_2a.xaxis.set_minor_locator(AutoMinorLocator())
 rg_ax_2a.yaxis.set_minor_locator(AutoMinorLocator())
 rg_ax_2a.tick_params(which='major', length=6)
 rg_ax_2a.tick_params(which='minor', length=3)
+rg_ax_2a.plot([time[0], time[-1]], [0,0], 'k')
 
 #rg_ax_2b = rg_ax_2a.twinx()
 #rg_ax_2b.plot(time, kurtR, 'bo-', linewidth=1.5, markevery=10)
@@ -126,12 +148,12 @@ var_ax_2a.plot(time, skewEVar, 'ko-', linewidth=1.5, markevery=10)
 var_ax_2a.plot(time, kurtEVar, 'bo-', linewidth=1.5, markevery=10)
 var_ax_2a.set_xlabel('Time [ms]')
 var_ax_2a.set_ylabel('EVar', color='k')
-var_ax_2a.set_xlim([time[0], time[-1]])
 
 var_ax_2a.xaxis.set_minor_locator(AutoMinorLocator())
 var_ax_2a.yaxis.set_minor_locator(AutoMinorLocator())
 var_ax_2a.tick_params(which='major', length=6)
 var_ax_2a.tick_params(which='minor', length=3)
+var_ax_2a.plot([time[0], time[-1]], [0,0], 'k')
 
 # Shape
 s_ax_2a = higher_measures.add_subplot(313)
@@ -139,49 +161,81 @@ s_ax_2a.plot(time, skewShape, 'ko-', linewidth=1.5, markevery=10)
 s_ax_2a.plot(time, kurtShape, 'bo-', linewidth=1.5, markevery=10)
 s_ax_2a.set_xlabel('Time [ms]')
 s_ax_2a.set_ylabel('Shape', color='k')
-s_ax_2a.set_xlim([time[0], time[-1]])
 
 s_ax_2a.xaxis.set_minor_locator(AutoMinorLocator())
 s_ax_2a.yaxis.set_minor_locator(AutoMinorLocator())
 s_ax_2a.tick_params(which='major', length=6)
 s_ax_2a.tick_params(which='minor', length=3)
+s_ax_2a.plot([time[0], time[-1]], [0,0], 'k')
 
-# Compressibility
-compFig = plt.figure(figsize=(12,8))
+## PRINCIPAL AXIS ##
+iFig = plt.figure(figsize=(12,8))
+iFig.suptitle('Size of Principal Axes', fontsize=20)
 
-# mean
-meanAx = compFig.add_subplot(221)
-meanAx.set_xlabel('Time')
-meanAx.set_ylabel('Mean')
-meanAx.plot(time, meanS11, linewidth=2)
-meanAx.plot(time, meanS22, linewidth=2)
-meanAx.plot(time, meanS33, linewidth=2)
-meanAx.legend(['S11', 'S22', 'S33'])
-meanAx.set_xlim([500, 575])
+# IMean and sdev
+IMean = iFig.add_subplot(311)
+IMean.plot(time, meanI1, 'ko-', linewidth=1.5, markevery=10)
+IMean.plot(time, meanI1 + sdevI1, 'k.', linewidth=1.5, markevery=2)
+IMean.plot(time, meanI1 - sdevI1, 'k.', linewidth=1.5, markevery=2)
+IMean.plot(time, meanI2, 'ro-', linewidth=1.5, markevery=10)
+IMean.plot(time, meanI2 + sdevI2, 'r.', linewidth=1.5, markevery=2)
+IMean.plot(time, meanI2 - sdevI2, 'r.', linewidth=1.5, markevery=2)
+IMean.plot(time, meanI3, 'bo-', linewidth=1.5, markevery=10)
+IMean.plot(time, meanI3 + sdevI3, 'b.', linewidth=1.5, markevery=2)
+IMean.plot(time, meanI3 - sdevI3, 'b.', linewidth=1.5, markevery=2)
+IMean.set_ylabel('I_j')
 
-# sdev
-sdevAx = compFig.add_subplot(222)
-sdevAx.set_xlabel('Time')
-sdevAx.set_ylabel('sdev')
-sdevAx.plot(time, sdevS11, linewidth=2)
-sdevAx.plot(time, sdevS22, linewidth=2)
-sdevAx.plot(time, sdevS33, linewidth=2)
-
-# skew
-skewAx = compFig.add_subplot(223)
-skewAx.set_xlabel('Time')
-skewAx.set_ylabel('skew')
-skewAx.plot(time, skewS11, linewidth=2)
-skewAx.plot(time, skewS22, linewidth=2)
-skewAx.plot(time, skewS33, linewidth=2)
+# Skew
+ISkew = iFig.add_subplot(312)
+ISkew.plot(time, skewI1, 'ko-', linewidth=1.5, markevery=10)
+ISkew.plot(time, skewI2, 'ro-', linewidth=1.5, markevery=10)
+ISkew.plot(time, skewI3, 'bo-', linewidth=1.5, markevery=10)
+ISkew.set_ylabel('Skewness')
 
 # kurt
-kurtAx = compFig.add_subplot(224)
-kurtAx.set_xlabel('Time')
-kurtAx.set_ylabel('kurt')
-kurtAx.plot(time, kurtS11, linewidth=2)
-kurtAx.plot(time, kurtS22, linewidth=2)
-kurtAx.plot(time, kurtS33, linewidth=2)
+IKurt = iFig.add_subplot(313)
+IKurt.plot(time, kurtI1, 'ko-', linewidth=1.5, markevery=10)
+IKurt.plot(time, kurtI2, 'ro-', linewidth=1.5, markevery=10)
+IKurt.plot(time, kurtI3, 'bo-', linewidth=1.5, markevery=10)
+IKurt.set_ylabel('excess kurtosis')
+IKurt.legend(['I1', 'I2', 'I3'], loc='center right')
+
+# # Compressibility
+# compFig = plt.figure(figsize=(12,8))
+# 
+# # mean
+# meanAx = compFig.add_subplot(221)
+# meanAx.set_xlabel('Time')
+# meanAx.set_ylabel('Mean')
+# meanAx.plot(time, meanS11, linewidth=2)
+# meanAx.plot(time, meanS22, linewidth=2)
+# meanAx.plot(time, meanS33, linewidth=2)
+# meanAx.legend(['S11', 'S22', 'S33'])
+# meanAx.set_xlim([500, 575])
+# 
+# # sdev
+# sdevAx = compFig.add_subplot(222)
+# sdevAx.set_xlabel('Time')
+# sdevAx.set_ylabel('sdev')
+# sdevAx.plot(time, sdevS11, linewidth=2)
+# sdevAx.plot(time, sdevS22, linewidth=2)
+# sdevAx.plot(time, sdevS33, linewidth=2)
+# 
+# # skew
+# skewAx = compFig.add_subplot(223)
+# skewAx.set_xlabel('Time')
+# skewAx.set_ylabel('skew')
+# skewAx.plot(time, skewS11, linewidth=2)
+# skewAx.plot(time, skewS22, linewidth=2)
+# skewAx.plot(time, skewS33, linewidth=2)
+# 
+# # kurt
+# kurtAx = compFig.add_subplot(224)
+# kurtAx.set_xlabel('Time')
+# kurtAx.set_ylabel('kurt')
+# kurtAx.plot(time, kurtS11, linewidth=2)
+# kurtAx.plot(time, kurtS22, linewidth=2)
+# kurtAx.plot(time, kurtS33, linewidth=2)
 
 plt.show()
 

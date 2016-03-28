@@ -334,7 +334,9 @@ void cuda_tetrad_malloc(void)
   cudaMalloc((void**) &(_EVar), sizeof(double) * nRegular);
   cudaMalloc((void**) &(_shape), sizeof(double) * nRegular);
 
-  cudaMalloc((void**) &(_gEigVal), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I1), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I2), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I3), 3 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_gEigVec), 9 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_sEigVal), 3 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_sEigVec), 9 * sizeof(double) * nRegular);
@@ -417,7 +419,7 @@ void cuda_tetrad_stats(void)
 
   // Calculate tetrad geometry and velocity measures
   tetrad_geometry<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_parts, _tetrads,
-    _dom, _RoG, _EVar, _shape, _gEigVal, _gEigVec, _sEigVal, _sEigVec, 
+    _dom, _RoG, _EVar, _shape, _I1, _I2, _I3, _gEigVec, _sEigVal, _sEigVec, 
     _vorticity, _S11, _S22, _S33, _vortMag, nRegular, tt);
 
   // If first timestep, save vectors for later comparison
@@ -433,7 +435,9 @@ void cuda_tetrad_stats(void)
   cudaMemcpy(EVar, _EVar, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
   cudaMemcpy(shape, _shape, sizeof(double) * nRegular, cudaMemcpyDeviceToHost);
 
-  cudaMemcpy(gEigVal,_gEigVal,3*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
+  cudaMemcpy(I1, _I1, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
+  cudaMemcpy(I2, _I2, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
+  cudaMemcpy(I3, _I3, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
   cudaMemcpy(gEigVec,_gEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
   cudaMemcpy(sEigVal,_sEigVal,3*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
   cudaMemcpy(sEigVec,_sEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
@@ -455,12 +459,14 @@ void cuda_tetrad_stats(void)
   cuda_higher_moments(_RoG, nRegular, m_RoG);
   cuda_higher_moments(_EVar, nRegular, m_EVar);
   cuda_higher_moments(_shape, nRegular, m_Shape);
+  cuda_higher_moments(_I1, nRegular, m_I1);
+  cuda_higher_moments(_I2, nRegular, m_I2);
+  cuda_higher_moments(_I3, nRegular, m_I3);
   cuda_higher_moments(_S11, nRegular, m_S11);
   cuda_higher_moments(_S22, nRegular, m_S22);
   cuda_higher_moments(_S33, nRegular, m_S33);
 
   // Calculate higher stat moments of alignments
-
   cuda_higher_moments(_g1_s1, nRegular, m_g1_s1); 
   cuda_higher_moments(_g1_s2, nRegular, m_g1_s2); 
   cuda_higher_moments(_g1_s3, nRegular, m_g1_s3); 
@@ -583,7 +589,9 @@ void cuda_dev_free(void)
   cudaFree(_RoG);
   cudaFree(_EVar);
   cudaFree(_shape);
-  cudaFree(_gEigVal);
+  cudaFree(_I1);
+  cudaFree(_I2);
+  cudaFree(_I3);
   cudaFree(_gEigVec);
   cudaFree(_sEigVal);
   cudaFree(_sEigVec);

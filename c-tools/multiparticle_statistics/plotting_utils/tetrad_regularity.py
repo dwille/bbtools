@@ -33,7 +33,8 @@ class structtype():
   pass
 
 ## Get info
-print "Anisotropy Measures plotting utility"
+print ""
+print " ---- Anisotropy Measures plotting utility ---- "
 print ""
 #root = raw_input("Simulation root: ")
 #if not root.endswith('/'):
@@ -42,7 +43,7 @@ print ""
 #te = raw_input("Desired end time: ")
 root = "../sim/"
 ts = "500"
-te = "1000"
+te = "2000"
 
 ## Sort output files and find number within time range
 files = sorted_nicely(glob.glob(root + "data-tetrads/raw-data-*"))
@@ -60,7 +61,7 @@ for fname in files:
 
 nFiles = n
 
-print "Found " + str(nFiles) + " files in time range"
+print "      Found " + str(nFiles) + " files in time range"
 print ""
 
 # Find number of tetrads
@@ -113,6 +114,8 @@ for fname in files:
     data[i].I3 = np.genfromtxt(fname, skip_header=1, usecols=minEig)
 
     i += 1
+
+time = time - time[0]
 
 # Initialize histogram bins
 nBins = float(35)
@@ -198,8 +201,10 @@ axR.tick_params(which='minor', length=3)
 timePrAx = plt.figure(figsize=(12,8))
 timePrAx.suptitle('Time Evolution of Principal Axes', fontsize=16)
 
-color = np.linspace(1, 0.2, num=6)
-tstepplot = np.arange(0,nFiles,25)
+nPlot = 6
+color = np.linspace(1, 0.2, num=nPlot)
+tstepplot = np.linspace(0,nFiles-1,nPlot)
+tstepplot = tstepplot.astype(int)
 legText = ['']*np.size(tstepplot)
 
 i1_ax = timePrAx.add_subplot(311)

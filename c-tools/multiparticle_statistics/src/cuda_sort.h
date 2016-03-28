@@ -66,9 +66,10 @@ __global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
 
 // tetrad geometry
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
-  dom_struct *dom, double *RoG, double *var, double *shape, double *gEigVal,
-  double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
-  double *S11, double *S22, double *S33, double *vortMag, int nTetrads, int tt);
+  dom_struct *dom, double *RoG, double *var, double *shape, double *I1, 
+  double *I2, double *I3, double *gEigVec, double *sEigVal, double *sEigVec, 
+  double *vorticity, double *S11, double *S22, double *S33, double *vortMag, 
+  int nTetrads, int tt);
 
 // matrix tests if necessary
 __global__ void matrixTests(void);

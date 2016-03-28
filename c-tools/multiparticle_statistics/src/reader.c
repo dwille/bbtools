@@ -28,7 +28,9 @@ tetrad_struct *_tetrads;
 double *RoG;
 double *EVar;
 double *shape;
-double *gEigVal;
+double *I1;
+double *I2;
+double *I3;
 double *gEigVec;
 double *sEigVal;
 double *sEigVec;
@@ -40,7 +42,9 @@ double *S33;
 double *_RoG;
 double *_EVar;
 double *_shape;
-double *_gEigVal;
+double *_I1;
+double *_I2;
+double *_I3;
 double *_gEigVec;
 double *_sEigVal;
 double *_sEigVec;
@@ -238,32 +242,61 @@ void create_output_dir(void)
 // Initialize stat.dat output file and align.dat
 void init_stat_output(void)
 {
-  // STAT.DAT
-  char path[FILE_NAME_SIZE] = "";
-  // If multiple runs planned, set up correct dir
-  if (multRuns == 1) {
-    sprintf(path, "%s/stat.dat", runDir);
-  } else {
-    sprintf(path, "%s/%s/stat.dat", ROOT_DIR, DATA_OUT_DIR);
-  }
-
-  // open file for reading
-  FILE *rec = fopen(path, "w");
-  if (rec == NULL) {
-    printf("Could not open file %s\n", path);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(rec, "time meanRoG meanEVar meanShape meanS11 meanS22 meanS33 ");
-  fprintf(rec, "sdevRoG sdevEVar sdevShape sdevS11 sdevS22 sdevS33 "); 
-  fprintf(rec, "skewRoG skewEVar skewShape skewS11 skewS22 skewS33 ");
-  fprintf(rec, "kurtRoG kurtEVar kurtShape kurtS11 kurtS22 kurtS33 \n"); 
-  fclose(rec);
-
-  // ALIGN.DAT
+  /* STAT.DAT */
   char path2mean[FILE_NAME_SIZE] = "";
   char path2sdev[FILE_NAME_SIZE] = "";
   char path2skew[FILE_NAME_SIZE] = "";
   char path2kurt[FILE_NAME_SIZE] = "";
+  // If multiple runs planned, set up correct dir
+  if (multRuns == 1) {
+    sprintf(path2mean, "%s/stat.mean", runDir);
+    sprintf(path2sdev, "%s/stat.sdev", runDir);
+    sprintf(path2skew, "%s/stat.skew", runDir);
+    sprintf(path2kurt, "%s/stat.kurt", runDir);
+  } else {
+    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_OUT_DIR);
+  }
+
+  // open file for reading -- stat.mean
+  FILE *fmean = fopen(path2mean, "w");
+  if (fmean == NULL) {
+    printf("Could not open file %s\n", path2mean);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fmean, "time RoG EVar Shape I1 I2 I3 S11 S22 S33\n");
+  fclose(fmean);
+
+  // open file for reading -- stat.sdev
+  FILE *fsdev = fopen(path2sdev, "w");
+  if (fsdev == NULL) {
+    printf("Could not open file %s\n", path2sdev);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fsdev, "time RoG EVar Shape I1 I2 I3 S11 S22 S33\n");
+  fclose(fsdev);
+
+  // open file for reading -- stat.skew
+  FILE *fskew = fopen(path2skew, "w");
+  if (fskew == NULL) {
+    printf("Could not open file %s\n", path2skew);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fskew, "time RoG EVar Shape I1 I2 I3 S11 S22 S33\n");
+  fclose(fskew);
+
+  // open file for reading -- stat.kurt
+  FILE *fkurt = fopen(path2kurt, "w");
+  if (fkurt == NULL) {
+    printf("Could not open file %s\n", path2kurt);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fkurt, "time RoG EVar Shape I1 I2 I3 S11 S22 S33\n");
+  fclose(fkurt);
+
+  /* ALIGN.DAT */
   // If multiple runs planned, set up correct dir
   if (multRuns == 1) {
     sprintf(path2mean, "%s/align.mean", runDir);
@@ -278,52 +311,52 @@ void init_stat_output(void)
   }
 
   // open file for reading -- mean
-  FILE *rec2mean = fopen(path2mean, "w");
-  if (rec2mean == NULL) {
+  fmean = fopen(path2mean, "w");
+  if (fmean == NULL) {
     printf("Could not open file %s\n", path2mean);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2mean, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
-  fprintf(rec2mean, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
-  fprintf(rec2mean, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
-  fprintf(rec2mean, "vortMag\n");
-  fclose(rec2mean);
+  fprintf(fmean, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
+  fprintf(fmean, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
+  fprintf(fmean, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
+  fprintf(fmean, "vortMag\n");
+  fclose(fmean);
 
   // open file for reading -- sdev
-  FILE *rec2sdev = fopen(path2sdev, "w");
-  if (rec2sdev == NULL) {
+  fsdev = fopen(path2sdev, "w");
+  if (fsdev == NULL) {
     printf("Could not open file %s\n", path2sdev);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2sdev, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
-  fprintf(rec2sdev, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
-  fprintf(rec2sdev, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
-  fprintf(rec2sdev, "vortMag\n");
-  fclose(rec2sdev);
+  fprintf(fsdev, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
+  fprintf(fsdev, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
+  fprintf(fsdev, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
+  fprintf(fsdev, "vortMag\n");
+  fclose(fsdev);
 
   // open file for reading -- skew
-  FILE *rec2skew = fopen(path2skew, "w");
-  if (rec2skew == NULL) {
+  fskew = fopen(path2skew, "w");
+  if (fskew == NULL) {
     printf("Could not open file %s\n", path2skew);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2skew, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
-  fprintf(rec2skew, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
-  fprintf(rec2skew, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
-  fprintf(rec2skew, "vortMag\n");
-  fclose(rec2skew);
+  fprintf(fskew, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
+  fprintf(fskew, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
+  fprintf(fskew, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
+  fprintf(fskew, "vortMag\n");
+  fclose(fskew);
 
   // open file for reading -- kurt
-  FILE *rec2kurt = fopen(path2kurt, "w");
-  if (rec2kurt == NULL) {
+  fkurt = fopen(path2kurt, "w");
+  if (fkurt == NULL) {
     printf("Could not open file %s\n", path2kurt);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2kurt, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
-  fprintf(rec2kurt, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
-  fprintf(rec2kurt, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
-  fprintf(rec2kurt, "vortMag\n");
-  fclose(rec2kurt);
+  fprintf(fkurt, "time g1s1 g2s1 g3s1 g1s2 g2s2 g3s2 g1s3 g2s3 g3s3 ");
+  fprintf(fkurt, "g1_z g2_z g3_z s1_z s2_z s3_z w_z ");
+  fprintf(fkurt, "w_g1 w_g2 w_g3 w_s1 w_s2 w_s3 ");
+  fprintf(fkurt, "vortMag\n");
+  fclose(fkurt);
 }
 
 // read CUDA_VISIBLE_DEVICES from slurm and set dev_start
@@ -706,7 +739,9 @@ void alloc_tetrad_arrays(void)
   EVar = malloc(sizeof(double) * nRegular);
   shape = malloc(sizeof(double) * nRegular);
 
-  gEigVal = malloc(3 * sizeof(double) * nRegular);
+  I1 = malloc(sizeof(double) * nRegular);
+  I2 = malloc(sizeof(double) * nRegular);
+  I3 = malloc(sizeof(double) * nRegular);
   gEigVec = malloc(9 * sizeof(double) * nRegular);
   sEigVal = malloc(3 * sizeof(double) * nRegular);
   sEigVec = malloc(9 * sizeof(double) * nRegular);
@@ -937,7 +972,7 @@ void write_timestep(void)
   }
 
   fprintf(fdat, "RoG EVar shape ");
-  fprintf(fdat, "gEigVal_1 gEigVal_2 gEigVal_3 ");
+  fprintf(fdat, "I1 I2 I3 ");
   fprintf(fdat, "gEigVec_1x gEigVec_1y gEigVec_1z ");
   fprintf(fdat, "gEigVec_2x gEigVec_2y gEigVec_2z ");
   fprintf(fdat, "gEigVec_3x gEigVec_3y gEigVec_3z ");
@@ -956,7 +991,7 @@ void write_timestep(void)
           RoG[i], EVar[i], shape[i]);
 
         fprintf(fdat, "%lf %lf %lf ",
-          gEigVal[p3], gEigVal[p3 + 1], gEigVal[p3 + 2]);
+          I1[i], I2[i], I3[i]);
 
         fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
           gEigVec[p9 + 0], gEigVec[p9 + 3], gEigVec[p9 + 6], 
@@ -978,36 +1013,69 @@ void write_timestep(void)
   }
   fclose(fdat);
 
-  // Print statistics of scalars
-  char path[FILE_NAME_SIZE] = "";
-  // correct path for multruns
-  if (multRuns == 1) {
-    sprintf(path, "%s/stat.dat", runDir);
-  } else {
-    sprintf(path, "%s/%s/stat.dat", ROOT_DIR, DATA_OUT_DIR);
-  }
-
-  FILE *rec = fopen(path, "a");
-  if (rec == NULL) {
-    printf("Could not open file %s\n", path);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(rec, "%lf ", simTime[tt]);
-  fprintf(rec, "%lf %lf %lf %lf %lf %lf ", m_RoG[0], m_EVar[0], m_Shape[0], 
-    m_S11[0], m_S22[0], m_S33[0]); 
-  fprintf(rec, "%lf %lf %lf %lf %lf %lf ", m_RoG[1], m_EVar[1], m_Shape[1], 
-    m_S11[1], m_S22[1], m_S33[1]); 
-  fprintf(rec, "%lf %lf %lf %lf %lf %lf ", m_RoG[2], m_EVar[2], m_Shape[2], 
-    m_S11[2], m_S22[2], m_S33[2]); 
-  fprintf(rec, "%lf %lf %lf %lf %lf %lf\n", m_RoG[3], m_EVar[3], m_Shape[3], 
-    m_S11[3], m_S22[3], m_S33[3]);
-  fclose(rec);
-
-  // Print alignment stats
+  /* Print statistics of scalars */
   char path2mean[FILE_NAME_SIZE] = "";
   char path2sdev[FILE_NAME_SIZE] = "";
   char path2skew[FILE_NAME_SIZE] = "";
   char path2kurt[FILE_NAME_SIZE] = "";
+  // correct path for multruns
+  if (multRuns == 1) {
+    sprintf(path2mean, "%s/stat.mean", runDir);
+    sprintf(path2sdev, "%s/stat.sdev", runDir);
+    sprintf(path2skew, "%s/stat.skew", runDir);
+    sprintf(path2kurt, "%s/stat.kurt", runDir);
+  } else {
+    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_OUT_DIR);
+  }
+
+  // mean
+  FILE *fmean = fopen(path2mean, "a");
+  if (fmean == NULL) {
+    printf("Could not open file %s\n", path2mean);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fmean, "%lf ", simTime[tt]);
+  fprintf(fmean, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", m_RoG[0], m_EVar[0], 
+    m_Shape[0], m_I1[0], m_I2[0], m_I3[0], m_S11[0], m_S22[0], m_S33[0]); 
+  fclose(fmean);
+
+  // sdev
+  FILE *fsdev = fopen(path2sdev, "a");
+  if (fsdev == NULL) {
+    printf("Could not open file %s\n", path2sdev);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fsdev, "%lf ", simTime[tt]);
+  fprintf(fsdev, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", m_RoG[1], m_EVar[1], 
+    m_Shape[1], m_I1[1], m_I2[1], m_I3[1], m_S11[1], m_S22[1], m_S33[1]); 
+  fclose(fsdev);
+
+  // skew
+  FILE *fskew = fopen(path2skew, "a");
+  if (fskew == NULL) {
+    printf("Could not open file %s\n", path2skew);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fskew, "%lf ", simTime[tt]);
+  fprintf(fskew, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", m_RoG[2], m_EVar[2], 
+    m_Shape[2], m_I1[2], m_I2[2], m_I3[2], m_S11[2], m_S22[2], m_S33[2]); 
+  fclose(fskew);
+
+  // kurt
+  FILE *fkurt = fopen(path2kurt, "a");
+  if (fkurt == NULL) {
+    printf("Could not open file %s\n", path2kurt);
+    exit(EXIT_FAILURE);
+  }
+  fprintf(fkurt, "%lf ", simTime[tt]);
+  fprintf(fkurt, "%lf %lf %lf %lf %lf %lf %lf %lf %lf\n", m_RoG[3], m_EVar[3], 
+    m_Shape[3], m_I1[3], m_I2[3], m_I3[3], m_S11[3], m_S22[3], m_S33[3]); 
+  fclose(fkurt);
+
+  /* Print alignment stats */
   // correct path for multruns
   if (multRuns == 1) {
     sprintf(path2mean, "%s/align.mean", runDir);
@@ -1022,88 +1090,88 @@ void write_timestep(void)
   }
 
   // Print mean
-  FILE *rec2mean = fopen(path2mean, "a");
-  if (rec2mean == NULL) {
+  fmean = fopen(path2mean, "a");
+  if (fmean == NULL) {
     printf("Could not open file %s\n", path2mean);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2mean, "%lf ", simTime[tt]);
-  fprintf(rec2mean, "%lf %lf %lf ", m_g1_s1[0], m_g1_s2[0], m_g1_s3[0]);
-  fprintf(rec2mean, "%lf %lf %lf ", m_g2_s1[0], m_g2_s2[0], m_g2_s3[0]);
-  fprintf(rec2mean, "%lf %lf %lf ", m_g3_s1[0], m_g3_s2[0], m_g3_s3[0]);
+  fprintf(fmean, "%lf ", simTime[tt]);
+  fprintf(fmean, "%lf %lf %lf ", m_g1_s1[0], m_g1_s2[0], m_g1_s3[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_g2_s1[0], m_g2_s2[0], m_g2_s3[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_g3_s1[0], m_g3_s2[0], m_g3_s3[0]);
 
-  fprintf(rec2mean, "%lf %lf %lf ", m_g1_z[0], m_g2_z[0], m_g3_z[0]);
-  fprintf(rec2mean, "%lf %lf %lf ", m_s1_z[0], m_s2_z[0], m_s3_z[0]);
-  fprintf(rec2mean, "%lf ", m_w_z[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_g1_z[0], m_g2_z[0], m_g3_z[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_s1_z[0], m_s2_z[0], m_s3_z[0]);
+  fprintf(fmean, "%lf ", m_w_z[0]);
 
-  fprintf(rec2mean, "%lf %lf %lf ", m_w_g1[0], m_w_g2[0], m_w_g3[0]);
-  fprintf(rec2mean, "%lf %lf %lf ", m_w_s1[0], m_w_s2[0], m_w_s3[0]);
-  fprintf(rec2mean, "%lf\n", m_vortMag[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_w_g1[0], m_w_g2[0], m_w_g3[0]);
+  fprintf(fmean, "%lf %lf %lf ", m_w_s1[0], m_w_s2[0], m_w_s3[0]);
+  fprintf(fmean, "%lf\n", m_vortMag[0]);
 
-  fclose(rec2mean);
+  fclose(fmean);
 
   // Print sdev
-  FILE *rec2sdev = fopen(path2sdev, "a");
-  if (rec2sdev == NULL) {
+  fsdev = fopen(path2sdev, "a");
+  if (fsdev == NULL) {
     printf("Could not open file %s\n", path2sdev);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2sdev, "%lf ", simTime[tt]);
-  fprintf(rec2sdev, "%lf %lf %lf ", m_g1_s1[1], m_g1_s2[1], m_g1_s3[1]);
-  fprintf(rec2sdev, "%lf %lf %lf ", m_g2_s1[1], m_g2_s2[1], m_g2_s3[1]);
-  fprintf(rec2sdev, "%lf %lf %lf ", m_g3_s1[1], m_g3_s2[1], m_g3_s3[1]);
+  fprintf(fsdev, "%lf ", simTime[tt]);
+  fprintf(fsdev, "%lf %lf %lf ", m_g1_s1[1], m_g1_s2[1], m_g1_s3[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_g2_s1[1], m_g2_s2[1], m_g2_s3[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_g3_s1[1], m_g3_s2[1], m_g3_s3[1]);
 
-  fprintf(rec2sdev, "%lf %lf %lf ", m_g1_z[1], m_g2_z[1], m_g3_z[1]);
-  fprintf(rec2sdev, "%lf %lf %lf ", m_s1_z[1], m_s2_z[1], m_s3_z[1]);
-  fprintf(rec2sdev, "%lf ", m_w_z[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_g1_z[1], m_g2_z[1], m_g3_z[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_s1_z[1], m_s2_z[1], m_s3_z[1]);
+  fprintf(fsdev, "%lf ", m_w_z[1]);
 
-  fprintf(rec2sdev, "%lf %lf %lf ", m_w_g1[1], m_w_g2[1], m_w_g3[1]);
-  fprintf(rec2sdev, "%lf %lf %lf ", m_w_s1[1], m_w_s2[1], m_w_s3[1]);
-  fprintf(rec2sdev, "%lf\n", m_vortMag[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_w_g1[1], m_w_g2[1], m_w_g3[1]);
+  fprintf(fsdev, "%lf %lf %lf ", m_w_s1[1], m_w_s2[1], m_w_s3[1]);
+  fprintf(fsdev, "%lf\n", m_vortMag[1]);
 
-  fclose(rec2sdev);
+  fclose(fsdev);
 
   // Print skew
-  FILE *rec2skew = fopen(path2skew, "a");
-  if (rec2skew == NULL) {
+  fskew = fopen(path2skew, "a");
+  if (fskew == NULL) {
     printf("Could not open file %s\n", path2skew);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2skew, "%lf ", simTime[tt]);
-  fprintf(rec2skew, "%lf %lf %lf ", m_g1_s1[2], m_g1_s2[2], m_g1_s3[2]);
-  fprintf(rec2skew, "%lf %lf %lf ", m_g2_s1[2], m_g2_s2[2], m_g2_s3[2]);
-  fprintf(rec2skew, "%lf %lf %lf ", m_g3_s1[2], m_g3_s2[2], m_g3_s3[2]);
+  fprintf(fskew, "%lf ", simTime[tt]);
+  fprintf(fskew, "%lf %lf %lf ", m_g1_s1[2], m_g1_s2[2], m_g1_s3[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_g2_s1[2], m_g2_s2[2], m_g2_s3[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_g3_s1[2], m_g3_s2[2], m_g3_s3[2]);
 
-  fprintf(rec2skew, "%lf %lf %lf ", m_g1_z[2], m_g2_z[2], m_g3_z[2]);
-  fprintf(rec2skew, "%lf %lf %lf ", m_s1_z[2], m_s2_z[2], m_s3_z[2]);
-  fprintf(rec2skew, "%lf ", m_w_z[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_g1_z[2], m_g2_z[2], m_g3_z[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_s1_z[2], m_s2_z[2], m_s3_z[2]);
+  fprintf(fskew, "%lf ", m_w_z[2]);
 
-  fprintf(rec2skew, "%lf %lf %lf ", m_w_g1[2], m_w_g2[2], m_w_g3[2]);
-  fprintf(rec2skew, "%lf %lf %lf ", m_w_s1[2], m_w_s2[2], m_w_s3[2]);
-  fprintf(rec2skew, "%lf\n", m_vortMag[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_w_g1[2], m_w_g2[2], m_w_g3[2]);
+  fprintf(fskew, "%lf %lf %lf ", m_w_s1[2], m_w_s2[2], m_w_s3[2]);
+  fprintf(fskew, "%lf\n", m_vortMag[2]);
 
-  fclose(rec2skew);
+  fclose(fskew);
 
   // Print kurt
-  FILE *rec2kurt = fopen(path2kurt, "a");
-  if (rec2kurt == NULL) {
+  fkurt = fopen(path2kurt, "a");
+  if (fkurt == NULL) {
     printf("Could not open file %s\n", path2kurt);
     exit(EXIT_FAILURE);
   }
-  fprintf(rec2kurt, "%lf ", simTime[tt]);
-  fprintf(rec2kurt, "%lf %lf %lf ", m_g1_s1[3], m_g1_s2[3], m_g1_s3[3]);
-  fprintf(rec2kurt, "%lf %lf %lf ", m_g2_s1[3], m_g2_s2[3], m_g2_s3[3]);
-  fprintf(rec2kurt, "%lf %lf %lf ", m_g3_s1[3], m_g3_s2[3], m_g3_s3[3]);
+  fprintf(fkurt, "%lf ", simTime[tt]);
+  fprintf(fkurt, "%lf %lf %lf ", m_g1_s1[3], m_g1_s2[3], m_g1_s3[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_g2_s1[3], m_g2_s2[3], m_g2_s3[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_g3_s1[3], m_g3_s2[3], m_g3_s3[3]);
 
-  fprintf(rec2kurt, "%lf %lf %lf ", m_g1_z[3], m_g2_z[3], m_g3_z[3]);
-  fprintf(rec2kurt, "%lf %lf %lf ", m_s1_z[3], m_s2_z[3], m_s3_z[3]);
-  fprintf(rec2kurt, "%lf ", m_w_z[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_g1_z[3], m_g2_z[3], m_g3_z[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_s1_z[3], m_s2_z[3], m_s3_z[3]);
+  fprintf(fkurt, "%lf ", m_w_z[3]);
 
-  fprintf(rec2kurt, "%lf %lf %lf ", m_w_g1[3], m_w_g2[3], m_w_g3[3]);
-  fprintf(rec2kurt, "%lf %lf %lf ", m_w_s1[3], m_w_s2[3], m_w_s3[3]);
-  fprintf(rec2kurt, "%lf\n", m_vortMag[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_w_g1[3], m_w_g2[3], m_w_g3[3]);
+  fprintf(fkurt, "%lf %lf %lf ", m_w_s1[3], m_w_s2[3], m_w_s3[3]);
+  fprintf(fkurt, "%lf\n", m_vortMag[3]);
 
-  fclose(rec2kurt);
+  fclose(fkurt);
 }
 
 // Free parts
@@ -1122,7 +1190,9 @@ void free_parts(void)
   free(RoG);
   free(EVar);
   free(shape);
-  free(gEigVal);
+  free(I1);
+  free(I2);
+  free(I3);
   free(gEigVec);
   free(sEigVal);
   free(sEigVec);

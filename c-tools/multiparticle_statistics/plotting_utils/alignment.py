@@ -22,6 +22,7 @@ te = "1000"
 alignFile = root + "data-tetrads/align.mean"
 
 time = np.genfromtxt(alignFile, skip_header=1, usecols=0)
+time = time - time[0]
 
 g1s1 = np.genfromtxt(alignFile, skip_header=1, usecols=1)
 g2s1 = np.genfromtxt(alignFile, skip_header=1, usecols=2)
@@ -159,9 +160,10 @@ gzAx.plot(time, g1z, 'ko-', linewidth=1.5, markevery=10)
 gzAx.plot(time, g2z, 'bo-', linewidth=1.5, markevery=10)
 gzAx.plot(time, g3z, 'ro-', linewidth=1.5, markevery=10)
 
-gzAx.set_ylim([0, 0.6])
+gzAx.set_ylim([0, 1])
 gzAx.set_ylabel(r'$\cos \theta = (\mathbf{g}_i \cdot \mathbf{z})$', fontsize=15)
-gzAx.legend(['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis'])
+gzAx.legend(['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis'],
+  loc='upper left')
 gzAx.xaxis.set_minor_locator(AutoMinorLocator())
 gzAx.yaxis.set_minor_locator(AutoMinorLocator())
 gzAx.tick_params(which='major', length=6)

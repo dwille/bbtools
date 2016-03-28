@@ -102,6 +102,9 @@ int main(void)
 double m_RoG[4];
 double m_EVar[4];
 double m_Shape[4];
+double m_I1[4];
+double m_I2[4];
+double m_I3[4];
 double m_S11[4];
 double m_S22[4];
 double m_S33[4];

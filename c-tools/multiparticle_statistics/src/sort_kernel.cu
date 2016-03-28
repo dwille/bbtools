@@ -559,9 +559,10 @@ __global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
 }
 
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
-  dom_struct *dom, double *RoG, double *EVar, double *shape, double *gEigVal,
-  double *gEigVec, double *sEigVal, double *sEigVec, double *vorticity,
-  double *S11, double *S22, double *S33, double *vortMag, int nTetrads, int tt)
+  dom_struct *dom, double *RoG, double *EVar, double *shape, double *I1, 
+  double *I2, double *I3, double *gEigVec, double *sEigVal, double *sEigVec, 
+  double *vorticity, double *S11, double *S22, double *S33, double *vortMag, 
+  int nTetrads, int tt)
 {
   int tet = threadIdx.x + blockIdx.x*blockDim.x;
 
@@ -579,6 +580,7 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
   double g[nDim2];      // Gyration tensor
   double avgLambda;     // Average eigenvalue of g = trace(g)/3 
   double g_hat[nDim2];  // Deviatoric part of g
+  double gEigVal[3];    // Holds eigvals of g
 
   /* Velocity variables */
   double gInv[nDim2];   // Gyration tensor inverse
@@ -686,12 +688,12 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
     shape[tet] = 27.*matrixDet3(g_hat) * iR2 * iR2 * iR2;
 
     // Calculate I1, I2, I3 and principal directions of shape tensor
-    jacobiEig3(g, &(gEigVal[nDim*tet]), &(gEigVec[nDim2*tet]), &nrot);
+    jacobiEig3(g, gEigVal, &(gEigVec[nDim2*tet]), &nrot);
 
     // Normalize I1, I2, I3 by R2 = I1 + I2 + I3
-    for (int i = 0; i < nDim; i++) {
-      gEigVal[nDim*tet + i] *= iR2;
-    }
+    I1[tet] = gEigVal[0] * iR2;
+    I2[tet] = gEigVal[1] * iR2;
+    I3[tet] = gEigVal[2] * iR2;
 
     /* Velocity */
     // Reinit g since it was overwritten in last step
