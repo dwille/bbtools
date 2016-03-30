@@ -94,10 +94,10 @@ print " ---- Combine-Runs Utility ----"
 print ""
 
 ## Set root dir, simdir, and datadir
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("  Simulation directory: ")
-root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
-simdir =  "sim/"
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+simdir = raw_input("  Simulation directory: ")
+#root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
+#simdir =  "sim/"
 
 if not simdir.endswith('/'):
   simdir = simdir + '/'
@@ -225,6 +225,16 @@ m_Shape = stats(Shape)
 m_I1 = stats(I1)
 m_I2 = stats(I2)
 m_I3 = stats(I3)
+
+# Print info to infofile
+infofile = datadir + 'info.dat'
+with open(infofile, 'wb') as outfile:
+  a = csv.writer(outfile, delimiter=' ')
+  headers = [['nTetrads', 'nTsteps']]
+  a.writerows(headers)
+  data = [[totalTetrads, maxTsteps]]
+  a.writerows(data)
+  #TODO: maybe should be a minTsteps as well?
 
 # Print info to datadir -- mean
 allMeanFile = datadir + 'stat.mean'

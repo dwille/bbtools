@@ -94,16 +94,16 @@ print ""
 print "---- Combine-Runs Utility -- Alignment ----"
 print ""
 
-# Set root dir
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
-print "    Sim root directory set to: " + root
+# Set root dir, simdir, and datadir
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+simdir = raw_input("  Simulation directory: ")
+#root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
+#simdir =  "sim/"
 
-# Get simdir and create datadir
-#simdir = raw_input("  Simulation directory: ")
-simdir =  "sim/"
-#if not simdir.endswith('/'):
-#  simdir = simdir + '/'
+if not simdir.endswith('/'):
+  simdir = simdir + '/'
+
+print "    Sim root directory set to: " + root
 datadir = root + simdir + "data-tetrads/"
 
 # Get list of directories in the datadir -- corresponds to different runs
@@ -359,8 +359,6 @@ for rr, run in enumerate(runs):
   w_s3[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=22)
   w_s3[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=22)
 
-
-
 totalTetrads = np.sum(nTetrads)
 print '    Total tetrads tracked: ' + str(totalTetrads)
 
@@ -521,30 +519,30 @@ with open(allFile, 'wb') as outfile:
       m_w_s1[tt,3], m_w_s2[tt,3], m_w_s3[tt,3]]]
     a.writerows(data)
 
-# g1_z
-fig = plt.figure(figsize=(12,8))
-m1 = fig.add_subplot(221)
-plt.plot(time, m_g1_z[:,0], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], g1_z[rr].mean)
-m1.set_title('Mean g1_z')
-
-m2 = fig.add_subplot(222)
-plt.plot(time, m_g1_z[:,1], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], g1_z[rr].sdev)
-m2.set_title('sdev g1_z')
-
-m3 = fig.add_subplot(223)
-plt.plot(time, m_g1_z[:,2], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], g1_z[rr].skew)
-m3.set_title('skew g1_z')
-
-m4 = fig.add_subplot(224)
-plt.plot(time, m_g1_z[:,3], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], g1_z[rr].kurt)
-m4.set_title('kurt g1_z')
-
-plt.show()
+## g1_z
+#fig = plt.figure(figsize=(12,8))
+#m1 = fig.add_subplot(221)
+#plt.plot(time, m_g1_z[:,0], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], g1_z[rr].mean)
+#m1.set_title('Mean g1_z')
+#
+#m2 = fig.add_subplot(222)
+#plt.plot(time, m_g1_z[:,1], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], g1_z[rr].sdev)
+#m2.set_title('sdev g1_z')
+#
+#m3 = fig.add_subplot(223)
+#plt.plot(time, m_g1_z[:,2], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], g1_z[rr].skew)
+#m3.set_title('skew g1_z')
+#
+#m4 = fig.add_subplot(224)
+#plt.plot(time, m_g1_z[:,3], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], g1_z[rr].kurt)
+#m4.set_title('kurt g1_z')
+#
+#plt.show()
