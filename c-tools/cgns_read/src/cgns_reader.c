@@ -306,7 +306,7 @@ void create_output_dir (void) {
 }
 
 // read number of particles from cgns file
-void cgns_read_nparts(void)
+int cgns_read_nparts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
@@ -324,6 +324,8 @@ void cgns_read_nparts(void)
   cg_zone_read(fn, bn, zn, zonename, &nparts);
 
   cg_close(fn);
+
+  return nparts;
 }
 
 // initialize part_struct

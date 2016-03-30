@@ -19,7 +19,10 @@ int main(void)
   create_output_dir();
 
   // Get number of particles
-  cgns_read_nparts();
+  nparts = cgns_read_nparts();
+
+  // Initialize domain and flow arrays
+  domain_init(); 
 
   // Initialize partstruct and flow vars
   parts_init();
@@ -27,9 +30,6 @@ int main(void)
 
   // Messy hack for taking advantage of CUDA_VISIBLE_DEVICES in SLURM
   dev_start = read_devices();
-
-  // Initialize domain and flow arrays
-  domain_init(); 
 
   // Allocate device memory
   cuda_dev_malloc();

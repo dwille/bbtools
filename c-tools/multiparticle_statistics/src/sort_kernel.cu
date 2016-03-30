@@ -1203,27 +1203,28 @@ __global__ void  align_vectors(double *gEigVec, double *sEigVec,
 
   
     // Alignment of shape axes with initial strain axes
-    g1_s1[tet] = dot3(g1,s1_0);
-    g1_s2[tet] = dot3(g1,s2_0);
-    g1_s3[tet] = dot3(g1,s3_0);
+    g1_s1[tet] = fabs(dot3(g1,s1_0));
+    g1_s2[tet] = fabs(dot3(g1,s2_0));
+    g1_s3[tet] = fabs(dot3(g1,s3_0));
 
-    g2_s1[tet] = dot3(g2, s1_0);
-    g2_s2[tet] = dot3(g2, s2_0);
-    g2_s3[tet] = dot3(g2, s3_0);
+    g2_s1[tet] = fabs(dot3(g2, s1_0));
+    g2_s2[tet] = fabs(dot3(g2, s2_0));
+    g2_s3[tet] = fabs(dot3(g2, s3_0));
 
-    g3_s1[tet] = dot3(g3, s1_0);
-    g3_s2[tet] = dot3(g3, s2_0);
-    g3_s3[tet] = dot3(g3, s3_0);
+    g3_s1[tet] = fabs(dot3(g3, s1_0));
+    g3_s2[tet] = fabs(dot3(g3, s2_0));
+    g3_s3[tet] = fabs(dot3(g3, s3_0));
 
     // Alignment of shape,strain,vorticity with z axis
-    g1_z[tet] = dot3(g1, z);
-    g2_z[tet] = dot3(g2, z);
-    g3_z[tet] = dot3(g3, z);
+    g1_z[tet] = fabs(dot3(g1, z));
+    g2_z[tet] = fabs(dot3(g2, z));
+    g3_z[tet] = fabs(dot3(g3, z));
 
-    s1_z[tet] = dot3(s1, z);
-    s2_z[tet] = dot3(s2, z);
-    s3_z[tet] = dot3(s3, z);
+    s1_z[tet] = fabs(dot3(s1, z));
+    s2_z[tet] = fabs(dot3(s2, z));
+    s3_z[tet] = fabs(dot3(s3, z));
 
+    // actual direction of vorticity DOES matter -- so don't use fabs
     w_z[tet] = dot3(vort, z);
 
     // Alignment of vorticity with initial shape, strain

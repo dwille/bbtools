@@ -9,7 +9,8 @@ import numpy as np
 import re
 
 ## Get info
-print "---- Anisotropy Measures plotting utility ----"
+print ""
+print " ---- Alignment plotting utility ---- "
 print ""
 #root = raw_input("Simulation root: ")
 #if not root.endswith('/'):
