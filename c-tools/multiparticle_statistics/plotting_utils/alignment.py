@@ -9,17 +9,15 @@ import numpy as np
 import re
 
 ## Get info
-print "---- Anisotropy Measures plotting utility ----"
+print " ---- Anisotropy Measures plotting utility ----"
 print ""
-#root = raw_input("Simulation root: ")
-#if not root.endswith('/'):
-#  root = root + '/'
-#ts = raw_input("Desired start time: ")
-#te = raw_input("Desired end time: ")
-root = "../sim/"
-ts = "500"
-te = "1000"
-alignFile = root + "data-tetrads/align.mean"
+root = '/home-1/dwillen3@jhu.edu/scratch/triply_per/'
+simdir = raw_input("      Simulation root: ")
+if not simdir.endswith('/'):
+  simdir = simdir + '/'
+datadir = root + simdir + 'data-tetrads/'
+print "      Data directory set to: " + datadir
+alignFile = datadir + 'align.mean'
 
 time = np.genfromtxt(alignFile, skip_header=1, usecols=0)
 time = time - time[0]
@@ -54,7 +52,7 @@ ws1 = np.genfromtxt(alignFile, skip_header=1, usecols=20)
 ws2 = np.genfromtxt(alignFile, skip_header=1, usecols=21)
 ws3 = np.genfromtxt(alignFile, skip_header=1, usecols=22)
 
-wnorm = np.genfromtxt(alignFile, skip_header=1, usecols=23)
+#wnorm = np.genfromtxt(alignFile, skip_header=1, usecols=23)
 
 ## Principal axes / strain ##
 plt.rc('font', family='serif')
@@ -64,27 +62,30 @@ g_s.suptitle('Alignment of Shape Principal Axes with Strain', fontsize=16)
 
 # major
 g1s_Ax = g_s.add_subplot(311)
-g1s_Ax.plot(time, g1s1, 'ko-', linewidth=1.5, markevery=10)
-g1s_Ax.plot(time, g1s2, 'bo-', linewidth=1.5, markevery=10)
-g1s_Ax.plot(time, g1s3, 'ro-', linewidth=1.5, markevery=10)
+g1s_Ax.plot(time, g1s1, 'ko-', linewidth=1.5, markevery=1)
+g1s_Ax.plot(time, g1s2, 'bo-', linewidth=1.5, markevery=1)
+g1s_Ax.plot(time, g1s3, 'ro-', linewidth=1.5, markevery=1)
 
 g1s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_1 \cdot \mathbf{s(0)}_i)$', 
   fontsize=15)
-g1s_Ax.set_ylim([0, 0.6])
+#g1s_Ax.set_ylim([0, 0.6])
+g1s_Ax.set_xlim([0, 200])
 g1s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
 g1s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
 g1s_Ax.tick_params(which='major', length=6)
 g1s_Ax.tick_params(which='minor', length=3)
 
-g2s_Ax = g_s.add_subplot(312)
-g2s_Ax.plot(time, g2s1, 'ko-', linewidth=1.5, markevery=10)
-g2s_Ax.plot(time, g2s2, 'bo-', linewidth=1.5, markevery=10)
-g2s_Ax.plot(time, g2s3, 'ro-', linewidth=1.5, markevery=10)
-
 # middle
+g2s_Ax = g_s.add_subplot(312)
+g2s_Ax.plot(time, g2s1, 'ko-', linewidth=1.5, markevery=1)
+g2s_Ax.plot(time, g2s2, 'bo-', linewidth=1.5, markevery=1)
+g2s_Ax.plot(time, g2s3, 'ro-', linewidth=1.5, markevery=1)
+
+
 g2s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_2 \cdot \mathbf{s(0)}_i)$', 
   fontsize=15)
-g2s_Ax.set_ylim([0, 0.6])
+#g2s_Ax.set_ylim([0, 0.6])
+g2s_Ax.set_xlim([0, 200])
 g2s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
 g2s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
 g2s_Ax.tick_params(which='major', length=6)
@@ -98,7 +99,8 @@ g3s_Ax.plot(time, g3s3, 'ro-', linewidth=1.5, markevery=10)
 # minor
 g3s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_3 \cdot \mathbf{s(0)}_i)$', 
   fontsize=15)
-g3s_Ax.set_ylim([0, 0.6])
+#g3s_Ax.set_ylim([0, 0.6])
+g3s_Ax.set_xlim([0, 200])
 g3s_Ax.set_xlabel('Time [ms]')
 g3s_Ax.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
 g3s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
@@ -106,6 +108,7 @@ g3s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
 g3s_Ax.tick_params(which='major', length=6)
 g3s_Ax.tick_params(which='minor', length=3)
 
+plt.show()
 ## vorticity / paxes, strain ##
 wFig = plt.figure(figsize=(12,8))
 wFig.suptitle('Alignment of shape and strain with vorticity', fontsize=16)
@@ -141,14 +144,14 @@ sw_Ax.tick_params(which='minor', length=3)
 # vorticity magnitude
 w_Ax = wFig.add_subplot(313)
 
-w_Ax.plot(time, wnorm, 'ko-', linewidth=1.5)
-
-w_Ax.set_xlabel('Time [ms]')
-w_Ax.set_ylabel('Vorticity')
-w_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-w_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-w_Ax.tick_params(which='major', length=6)
-w_Ax.tick_params(which='minor', length=3)
+#w_Ax.plot(time, wnorm, 'ko-', linewidth=1.5)
+#
+#w_Ax.set_xlabel('Time [ms]')
+#w_Ax.set_ylabel('Vorticity')
+#w_Ax.xaxis.set_minor_locator(AutoMinorLocator())
+#w_Ax.yaxis.set_minor_locator(AutoMinorLocator())
+#w_Ax.tick_params(which='major', length=6)
+#w_Ax.tick_params(which='minor', length=3)
 
 ## alignment with z ##
 g_z = plt.figure(figsize=(12,8))
@@ -192,5 +195,4 @@ wzAx.yaxis.set_minor_locator(AutoMinorLocator())
 wzAx.tick_params(which='major', length=6)
 wzAx.tick_params(which='minor', length=3)
  
-plt.show()
 

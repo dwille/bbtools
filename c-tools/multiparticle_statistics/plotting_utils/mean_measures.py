@@ -11,18 +11,17 @@ import re
 print ""
 print " ---- Mean Measures plotting utility ---- "
 print ""
-#root = raw_input("Simulation root: ")
-#if not root.endswith('/'):
-#  root = root + '/'
-#ts = raw_input("Desired start time: ")
-#te = raw_input("Desired end time: ")
-root = "../sim/"
-ts = "500"
-te = "1000"
-statMean = root + "data-tetrads/stat.mean"
-statSdev = root + "data-tetrads/stat.sdev"
-statSkew = root + "data-tetrads/stat.skew"
-statKurt = root + "data-tetrads/stat.kurt"
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+print "      Sim root directory set to: " + root
+simdir = raw_input("      Simulation directory: ")
+if not simdir.endswith('/'):
+  simdir = simdir + '/'
+datadir = root + simdir + "data-tetrads/"
+
+statMean = datadir + "stat.mean"
+statSdev = datadir + "stat.sdev"
+statSkew = datadir + "stat.skew"
+statKurt = datadir + "stat.kurt"
 
 # Find means and time from stat.dat
 time = np.genfromtxt(statMean, skip_header=1, usecols = 0)
