@@ -168,7 +168,7 @@ for pp in range(4):
     gis1_Ax[pp].plot(data[i].time, g3_s1[i].mean, linewidth=lWidth, color='b',
       alpha=shade[dd])
 
-gis1_Ax[0].set_ylim([0, 0.7])
+gis1_Ax[0].set_ylim([0, 1])
 gis1_Ax[0].set_xlim([0, 300])
 gis1_Ax[3].set_xlabel(r'Time [ms]', fontsize=fsAx)
 for ax in gis1_Ax:
@@ -197,7 +197,7 @@ for pp in range(4):
     gis2_Ax[pp].plot(data[i].time, g3_s2[i].mean, linewidth=lWidth, color='b',
       alpha=shade[dd])
 
-gis2_Ax[0].set_ylim([0, 0.7])
+gis2_Ax[0].set_ylim([0, 1])
 gis2_Ax[0].set_xlim([0, 300])
 gis2_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
 for ax in gis2_Ax:
@@ -226,7 +226,7 @@ for pp in range(4):
     gis3_Ax[pp].plot(data[i].time, g3_s3[i].mean, linewidth=lWidth, color='b',
       alpha=shade[dd])
 
-gis3_Ax[0].set_ylim([0, 0.7])
+gis3_Ax[0].set_ylim([0, 1])
 gis3_Ax[0].set_xlim([0, 300])
 gis3_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
 for ax in gis3_Ax:
@@ -255,8 +255,8 @@ for pp in range(4):
     giz_Ax[pp].plot(data[i].time, g3_z[i].mean, linewidth=lWidth, color='b',
       alpha=shade[dd])
 
-giz_Ax[0].set_ylim([0, 0.7])
-giz_Ax[0].set_xlim([0, 1000])
+giz_Ax[0].set_ylim([0, 1])
+#giz_Ax[0].set_xlim([0, 1000])
 giz_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
 for ax in giz_Ax:
   ax.grid(True)
@@ -284,7 +284,7 @@ for pp in range(4):
     siz_Ax[pp].plot(data[i].time, s3_z[i].mean, linewidth=lWidth, color='b',
       alpha=shade[dd])
 
-siz_Ax[0].set_ylim([0, 0.7])
+siz_Ax[0].set_ylim([0, 1])
 siz_Ax[0].set_xlim([0, 1000])
 siz_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
 for ax in siz_Ax:

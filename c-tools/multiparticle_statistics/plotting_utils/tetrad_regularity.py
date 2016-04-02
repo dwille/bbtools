@@ -34,38 +34,31 @@ class structtype():
 
 ## Get info
 print ""
-print " ---- Anisotropy Measures plotting utility ---- "
+print " ---- Tetrad regularity plotting utility ---- "
 print ""
-#root = raw_input("Simulation root: ")
-#if not root.endswith('/'):
-#  root = root + '/'
-#ts = raw_input("Desired start time: ")
-#te = raw_input("Desired end time: ")
-root = "../sim/"
-ts = "500"
-te = "2000"
+
+# DEVEL
+#root = "../sim/"
+#datadir = root + "data-tetrads/"
+
+# MARCC
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+print "      Sim root directory set to: " + root
+simdir = raw_input("      Simulation directory: ")
+if not simdir.endswith('/'):
+  simdir = simdir + '/'
+
+datadir = root + simdir + "data-tetrads/"
+infoFile = datadir + "info.dat"
 
 ## Sort output files and find number within time range
-files = sorted_nicely(glob.glob(root + "data-tetrads/raw-data-*"))
-inRange = np.zeros(len(files))
-n = 0
-for fname in files:
-  ftime = fname.split('/')[-1]
-  
-  if ftime.startswith('raw-data-'):
-    time = ftime[9:]
+files = sorted_nicely(glob.glob(datadir + "raw-data-*"))
+nTetrads = np.genfromtxt(infoFile, skip_header=1, usecols=0)
+nFiles = np.genfromtxt(infoFile, skip_header=1, usecols=1)
 
-  if float(time) >= float(ts) and float(time) <= float(te):
-    inRange[n] = 1
-    n += 1
-
-nFiles = n
-
-print "      Found " + str(nFiles) + " files in time range"
+print "      Found " + str(nFiles) + " files."
+print "      Found " + str(nTetrads) + " tetrads."
 print ""
-
-# Find number of tetrads
-nTetrads = file_len(files[0])
 
 # Initialize numpy arrays
 data = [ structtype() for i in range(nFiles) ]
@@ -89,34 +82,30 @@ medEig = (4)
 minEig = (5)
 
 # Loop over all output files, pull data to structures
-i = 0;
-for fname in files:
-  ftime = fname.split('/')[-1]
+for ff, fname in enumerate(files):
+  # Pull time from filename
+  ftime = fname.split("/")[-1]
+  time[ff] = float(ftime[9:])
 
-  if ftime.startswith('raw-data-'):
-    ftime = ftime[9:]
+  # Pull data
+  data[ff].R2 = np.genfromtxt(fname, skip_header=1, usecols=R2Col)
+  data[ff].var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
+  data[ff].shape = np.genfromtxt(fname, skip_header=1, usecols=shapeCol)
 
-  if float(ftime) >= float(ts) and float(ftime) <= float(te):
-    time[i] = float(ftime)
-    ifile = open(fname)
-    ifile.readline()
+  data[ff].I1 = np.genfromtxt(fname, skip_header=1, usecols=maxEig)
+  data[ff].I2 = np.genfromtxt(fname, skip_header=1, usecols=medEig)
+  data[ff].I3 = np.genfromtxt(fname, skip_header=1, usecols=minEig)
 
-    # If this gets slow, see
-    # -- stackoverlfow 8956832 -- python out of memory on large csv file numpy
-    # -- "  " 18259393 -- numpy loading csv too slow compared to matlab
-    # -- "  " 26482209 -- fastest way to load huge dat into array
-    data[i].R2 = np.genfromtxt(fname, skip_header=1, usecols=R2Col)
-    data[i].var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
-    data[i].shape = np.genfromtxt(fname, skip_header=1, usecols=shapeCol)
+  if ff > 99:
+    break
 
-    data[i].I1 = np.genfromtxt(fname, skip_header=1, usecols=maxEig)
-    data[i].I2 = np.genfromtxt(fname, skip_header=1, usecols=medEig)
-    data[i].I3 = np.genfromtxt(fname, skip_header=1, usecols=minEig)
+  txt = "      File " + str(ff) + " of " + str(nFiles)
+  print txt
 
-    i += 1
-
+print ""
 time = time - time[0]
 
+print "      Printing initialization... "
 # Initialize histogram bins
 nBins = float(35)
 weights = np.ones(nTetrads)/nTetrads
@@ -197,13 +186,15 @@ axR.tick_params(which='major', length=6)
 axR.tick_params(which='minor', length=3)
 
 
+print "      Printing time evolution of pdfs... "
 # Time evolution of principal axes
 timePrAx = plt.figure(figsize=(12,8))
 timePrAx.suptitle('Time Evolution of Principal Axes', fontsize=16)
 
 nPlot = 6
 color = np.linspace(1, 0.2, num=nPlot)
-tstepplot = np.linspace(0,nFiles-1,nPlot)
+#tstepplot = np.linspace(0,nFiles-1,nPlot)
+tstepplot = np.linspace(0,100,nPlot)
 tstepplot = tstepplot.astype(int)
 legText = ['']*np.size(tstepplot)
 

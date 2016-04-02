@@ -36,11 +36,18 @@ class structtype():
 print ""
 print " ---- Alignment traces plotting utility ---- "
 print ""
-#root = raw_input("Simulation root: ")
-#if not root.endswith('/'):
-#  root = root + '/'
-root = "../sim/"
-datadir = root + "data-tetrads/"
+
+# DEVEL
+#root = "../sim"
+#datadir = root + "data-tetrads/"
+
+# MARCC
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+print "      Sim root directory set to: " + root
+simdir = raw_input("      Simulation directory: ")
+if not simdir.endswith('/'):
+  simdir = simdir + '/'
+datadir = root + simdir + "data-tetrads/"
 infoFile = datadir + "info.dat"
 
 ## Sort output files and find nTetrads, nFiles
