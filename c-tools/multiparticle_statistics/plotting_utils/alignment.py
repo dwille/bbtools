@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import sys
+import sys, os
 import glob
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors
@@ -18,6 +18,12 @@ if not simdir.endswith('/'):
   simdir = simdir + '/'
 datadir = root + simdir + 'data-tetrads/'
 print "      Data directory set to: " + datadir
+
+# Create imgdir if necessary
+imgdir = root + simdir + "/img/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
 alignFile = datadir + 'align.mean'
 
 time = np.genfromtxt(alignFile, skip_header=1, usecols=0)
@@ -56,145 +62,150 @@ ws3 = np.genfromtxt(alignFile, skip_header=1, usecols=22)
 #wnorm = np.genfromtxt(alignFile, skip_header=1, usecols=23)
 
 ## Principal axes / strain ##
-plt.rc('font', family='serif')
-g_s = plt.figure(figsize=(12,8))
+plt.rc('xtick', labelsize=10)
+plt.rc('ytick', labelsize=10)
+plt.rc('axes', labelsize=11)
+plt.rc('figure', titlesize=14)
+plt.rc('figure', figsize=(4,3))
+plt.rc('legend', fontsize=11, numpoints=3)
+plt.rc('lines', markersize=4)
+labelx = -0.30
 
-g_s.suptitle('Alignment of Shape Principal Axes with Strain', fontsize=16)
+g_s = plt.figure()
 
 # major
 g1s_Ax = g_s.add_subplot(311)
-g1s_Ax.plot(time, g1s1, 'ko-', linewidth=1.5, markevery=1)
-g1s_Ax.plot(time, g1s2, 'bo-', linewidth=1.5, markevery=1)
-g1s_Ax.plot(time, g1s3, 'ro-', linewidth=1.5, markevery=1)
+g1s_Ax.plot(time, g1s1, 'ko', markevery=2)
+g1s_Ax.plot(time, g1s2, 'bo', markevery=2)
+g1s_Ax.plot(time, g1s3, 'ro', markevery=2)
 
 g1s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_1 \cdot \mathbf{s(0)}_i)$', 
-  fontsize=15)
+  rotation=0)
+g1s_Ax.yaxis.set_label_coords(labelx, 0.5)
+g1s_Ax.tick_params(axis='x', labelbottom='off')
+
 g1s_Ax.set_ylim([0, 1])
 g1s_Ax.set_xlim([0, 300])
-g1s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-g1s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-g1s_Ax.tick_params(which='major', length=6)
-g1s_Ax.tick_params(which='minor', length=3)
+
+#legText = ['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis']
+legText = [r'$\mathbf{s}_1$', r'$\mathbf{s}_2$', r'$\mathbf{s}_3$']
+g1s_Ax.legend(legText, bbox_to_anchor=(0, 1.20, 1, .1), loc=3, ncol=3,
+  mode='expand', borderaxespad=0)
 
 # middle
 g2s_Ax = g_s.add_subplot(312)
-g2s_Ax.plot(time, g2s1, 'ko-', linewidth=1.5, markevery=1)
-g2s_Ax.plot(time, g2s2, 'bo-', linewidth=1.5, markevery=1)
-g2s_Ax.plot(time, g2s3, 'ro-', linewidth=1.5, markevery=1)
+g2s_Ax.plot(time, g2s1, 'ko', markevery=2)
+g2s_Ax.plot(time, g2s2, 'bo', markevery=2)
+g2s_Ax.plot(time, g2s3, 'ro', markevery=2)
 
 
 g2s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_2 \cdot \mathbf{s(0)}_i)$', 
-  fontsize=15)
+  rotation=0)
+g2s_Ax.yaxis.set_label_coords(labelx, 0.5)
+g2s_Ax.tick_params(axis='x', labelbottom='off')
+
 g2s_Ax.set_ylim([0, 1])
 g2s_Ax.set_xlim([0, 300])
-g2s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-g2s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-g2s_Ax.tick_params(which='major', length=6)
-g2s_Ax.tick_params(which='minor', length=3)
 
 g3s_Ax = g_s.add_subplot(313)
-g3s_Ax.plot(time, g3s1, 'ko-', linewidth=1.5, markevery=1)
-g3s_Ax.plot(time, g3s2, 'bo-', linewidth=1.5, markevery=1)
-g3s_Ax.plot(time, g3s3, 'ro-', linewidth=1.5, markevery=1)
+g3s_Ax.plot(time, g3s1, 'ko', markevery=2)
+g3s_Ax.plot(time, g3s2, 'bo', markevery=2)
+g3s_Ax.plot(time, g3s3, 'ro', markevery=2)
 
 # minor
-g3s_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g}_3 \cdot \mathbf{s(0)}_i)$', 
-  fontsize=15)
+g3s_Ax.set_ylabel(r'$(\mathbf{g}_3 \cdot \mathbf{s(0)}_i)$',
+  rotation=0)
+g3s_Ax.yaxis.set_label_coords(labelx, 0.5)
+
 g3s_Ax.set_ylim([0, 1])
 g3s_Ax.set_xlim([0, 300])
 g3s_Ax.set_xlabel('Time [ms]')
-g3s_Ax.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
-g3s_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-g3s_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-g3s_Ax.tick_params(which='major', length=6)
-g3s_Ax.tick_params(which='minor', length=3)
 
-## vorticity / paxes, strain ##
-wFig = plt.figure(figsize=(12,8))
-wFig.suptitle('Alignment of shape and strain with vorticity', fontsize=16)
+# SAVE 
+imgname = imgdir + "align_shape_strain"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+## VORTICITY / PAXES, STRAIN ##
+wFig = plt.figure()
 
 # principal axes
-gw_Ax = wFig.add_subplot(311)
-gw_Ax.plot(time, wg1, 'ko-', linewidth=1.5, markevery=10)
-gw_Ax.plot(time, wg2, 'bo-', linewidth=1.5, markevery=10)
-gw_Ax.plot(time, wg3, 'ro-', linewidth=1.5, markevery=10)
+gw_Ax = wFig.add_subplot(211)
+gw_Ax.plot(time, wg1, 'ko', markevery=2)
+gw_Ax.plot(time, wg2, 'bo', markevery=2)
+gw_Ax.plot(time, wg3, 'ro', markevery=2)
 
-gw_Ax.set_ylabel(r'$\cos \theta = (\mathbf{g(0)}_i \cdot \mathbf{\omega})$', 
-  fontsize=15)
-gw_Ax.legend(['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis'])
-gw_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-gw_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-gw_Ax.tick_params(which='major', length=6)
-gw_Ax.tick_params(which='minor', length=3)
+gw_Ax.set_ylabel(r'$(\mathbf{g(0)}_i \cdot \mathbf{\omega})$',
+  rotation=0)
+gw_Ax.yaxis.set_label_coords(labelx, 0.5)
+gw_Ax.tick_params(axis='x', labelbottom='off')
+
+#gw_Ax.legend(['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis'])
+legText = [r'$i=1$', r'$i=2$', r'$i=3$']
+gw_Ax.legend(legText, bbox_to_anchor=(0, 1.20, 1, .1), loc=3, ncol=3,
+  mode='expand', borderaxespad=0)
 
 # strain
-sw_Ax = wFig.add_subplot(312)
-sw_Ax.plot(time, ws1, 'ko-', linewidth=1.5, markevery=10)
-sw_Ax.plot(time, ws2, 'bo-', linewidth=1.5, markevery=10)
-sw_Ax.plot(time, ws3, 'ro-', linewidth=1.5, markevery=10)
-sw_Ax.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
+sw_Ax = wFig.add_subplot(212)
+sw_Ax.plot(time, ws1, 'ko', markevery=2)
+sw_Ax.plot(time, ws2, 'bo', markevery=2)
+sw_Ax.plot(time, ws3, 'ro', markevery=2)
 
-sw_Ax.set_ylabel(r'$\cos \theta = (\mathbf{s(0)}_i \cdot \mathbf{\omega})$', 
-  fontsize=15)
-sw_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-sw_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-sw_Ax.tick_params(which='major', length=6)
-sw_Ax.tick_params(which='minor', length=3)
+sw_Ax.set_ylabel(r'$(\mathbf{s(0)}_i \cdot \mathbf{\omega})$',
+  rotation=0)
+sw_Ax.yaxis.set_label_coords(labelx, 0.5)
+sw_Ax.set_xlabel('Time [ms]')
 
-# vorticity magnitude
-w_Ax = wFig.add_subplot(313)
+#sw_Ax.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
 
-#w_Ax.plot(time, wnorm, 'ko-', linewidth=1.5)
-#
-#w_Ax.set_xlabel('Time [ms]')
-#w_Ax.set_ylabel('Vorticity')
-#w_Ax.xaxis.set_minor_locator(AutoMinorLocator())
-#w_Ax.yaxis.set_minor_locator(AutoMinorLocator())
-#w_Ax.tick_params(which='major', length=6)
-#w_Ax.tick_params(which='minor', length=3)
+# SAVE 
+imgname = imgdir + "align_shape-strain_vort"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-## alignment with z ##
-g_z = plt.figure(figsize=(12,8))
-g_z.suptitle('Alignment of shape, strain, and vorticity with gravity', 
-  fontsize=16)
+## ALIGNMENT WITH Z ##
+g_z = plt.figure()
 
 gzAx = g_z.add_subplot(311)
-gzAx.plot(time, g1z, 'ko-', linewidth=1.5, markevery=10)
-gzAx.plot(time, g2z, 'bo-', linewidth=1.5, markevery=10)
-gzAx.plot(time, g3z, 'ro-', linewidth=1.5, markevery=10)
+gzAx.plot(time, g1z, 'ko', markevery=25)
+gzAx.plot(time, g2z, 'bo', markevery=25)
+gzAx.plot(time, g3z, 'ro', markevery=25)
 
 gzAx.set_ylim([0, 1])
-gzAx.set_ylabel(r'$\cos \theta = (\mathbf{g}_i \cdot \mathbf{z})$', fontsize=15)
-gzAx.legend(['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis'],
-  loc='lower right')
-gzAx.xaxis.set_minor_locator(AutoMinorLocator())
-gzAx.yaxis.set_minor_locator(AutoMinorLocator())
-gzAx.tick_params(which='major', length=6)
-gzAx.tick_params(which='minor', length=3)
+gzAx.set_ylabel(r'$\cos \theta = (\mathbf{g}_i \cdot \mathbf{z})$',
+  rotation=0)
+gzAx.yaxis.set_label_coords(labelx, 0.5)
+gzAx.tick_params(axis='x', labelbottom='off')
+
+#legText = ['Major Shape Axis', 'Middle Shape Axis', 'Minor Shape Axis']
+legText = [r'$i=1$', r'$i=2$', r'$i=3$']
+gzAx.legend(legText, bbox_to_anchor=(0, 1.20, 1, .1), loc=3, ncol=3,
+  mode='expand', borderaxespad=0)
 
 szAx = g_z.add_subplot(312)
-szAx.plot(time, s1z, 'ko-', linewidth=1.5, markevery=10)
-szAx.plot(time, s2z, 'bo-', linewidth=1.5, markevery=10)
-szAx.plot(time, s3z, 'ro-', linewidth=1.5, markevery=10)
+szAx.plot(time, s1z, 'ko', markevery=25)
+szAx.plot(time, s2z, 'bo', markevery=25)
+szAx.plot(time, s3z, 'ro', markevery=25)
 
 szAx.set_ylim([0, 1])
-szAx.set_ylabel(r'$\cos \theta = (\mathbf{s}_i \cdot \mathbf{z})$', fontsize=15)
-szAx.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
-szAx.xaxis.set_minor_locator(AutoMinorLocator())
-szAx.yaxis.set_minor_locator(AutoMinorLocator())
-szAx.tick_params(which='major', length=6)
-szAx.tick_params(which='minor', length=3)
+szAx.set_ylabel(r'$\cos \theta = (\mathbf{s}_i \cdot \mathbf{z})$',
+  rotation=0)
+szAx.yaxis.set_label_coords(labelx, 0.5)
+szAx.tick_params(axis='x', labelbottom='off')
+
+#szAx.legend(['Major Strain Axis', 'Middle Strain Axis', 'Minor Strain Axis'])
 
 wzAx = g_z.add_subplot(313)
-wzAx.plot(time, wz, 'ko-', linewidth=1.5)
+wzAx.plot(time, wz, 'ko', markevery=25)
 
-wzAx.set_xlabel('Time')
-wzAx.set_ylabel(r'$\cos \theta = (\mathbf{\omega} \cdot \mathbf{z})$', fontsize=15)
-wzAx.xaxis.set_minor_locator(AutoMinorLocator())
-wzAx.yaxis.set_minor_locator(AutoMinorLocator())
-wzAx.tick_params(which='major', length=6)
-wzAx.tick_params(which='minor', length=3)
+wzAx.set_xlabel('Time [ms]')
+wzAx.set_ylabel(r'$\cos \theta = (\mathbf{\omega} \cdot \mathbf{z})$',
+  rotation=0)
+wzAx.yaxis.set_label_coords(labelx, 0.5)
+wzAx.set_ylim([-0.05,0.05])
+wzAx.set_yticks([-0.05, -0.025, 0, 0.025, 0.05])
 
-plt.show()
- 
-
+# SAVE 
+imgname = imgdir + "align_shape-strain_gravity"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
