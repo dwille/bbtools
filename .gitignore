@@ -1,0 +1,32 @@
+# Compiled source
+*.o
+
+# Bluebottle output/input files
+flow-*.cgns
+part-*.cgns
+grid.cgns
+part.config
+flow.config
+
+# c-tool binaries
+tetrad_init
+phase_vel
+
+# c-tool data files
+raw-data-*
+align.mean
+align.sdev
+align.skew
+align.kurt
+info.dat
+stat.mean
+stat.sdev
+stat.skew
+stat.kurt
+regularNodes
+ts_*
+
+# other
+out
+.git_placeholder
+*.sh
