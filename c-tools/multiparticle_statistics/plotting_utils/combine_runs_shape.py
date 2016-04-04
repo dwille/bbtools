@@ -1,7 +1,8 @@
 #!/usr/bin/env python2
 # Combine various runs of a tetrad analysis into master dat files
 
-import sys, os, re
+import sys
+import os, re
 import glob
 import csv
 import numpy as np
@@ -43,10 +44,10 @@ def interp(time, allTime, array, nRuns):
 
 ## Overall moments
 def stats(data):
-  mean = np.zeros(maxTsteps)
-  var = np.zeros(maxTsteps)
-  skew = np.zeros(maxTsteps)
-  kurt = np.zeros(maxTsteps)
+  mean = np.zeros(minTsteps)
+  var = np.zeros(minTsteps)
+  skew = np.zeros(minTsteps)
+  kurt = np.zeros(minTsteps)
 
   # Mean
   for rr in np.arange(0,nRuns):
@@ -72,7 +73,7 @@ def stats(data):
   skew /= np.power(sdev, 3.)
 
   # kurt
-  kurt = np.zeros(maxTsteps)
+  kurt = np.zeros(minTsteps)
   for rr in np.arange(0,nRuns):
     Nr = nTetrads[rr]
     diff = data[rr].mean - mean
@@ -83,21 +84,29 @@ def stats(data):
   kurt /= np.sum(nTetrads)
   kurt /= np.power(sdev, 4.)
 
-  moments = np.zeros((maxTsteps,4))
+  moments = np.zeros((minTsteps,4))
   moments[:,0] = mean
   moments[:,1] = sdev
   moments[:,2] = skew
   moments[:,3] = kurt
   return moments
 
-print " ---- Combine-Runs Utility ----"
+## Parse commandline args
+#simdir = ""
+#if len(sys.argv) == 2:
+#  simdir = sys.argv[1]
+#else:
+#  sys.exit("Usage: ./combine_runs_shape.py <inputfile>")
+
+## Setup directories
+print "     ---- Combine-Runs Utility ----"
 print ""
 
 ## Set root dir, simdir, and datadir
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-simdir = raw_input("  Simulation directory: ")
-#root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
-#simdir =  "sim/"
+#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+#simdir = raw_input("  Simulation directory: ")
+root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
+simdir =  "sim/"
 
 if not simdir.endswith('/'):
   simdir = simdir + '/'
@@ -131,10 +140,12 @@ for rr, run in enumerate(runs):
   nTetrads[rr] = np.genfromtxt(infoFile, skip_header=1, usecols=0)
   nTsteps[rr] = np.genfromtxt(infoFile, skip_header=1, usecols=1)
 
-# find maxTsteps
-global maxTsteps
-maxTsteps = np.max(nTsteps)
-allTime = np.zeros((maxTsteps, nRuns))
+# find minTsteps
+global minTsteps
+minTsteps = np.min(nTsteps)
+allTime = np.zeros((minTsteps, nRuns))
+
+print "minTsteps = " + str(minTsteps)
 
 for rr, run in enumerate(runs):
   meanFile = run + '/stat.mean'
@@ -142,64 +153,90 @@ for rr, run in enumerate(runs):
   skewFile = run + '/stat.skew'
   kurtFile = run + '/stat.kurt'
 
-  # init data to maxTstep size
-  RoG[rr].mean = np.zeros(maxTsteps)
-  RoG[rr].sdev = np.zeros(maxTsteps)
-  RoG[rr].skew = np.zeros(maxTsteps)
-  RoG[rr].kurt = np.zeros(maxTsteps)
-  EVar[rr].mean = np.zeros(maxTsteps)
-  EVar[rr].sdev = np.zeros(maxTsteps)
-  EVar[rr].skew = np.zeros(maxTsteps)
-  EVar[rr].kurt = np.zeros(maxTsteps)
-  Shape[rr].mean = np.zeros(maxTsteps)
-  Shape[rr].sdev = np.zeros(maxTsteps)
-  Shape[rr].skew = np.zeros(maxTsteps)
-  Shape[rr].kurt = np.zeros(maxTsteps)
-  I1[rr].mean = np.zeros(maxTsteps)
-  I1[rr].sdev = np.zeros(maxTsteps)
-  I1[rr].skew = np.zeros(maxTsteps)
-  I1[rr].kurt = np.zeros(maxTsteps)
-  I2[rr].mean = np.zeros(maxTsteps)
-  I2[rr].sdev = np.zeros(maxTsteps)
-  I2[rr].skew = np.zeros(maxTsteps)
-  I2[rr].kurt = np.zeros(maxTsteps)
-  I3[rr].mean = np.zeros(maxTsteps)
-  I3[rr].sdev = np.zeros(maxTsteps)
-  I3[rr].skew = np.zeros(maxTsteps)
-  I3[rr].kurt = np.zeros(maxTsteps)
+  # init data to minTstep size
+  RoG[rr].mean = np.zeros(minTsteps)
+  RoG[rr].sdev = np.zeros(minTsteps)
+  RoG[rr].skew = np.zeros(minTsteps)
+  RoG[rr].kurt = np.zeros(minTsteps)
+  EVar[rr].mean = np.zeros(minTsteps)
+  EVar[rr].sdev = np.zeros(minTsteps)
+  EVar[rr].skew = np.zeros(minTsteps)
+  EVar[rr].kurt = np.zeros(minTsteps)
+  Shape[rr].mean = np.zeros(minTsteps)
+  Shape[rr].sdev = np.zeros(minTsteps)
+  Shape[rr].skew = np.zeros(minTsteps)
+  Shape[rr].kurt = np.zeros(minTsteps)
+  I1[rr].mean = np.zeros(minTsteps)
+  I1[rr].sdev = np.zeros(minTsteps)
+  I1[rr].skew = np.zeros(minTsteps)
+  I1[rr].kurt = np.zeros(minTsteps)
+  I2[rr].mean = np.zeros(minTsteps)
+  I2[rr].sdev = np.zeros(minTsteps)
+  I2[rr].skew = np.zeros(minTsteps)
+  I2[rr].kurt = np.zeros(minTsteps)
+  I3[rr].mean = np.zeros(minTsteps)
+  I3[rr].sdev = np.zeros(minTsteps)
+  I3[rr].skew = np.zeros(minTsteps)
+  I3[rr].kurt = np.zeros(minTsteps)
 
-  # only fill up to nTsteps[rr] -- this pads the end of the array with 0s
-  nt = nTsteps[rr]
-  tmpT = np.genfromtxt(meanFile, skip_header=1, usecols=0)
-  allTime[0:nt, rr] = tmpT - tmpT[0]
+  # only pull minTsteps 
+  # -- skip_header=1, skip_footer = nTsteps[rr] - minTsteps
+  skip = int(nTsteps[rr] - minTsteps)
 
-  RoG[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=1)
-  EVar[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=2)
-  Shape[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=3)
-  I1[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=4)
-  I2[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=5)
-  I3[rr].mean[0:nt] = np.genfromtxt(meanFile, skip_header=1, usecols=6)
+  tmpT = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, usecols=0)
+  allTime[:,rr] = tmpT - tmpT[0]
 
-  RoG[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=1)
-  EVar[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=2)
-  Shape[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=3)
-  I1[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=4)
-  I2[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=5)
-  I3[rr].sdev[0:nt] = np.genfromtxt(sdevFile, skip_header=1, usecols=6)
+  RoG[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=1)
+  EVar[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=2)
+  Shape[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=3)
+  I1[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=4)
+  I2[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=5)
+  I3[rr].mean[:] = np.genfromtxt(meanFile, skip_header=1, skip_footer=skip, 
+    usecols=6)
 
-  RoG[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=1)
-  EVar[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=2)
-  Shape[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=3)
-  I1[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=4)
-  I2[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=5)
-  I3[rr].skew[0:nt] = np.genfromtxt(skewFile, skip_header=1, usecols=6)
+  RoG[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=1)
+  EVar[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=2)
+  Shape[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=3)
+  I1[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=4)
+  I2[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=5)
+  I3[rr].sdev[:] = np.genfromtxt(sdevFile, skip_header=1, skip_footer=skip, 
+    usecols=6)
 
-  RoG[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=1)
-  EVar[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=2)
-  Shape[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=3)
-  I1[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=4)
-  I2[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=5)
-  I3[rr].kurt[0:nt] = np.genfromtxt(kurtFile, skip_header=1, usecols=6)
+  RoG[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=1)
+  EVar[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=2)
+  Shape[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=3)
+  I1[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=4)
+  I2[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=5)
+  I3[rr].skew[:] = np.genfromtxt(skewFile, skip_header=1, skip_footer=skip, 
+    usecols=6)
+
+  RoG[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=1)
+  EVar[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=2)
+  Shape[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=3)
+  I1[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=4)
+  I2[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=5)
+  I3[rr].kurt[:] = np.genfromtxt(kurtFile, skip_header=1, skip_footer=skip, 
+    usecols=6)
 
 totalTetrads = np.sum(nTetrads)
 print '      Total tetrads tracked: ' + str(totalTetrads)
@@ -232,9 +269,8 @@ with open(infofile, 'wb') as outfile:
   a = csv.writer(outfile, delimiter=' ')
   headers = [['nTetrads', 'nTsteps']]
   a.writerows(headers)
-  data = [[totalTetrads, maxTsteps]]
+  data = [[totalTetrads, minTsteps]]
   a.writerows(data)
-  #TODO: maybe should be a minTsteps as well?
 
 # Print info to datadir -- mean
 allMeanFile = datadir + 'stat.mean'
@@ -242,7 +278,7 @@ with open(allMeanFile, 'wb') as outfile:
   a = csv.writer(outfile, delimiter=' ')
   headers = [['time', 'RoG', 'EVar', 'Shape', 'I1', 'I2', 'I3']]
   a.writerows(headers)
-  for tt in np.arange(0, maxTsteps):
+  for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,0], m_EVar[tt,0], m_Shape[tt,0],
       m_I1[tt,0], m_I1[tt,0], m_I1[tt,0]]]
     a.writerows(data)
@@ -253,7 +289,7 @@ with open(allSdevFile, 'wb') as outfile:
   a = csv.writer(outfile, delimiter=' ')
   headers = [['time', 'RoG', 'EVar', 'Shape', 'I1', 'I2', 'I3']]
   a.writerows(headers)
-  for tt in np.arange(0, maxTsteps):
+  for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,1], m_EVar[tt,1], m_Shape[tt,1],
       m_I1[tt,1], m_I1[tt,1], m_I1[tt,1]]]
     a.writerows(data)
@@ -264,7 +300,7 @@ with open(allSkewFile, 'wb') as outfile:
   a = csv.writer(outfile, delimiter=' ')
   headers = [['time', 'RoG', 'EVar', 'Shape', 'I1', 'I2', 'I3']]
   a.writerows(headers)
-  for tt in np.arange(0, maxTsteps):
+  for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,2], m_EVar[tt,2], m_Shape[tt,2],
       m_I1[tt,2], m_I1[tt,2], m_I1[tt,2]]]
     a.writerows(data)
@@ -275,37 +311,37 @@ with open(allKurtFile, 'wb') as outfile:
   a = csv.writer(outfile, delimiter=' ')
   headers = [['time', 'RoG', 'EVar', 'Shape', 'I1', 'I2', 'I3']]
   a.writerows(headers)
-  for tt in np.arange(0, maxTsteps):
+  for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,3], m_EVar[tt,3], m_Shape[tt,3],
       m_I1[tt,3], m_I1[tt,3], m_I1[tt,3]]]
     a.writerows(data)
 
-# # R
-# R = plt.figure(figsize=(12,8))
-# m1_R = R.add_subplot(221)
-# plt.plot(time, m_RoG[:,0], 'k', linewidth=2)
-# for rr in np.arange(0,nRuns):
-#   plt.plot(allTime[:,rr], RoG[rr].mean)
-# m1_R.set_title('Mean R')
-# 
-# m2_R = R.add_subplot(222)
-# plt.plot(time, m_RoG[:,1], 'k', linewidth=2)
-# for rr in np.arange(0,nRuns):
-#   plt.plot(allTime[:,rr], RoG[rr].sdev)
-# m2_R.set_title('sdev R')
-# 
-# m3_R = R.add_subplot(223)
-# plt.plot(time, m_RoG[:,2], 'k', linewidth=2)
-# for rr in np.arange(0,nRuns):
-#   plt.plot(allTime[:,rr], RoG[rr].skew)
-# m3_R.set_title('skew R')
-# 
-# m4_R = R.add_subplot(224)
-# plt.plot(time, m_RoG[:,3], 'k', linewidth=2)
-# for rr in np.arange(0,nRuns):
-#   plt.plot(allTime[:,rr], RoG[rr].kurt)
-# m4_R.set_title('kurt R')
-# 
+# R
+R = plt.figure(figsize=(12,8))
+m1_R = R.add_subplot(221)
+plt.plot(time, m_RoG[:,0], 'k', linewidth=2)
+for rr in np.arange(0,nRuns):
+  plt.plot(allTime[:,rr], RoG[rr].mean)
+m1_R.set_title('Mean R')
+
+m2_R = R.add_subplot(222)
+plt.plot(time, m_RoG[:,1], 'k', linewidth=2)
+for rr in np.arange(0,nRuns):
+  plt.plot(allTime[:,rr], RoG[rr].sdev)
+m2_R.set_title('sdev R')
+
+m3_R = R.add_subplot(223)
+plt.plot(time, m_RoG[:,2], 'k', linewidth=2)
+for rr in np.arange(0,nRuns):
+  plt.plot(allTime[:,rr], RoG[rr].skew)
+m3_R.set_title('skew R')
+
+m4_R = R.add_subplot(224)
+plt.plot(time, m_RoG[:,3], 'k', linewidth=2)
+for rr in np.arange(0,nRuns):
+  plt.plot(allTime[:,rr], RoG[rr].kurt)
+m4_R.set_title('kurt R')
+
 # # EVar
 # EVar_fig = plt.figure(figsize=(12,8))
 # m1_EVar = EVar_fig.add_subplot(221)
@@ -399,5 +435,5 @@ with open(allKurtFile, 'wb') as outfile:
 #   plt.plot(allTime[:,rr], I2[rr].kurt, 'r--')
 #   plt.plot(allTime[:,rr], I3[rr].kurt, 'b--')
 # m4_I.set_title('kurtI')
-# 
-# plt.show()
+ 
+plt.show()
