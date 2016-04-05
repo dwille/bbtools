@@ -27,12 +27,17 @@ print ""
 root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 print "      Sim root directory set to: " + root
 
+# Create imgdir if necessary
+imgdir = root + "img/align/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
 # Parameter sweep
 partList = ['500', '1000', '1500', '2000']
 densList = ['rho2.0', 'rho3.3', 'rho4.0', 'rho5.0']
 legendText = ['']*16
 
-# Initialize mean/std arrays
+# Initialize arrays
 nTetrads = np.zeros(16)
 data = [ structtype() for i in range(16) ]
 g1_s1 = [ structtype() for i in range(16) ]
@@ -125,177 +130,206 @@ for pp, part in enumerate(partList):
 
     legendText[stride] = caseDir + ': ' + str(nTetrads[stride])
 
-# Plotting specs
+# Plot specs
 plt.rc('font', family='serif')
-color = ['r', 'g', 'b', 'k']
-shade = [0.4, 0.57, 0.74, 0.9]
-fsAx = 14
-fSize = (12,8)
-lWidth = 2
+plt.rc('xtick', labelsize=10)
+plt.rc('ytick', labelsize=10)
+plt.rc('axes', labelsize=11)
+plt.rc('figure', titlesize=14)
+plt.rc('figure', figsize=(4,4))
+plt.rc('legend', fontsize=10, numpoints=3)
+plt.rc('lines', markersize=4, linewidth=1.5)
+labelx = -0.2
+labely = 0.5
+colors = ['r', 'g', 'b', 'k']
+shades = [0.4, 0.57, 0.74, 0.9]
 
 # Legend specs
-rho2_spec = mlines.Line2D([],[], color='k', alpha=shade[0], linewidth=lWidth,
+rho2_spec = mlines.Line2D([],[], color='k', alpha=shades[0],
  label=r'$\rho^* = 2.0$')
-rho3_spec = mlines.Line2D([],[], color='k', alpha=shade[1], linewidth=lWidth,
+rho3_spec = mlines.Line2D([],[], color='k', alpha=shades[1],
  label=r'$\rho^* = 3.3$')
-rho4_spec = mlines.Line2D([],[], color='k', alpha=shade[2], linewidth=lWidth,
+rho4_spec = mlines.Line2D([],[], color='k', alpha=shades[2],
  label=r'$\rho^* = 4.0$')
-rho5_spec = mlines.Line2D([],[], color='k', alpha=shade[3], linewidth=lWidth,
+rho5_spec = mlines.Line2D([],[], color='k', alpha=shades[3],
  label=r'$\rho^* = 5.0$')
 
-g1si_spec = mlines.Line2D([],[], color='k', linewidth=lWidth,
-  label=r'$\langle(g_1, s_i)\rangle$')
-g2si_spec = mlines.Line2D([],[], color='r', linewidth=lWidth,
-  label=r'$\langle(g_2, s_i)\rangle$')
-g3si_spec = mlines.Line2D([],[], color='b', linewidth=lWidth,
-  label=r'$\langle(g_3, s_i)\rangle$')
+align_spec_1 = mlines.Line2D([],[], color='k')
+align_spec_2 = mlines.Line2D([],[], color='r')
+align_spec_3 = mlines.Line2D([],[], color='b')
 
-## Shape and Strain Alignment ##
-
-###########
 ## gi_s1 ##
-###########
-gis1_Fig, gis1_Ax = plt.subplots(4,1, sharex=True, sharey=True, figsize=fSize)
-gis1_Fig.suptitle(r'$\langle (g_i(t), s_1(0)) \rangle $ -- Mean', fontsize=16)
+gis1_Fig, gis1_Ax = plt.subplots(4,1, sharex=True, sharey=True)
 
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    gis1_Ax[pp].plot(data[i].time, g1_s1[i].mean, linewidth=lWidth, color='k',
-      alpha=shade[dd])
-    gis1_Ax[pp].plot(data[i].time, g2_s1[i].mean, linewidth=lWidth, color='r',
-      alpha=shade[dd])
-    gis1_Ax[pp].plot(data[i].time, g3_s1[i].mean, linewidth=lWidth, color='b',
-      alpha=shade[dd])
+    gis1_Ax[pp].plot(data[i].time, g1_s1[i].mean, color='k', alpha=shades[dd])
+    gis1_Ax[pp].plot(data[i].time, g2_s1[i].mean, color='r', alpha=shades[dd])
+    gis1_Ax[pp].plot(data[i].time, g3_s1[i].mean, color='b', alpha=shades[dd])
 
 gis1_Ax[0].set_ylim([0, 1])
 gis1_Ax[0].set_xlim([0, 300])
-gis1_Ax[3].set_xlabel(r'Time [ms]', fontsize=fsAx)
+gis1_Ax[3].set_xlabel(r'$Time\ [ms]$')
 for ax in gis1_Ax:
   ax.grid(True)
 for y, part in enumerate(partList):
-  gis1_Ax[y].set_ylabel(r'n = ' + part + '\n\nMean ' + r'$\cos\theta$', fontsize=fsAx)
- 
-gis1_Ax[2].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
-gis1_Ax[3].legend(handles=[g1si_spec, g2si_spec, g3si_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
+  labelText = r'$n = ' + part + "$"
+  gis1_Ax[y].set_ylabel(labelText, rotation=0)
+  gis1_Ax[y].yaxis.set_label_coords(labelx, labely)
 
-###########
+align_spec_1.set_label(r'$\langle(g_1(t), s_1(0))\rangle$')
+align_spec_2.set_label(r'$\langle(g_2(t), s_1(0))\rangle$')
+align_spec_3.set_label(r'$\langle(g_3(t), s_1(0))\rangle$')
+ 
+gis1_Ax[1].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
+  bbox_to_anchor=(1, 0.65), loc='center')
+gis1_Ax[2].legend(handles=[align_spec_1, align_spec_2, align_spec_3], ncol=1,
+  bbox_to_anchor=(1, 0.35), loc='center')
+gis1_Ax[2].set_zorder(1)
+
+# Save
+imgname = imgdir + "all_align_gis1_mean"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
 ## gi_s2 ##
-###########
-gis2_Fig, gis2_Ax = plt.subplots(4,1, sharex=True, sharey=True, figsize=fSize)
-gis2_Fig.suptitle(r'$\langle(g_i(t), s_2(0))\rangle$ -- Mean', fontsize=16)
+gis2_Fig, gis2_Ax = plt.subplots(4,1, sharex=True, sharey=True)
 
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    gis2_Ax[pp].plot(data[i].time, g1_s2[i].mean, linewidth=lWidth, color='k',
-      alpha=shade[dd])
-    gis2_Ax[pp].plot(data[i].time, g2_s2[i].mean, linewidth=lWidth, color='r',
-      alpha=shade[dd])
-    gis2_Ax[pp].plot(data[i].time, g3_s2[i].mean, linewidth=lWidth, color='b',
-      alpha=shade[dd])
+    gis2_Ax[pp].plot(data[i].time, g1_s2[i].mean, color='k', alpha=shades[dd])
+    gis2_Ax[pp].plot(data[i].time, g2_s2[i].mean, color='r', alpha=shades[dd])
+    gis2_Ax[pp].plot(data[i].time, g3_s2[i].mean, color='b', alpha=shades[dd])
 
 gis2_Ax[0].set_ylim([0, 1])
 gis2_Ax[0].set_xlim([0, 300])
-gis2_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
+gis2_Ax[3].set_xlabel(r'$Time\ [ms]$')
 for ax in gis2_Ax:
   ax.grid(True)
 for y, part in enumerate(partList):
-  gis2_Ax[y].set_ylabel(r'n = ' + part + '\n\nMean ' + r'$\cos\theta$', fontsize=fsAx)
+  labelText = r'$n = ' + part + "$"
+  gis2_Ax[y].set_ylabel(labelText, rotation=0)
+  gis2_Ax[y].yaxis.set_label_coords(labelx, labely)
 
-gis2_Ax[2].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
-gis2_Ax[3].legend(handles=[g1si_spec, g2si_spec, g3si_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
+align_spec_1.set_label(r'$\langle(g_1(t), s_2(0))\rangle$')
+align_spec_2.set_label(r'$\langle(g_2(t), s_2(0))\rangle$')
+align_spec_3.set_label(r'$\langle(g_3(t), s_2(0))\rangle$')
 
-###########
+gis2_Ax[1].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
+  bbox_to_anchor=(1, 0.65), loc='center')
+gis2_Ax[2].legend(handles=[align_spec_1, align_spec_2, align_spec_3], ncol=1,
+  bbox_to_anchor=(1, 0.35), loc='center')
+gis2_Ax[2].set_zorder(1)
+
+# Save
+imgname = imgdir + "all_align_gis2_mean"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
 ## gi_s3 ##
-###########
-gis3_Fig, gis3_Ax = plt.subplots(4,1, sharex=True, sharey=True, figsize=fSize)
-gis3_Fig.suptitle(r'$\langle(g_i(t), s_3(0))\rangle$ -- Mean', fontsize=16)
+gis3_Fig, gis3_Ax = plt.subplots(4,1, sharex=True, sharey=True)
 
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    gis3_Ax[pp].plot(data[i].time, g1_s3[i].mean, linewidth=lWidth, color='k',
-      alpha=shade[dd])
-    gis3_Ax[pp].plot(data[i].time, g2_s3[i].mean, linewidth=lWidth, color='r',
-      alpha=shade[dd])
-    gis3_Ax[pp].plot(data[i].time, g3_s3[i].mean, linewidth=lWidth, color='b',
-      alpha=shade[dd])
+    gis3_Ax[pp].plot(data[i].time, g1_s3[i].mean, color='k', alpha=shades[dd])
+    gis3_Ax[pp].plot(data[i].time, g2_s3[i].mean, color='r', alpha=shades[dd])
+    gis3_Ax[pp].plot(data[i].time, g3_s3[i].mean, color='b', alpha=shades[dd])
 
 gis3_Ax[0].set_ylim([0, 1])
 gis3_Ax[0].set_xlim([0, 300])
-gis3_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
+gis3_Ax[3].set_xlabel(r'$Time\ [ms]$')
 for ax in gis3_Ax:
   ax.grid(True)
 for y, part in enumerate(partList):
-  gis3_Ax[y].set_ylabel(r'n = ' + part + '\n\nMean ' + r'$\cos\theta$', fontsize=fsAx)
- 
-gis3_Ax[2].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
-gis3_Ax[3].legend(handles=[g1si_spec, g2si_spec, g3si_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
+  labelText = r'$n = ' + part + "$"
+  gis3_Ax[y].set_ylabel(labelText, rotation=0)
+  gis3_Ax[y].yaxis.set_label_coords(labelx, labely)
 
-###########
+align_spec_1.set_label(r'$\langle(g_1(t), s_3(0))\rangle$')
+align_spec_2.set_label(r'$\langle(g_2(t), s_3(0))\rangle$')
+align_spec_3.set_label(r'$\langle(g_3(t), s_3(0))\rangle$')
+ 
+gis3_Ax[1].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
+  bbox_to_anchor=(1, .65), loc='center')
+gis3_Ax[2].legend(handles=[align_spec_1, align_spec_2, align_spec_3], ncol=1,
+  bbox_to_anchor=(1, .35), loc='center')
+gis3_Ax[2].set_zorder(1)
+
+# Save
+imgname = imgdir + "all_align_gis3_mean"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
 ## gi_z ##
-###########
-giz_Fig, giz_Ax = plt.subplots(4,1, sharex=True, sharey=True, figsize=fSize)
-giz_Fig.suptitle(r'$\langle(g_i(t), z)\rangle$ -- Mean', fontsize=16)
+giz_Fig, giz_Ax = plt.subplots(4,1, sharex=True, sharey=True)
 
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    giz_Ax[pp].plot(data[i].time, g1_z[i].mean, linewidth=lWidth, color='k',
-      alpha=shade[dd])
-    giz_Ax[pp].plot(data[i].time, g2_z[i].mean, linewidth=lWidth, color='r',
-      alpha=shade[dd])
-    giz_Ax[pp].plot(data[i].time, g3_z[i].mean, linewidth=lWidth, color='b',
-      alpha=shade[dd])
+    giz_Ax[pp].plot(data[i].time, g1_z[i].mean, color='k', alpha=shades[dd])
+    giz_Ax[pp].plot(data[i].time, g2_z[i].mean, color='r', alpha=shades[dd])
+    giz_Ax[pp].plot(data[i].time, g3_z[i].mean, color='b', alpha=shades[dd])
 
 giz_Ax[0].set_ylim([0, 1])
-#giz_Ax[0].set_xlim([0, 1000])
-giz_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
+giz_Ax[3].set_xlabel(r'$Time\ [ms]$')
 for ax in giz_Ax:
   ax.grid(True)
 for y, part in enumerate(partList):
-  giz_Ax[y].set_ylabel(r'n = ' + part + '\n\nMean ' + r'$\cos\theta$', fontsize=fsAx)
- 
-giz_Ax[2].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
-giz_Ax[3].legend(handles=[g1si_spec, g2si_spec, g3si_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
+  labelText = r'$n = ' + part + "$"
+  giz_Ax[y].set_ylabel(labelText, rotation=0)
+  giz_Ax[y].yaxis.set_label_coords(labelx, labely)
 
-###########
+align_spec_1.set_label(r'$\langle(g_1(t), z)\rangle$')
+align_spec_2.set_label(r'$\langle(g_2(t), z)\rangle$')
+align_spec_3.set_label(r'$\langle(g_3(t), z)\rangle$')
+ 
+giz_Ax[1].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
+  bbox_to_anchor=(1, .6), loc='center')
+giz_Ax[2].legend(handles=[align_spec_1, align_spec_2, align_spec_3], ncol=1,
+  bbox_to_anchor=(1, .35), loc='center')
+giz_Ax[2].set_zorder(1)
+
+# Save
+imgname = imgdir + "all_align_giz_mean"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
 ## si_z ##
-###########
-siz_Fig, siz_Ax = plt.subplots(4,1, sharex=True, sharey=True, figsize=fSize)
-siz_Fig.suptitle(r'$\langle(s_i(t), z)\rangle$ -- Mean', fontsize=16)
+siz_Fig, siz_Ax = plt.subplots(4,1, sharex=True, sharey=True)
 
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    siz_Ax[pp].plot(data[i].time, s1_z[i].mean, linewidth=lWidth, color='k',
-      alpha=shade[dd])
-    siz_Ax[pp].plot(data[i].time, s2_z[i].mean, linewidth=lWidth, color='r',
-      alpha=shade[dd])
-    siz_Ax[pp].plot(data[i].time, s3_z[i].mean, linewidth=lWidth, color='b',
-      alpha=shade[dd])
+    siz_Ax[pp].plot(data[i].time, s1_z[i].mean, color='k', alpha=shades[dd])
+    siz_Ax[pp].plot(data[i].time, s2_z[i].mean, color='r', alpha=shades[dd])
+    siz_Ax[pp].plot(data[i].time, s3_z[i].mean, color='b', alpha=shades[dd])
 
-siz_Ax[0].set_ylim([0, 1])
 siz_Ax[0].set_xlim([0, 1000])
-siz_Ax[3].set_xlabel('Time [ms]', fontsize=fsAx)
+siz_Ax[0].set_ylim([0.35, 0.65])
+siz_Ax[0].set_yticks([0.35, 0.45, 0.55, 0.65])
+
+siz_Ax[3].set_xlabel(r'$Time\ [ms]$')
 for ax in siz_Ax:
   ax.grid(True)
 for y, part in enumerate(partList):
-  siz_Ax[y].set_ylabel(r'n = ' + part + '\n\nMean ' + r'$\cos\theta$', fontsize=fsAx)
+  labelText = r'$n = ' + part + "$"
+  siz_Ax[y].set_ylabel(labelText, rotation=0)
+  siz_Ax[y].yaxis.set_label_coords(labelx - 0.05, labely)
+
+align_spec_1.set_label(r'$\langle(s_1(t), z)\rangle$')
+align_spec_2.set_label(r'$\langle(s_2(t), z)\rangle$')
+align_spec_3.set_label(r'$\langle(s_3(t), z)\rangle$')
  
-siz_Ax[2].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
-siz_Ax[3].legend(handles=[g1si_spec, g2si_spec, g3si_spec], ncol=1,
-  bbox_to_anchor=(1, 1.6), framealpha=0.9)
+siz_Ax[1].legend(handles=[rho2_spec, rho3_spec, rho4_spec, rho5_spec], ncol=1,
+  bbox_to_anchor=(1, .6), loc='center')
+siz_Ax[2].legend(handles=[align_spec_1, align_spec_2, align_spec_3], ncol=1,
+  bbox_to_anchor=(1, 0.35), loc='center')
+siz_Ax[2].set_zorder(1)
 
-
-plt.show()
+# Save
+imgname = imgdir + "all_align_siz_mean"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

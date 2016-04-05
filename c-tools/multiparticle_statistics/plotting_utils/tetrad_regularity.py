@@ -1,6 +1,6 @@
 #!/usr/bin/env python2
 
-import sys
+import sys, os
 import glob
 import matplotlib.pyplot as plt
 from matplotlib import cm, colors, gridspec
@@ -48,6 +48,17 @@ simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
 
+# Check if datadir exists so we don't go creating extra dirs
+if not os.path.exists(datadir):
+  print "      " + datadir + " does not exist. Exiting..."
+  print ""
+  sys.exit()
+
+# Create imgdir if necessary
+imgdir = root + simdir + "/img/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
 datadir = root + simdir + "data-tetrads/"
 infoFile = datadir + "info.dat"
 
@@ -69,12 +80,12 @@ for i in range(nFiles):
   data[i].I3 = np.zeros(nTetrads)
   data[i].shape = np.zeros(nTetrads)
   data[i].var = np.zeros(nTetrads)
-  data[i].R2 = np.zeros(nTetrads)
+  data[i].RoG = np.zeros(nTetrads)
 
 time = np.zeros(nFiles)
 
 # Enumerate the columns
-R2Col = (0)
+RoGCol = (0)
 varCol = (1)
 shapeCol = (2)
 maxEig = (3)
@@ -88,7 +99,7 @@ for ff, fname in enumerate(files):
   time[ff] = float(ftime[9:])
 
   # Pull data
-  data[ff].R2 = np.genfromtxt(fname, skip_header=1, usecols=R2Col)
+  data[ff].RoG = np.genfromtxt(fname, skip_header=1, usecols=RoGCol)
   data[ff].var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
   data[ff].shape = np.genfromtxt(fname, skip_header=1, usecols=shapeCol)
 
@@ -105,16 +116,25 @@ for ff, fname in enumerate(files):
 print ""
 time = time - time[0]
 
-print "      Printing initialization... "
 # Initialize histogram bins
 nBins = float(35)
 weights = np.ones(nTetrads)/nTetrads
 
-initial = plt.figure(figsize=(12,8))
-initial.suptitle('Tetrad Regularity at Initialization', fontsize=16)
-gs = gridspec.GridSpec(2,3)
+# Plot specs
+plt.rc('xtick', labelsize=10)
+plt.rc('ytick', labelsize=10)
+plt.rc('axes', labelsize=11)
+plt.rc('figure', titlesize=14)
+plt.rc('figure', figsize=(4,3))
+plt.rc('legend', fontsize=11, numpoints=3)
+#plt.rc('legend', framealpha=0.7)
+plt.rc('lines', markersize=4)
+labelx = -0.17
 
 # Initial Timestep
+initial = plt.figure(figsize=(5,4))
+gs = gridspec.GridSpec(2,3)
+
 axEig = initial.add_subplot(gs[0,:])
 
 n0, bins0, tmp0 = plt.hist(data[0].I1, bins=nBins, weights=weights, 
@@ -126,9 +146,9 @@ n2, bins2, tmp2 = plt.hist(data[0].I3, bins=nBins, weights=weights,
 
 axEig.set_xlim([0,1])
 axEig.set_ylim([0,0.12])
-axEig.set_xlabel('I_k')
+axEig.set_xlabel(r'$I_k$')
 axEig.set_ylabel('Probability')
-axEig.legend(['I_1', 'I_2', 'I_3'])
+axEig.legend([r'$I_1$', r'$I_2$', r'$I_3$'])
 axEig.set_xticks(np.linspace(0, 1, 11))
 axEig.xaxis.set_minor_locator(AutoMinorLocator())
 axEig.yaxis.set_minor_locator(AutoMinorLocator())
@@ -138,58 +158,52 @@ axEig.tick_params(which='minor', length=3)
 x0 = bins0[np.argmax(n0)]
 y0 = np.max(n0)
 axEig.plot(x0, y0, 'o')
-axEig.text(x0, y0 + 0.005, '(%.2f' % x0 + ', %.2f' % y0 + ')')
+axEig.text(x0 - 0.1, y0 + 0.01, '(%.2f' % x0 + ', %.2f' % y0 + ')', fontsize=10)
 
 x1 = bins1[np.argmax(n1)]
 y1 = np.max(n1)
 axEig.plot(x1, y1, 'o')
-axEig.text(x1, y1 + 0.005, '(%.2f' % x1 + ', %.2f' % y1 + ')')
+axEig.text(x1 - 0.1, y1 + 0.005, '(%.2f' % x1 + ', %.2f' % y1 + ')', fontsize=10)
 
 x2 = bins2[np.argmax(n2)]
 y2 = np.max(n2)
 axEig.plot(x2, y2, 'o')
-axEig.text(x2, y2 + 0.005, '(%.2f' % x2 + ', %.2f' % y2 + ')')
+axEig.text(x2 - 0.1, y2 + 0.015, '(%.2f' % x2 + ', %.2f' % y2 + ')', fontsize=10)
 
 # shape
 axShape = plt.subplot(gs[1,0])
 plt.hist(data[0].shape, weights=weights, normed=False, color='black', alpha=0.6)
 
-axShape.set_xlabel('Shape')
+axShape.set_xlabel(r'$S$')
 axShape.set_ylabel('Probability')
-axShape.locator_params(nbins=6)
-axShape.xaxis.set_minor_locator(AutoMinorLocator())
-axShape.yaxis.set_minor_locator(AutoMinorLocator())
-axShape.tick_params(which='major', length=6)
-axShape.tick_params(which='minor', length=3)
+axShape.set_xlim([-.15, .15])
+axShape.set_xticks([-0.1, 0, 0.1])
 
 # var
 axVar = plt.subplot(gs[1,1])
 plt.hist(data[0].var, weights=weights, normed=False, color='black', alpha=0.6)
 
-axVar.set_xlabel('Variance')
-axVar.locator_params(nbins=6)
-axVar.xaxis.set_minor_locator(AutoMinorLocator())
-axVar.yaxis.set_minor_locator(AutoMinorLocator())
-axVar.tick_params(which='major', length=6)
-axVar.tick_params(which='minor', length=3)
+axVar.set_xlabel(r'$\Delta$')
+axVar.set_xlim([0, 0.15])
+axVar.set_xticks([0, .15])
 
 # rog
 axR = plt.subplot(gs[1,2])
-plt.hist(np.sqrt(data[0].R2), weights=weights, normed=False, 
+plt.hist(data[0].RoG, weights=weights, normed=False, 
   color='black', alpha=0.6)
 
-axR.set_xlabel('R_g')
-axR.locator_params(nbins=6)
-axR.xaxis.set_minor_locator(AutoMinorLocator())
-axR.yaxis.set_minor_locator(AutoMinorLocator())
-axR.tick_params(which='major', length=6)
-axR.tick_params(which='minor', length=3)
+axR.set_xlabel(r'$R_g [mm]$')
+axR.set_xlim([2.4, 6])
+axR.set_xticks([2.5,3.5,4.5,5.5])
 
+# SAVE
+plt.tight_layout()
+imgname = imgdir + "shape_initial"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-print "      Printing time evolution of pdfs... "
 # Time evolution of principal axes
-timePrAx = plt.figure(figsize=(12,8))
-timePrAx.suptitle('Time Evolution of Principal Axes', fontsize=16)
+timePrAx = plt.figure()
 
 nPlot = 6
 color = np.linspace(1, 0.2, num=nPlot)
@@ -203,20 +217,12 @@ for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].I1, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   i1_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
-  legText[i] = str(time[nn])
 
 i1_ax.set_xlim([0,1])
-i1_ax.set_ylabel('P(I_1)')
-
-i2_ax = timePrAx.add_subplot(312)
-for i,nn in enumerate(tstepplot):
-  y,edges = np.histogram(data[nn].I2, weights=weights, normed=False)
-  centers = 0.5*(edges[1:] + edges[:-1])
-  i2_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
-
-i2_ax.set_xlim([0,1])
-i2_ax.set_ylabel('P(I_2)')
-i2_ax.legend(legText)
+i1_ax.set_ylim([0, 0.3])
+i1_ax.set_yticks([0, 0.1, 0.2, 0.3])
+i1_ax.set_ylabel(r'$P(I_1)$')
+i1_ax.tick_params(axis='x', labelbottom='off')
 
 i3_ax = timePrAx.add_subplot(313)
 for i,nn in enumerate(tstepplot):
@@ -225,42 +231,78 @@ for i,nn in enumerate(tstepplot):
   i3_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
 
 i3_ax.set_xlim([0,1])
-i3_ax.set_ylabel('P(I_3)')
-i3_ax.set_xlabel('I_k')
+i3_ax.set_ylim([0, 0.3])
+i3_ax.set_yticks([0, 0.1, 0.2, 0.3])
+i3_ax.set_ylabel(r'$P(I_3)$')
+i3_ax.set_xlabel(r'$I_k$')
 
-# Time evolution of shape
-timeShape = plt.figure(figsize=(12,8))
-timeShape.suptitle('Time Evolution of Shape Measures', fontsize=16)
+i2_ax = timePrAx.add_subplot(312)
+for i,nn in enumerate(tstepplot):
+  y,edges = np.histogram(data[nn].I2, weights=weights, normed=False)
+  centers = 0.5*(edges[1:] + edges[:-1])
+  i2_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+  legText[i] = str(time[nn])
+
+i2_ax.set_xlim([0,1])
+i2_ax.set_ylim([0, 0.3])
+i2_ax.set_yticks([0, 0.1, 0.2, 0.3])
+i2_ax.set_ylabel(r'$P(I_2)$')
+i2_ax.tick_params(axis='x', labelbottom='off')
+
+
+#i2_ax.legend(legText, bbox_to_anchor=(0.6, 1.), loc=2, borderaxespad=0, 
+#  title='Time [ms]', mode='expand')
+i2_ax.legend(legText, bbox_to_anchor=(0.625, 1.15), loc=2, title='Time [ms]')
+
+# SAVE
+imgname = imgdir + "shape_principal_evolution"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+## tIME EVOLUTION OF SHAPE ##
+timeShape = plt.figure(figsize=(4,4))
 
 shape_ax = timeShape.add_subplot(313)
 for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].shape, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   shape_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
-  legText[i] = str(time[nn])
 
-shape_ax.set_xlim([-0.25,2])
-shape_ax.set_xlabel('shape')
-shape_ax.set_ylabel('P(shape)')
-shape_ax.legend(legText)
+shape_ax.set_xlim([-0.25, 2])
+shape_ax.set_ylim([0, 0.5])
+shape_ax.set_xticks([-0.25, 0, 0.5, 1.0, 1.5, 2.0])
+shape_ax.set_yticks([0, 0.1, 0.2, 0.3, 0.4, 0.5])
+shape_ax.set_xlabel(r'$S$')
+shape_ax.set_ylabel(r'$P(S)$')
 
 var_ax = timeShape.add_subplot(312)
 for i,nn in enumerate(tstepplot):
   y,edges = np.histogram(data[nn].var, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   var_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
+  legText[i] = str(time[nn])
 
 var_ax.set_xlim([0,1])
-var_ax.set_xlabel('var')
-var_ax.set_ylabel('P(var)')
+var_ax.set_ylim([0, 0.4])
+var_ax.set_yticks([0, 0.1, 0.2, 0.3, 0.4])
+var_ax.set_xlabel(r'$\Delta$')
+var_ax.set_ylabel(r'$P(\Delta)$')
 
 rg_ax = timeShape.add_subplot(311)
 for i,nn in enumerate(tstepplot):
-  y,edges = np.histogram(np.sqrt(data[nn].R2), weights=weights, normed=False)
+  y,edges = np.histogram(data[nn].RoG, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   rg_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
 
-rg_ax.set_xlabel('R_g')
-rg_ax.set_ylabel('P(R_g)')
+rg_ax.set_ylim([0, 0.3])
+rg_ax.set_yticks([0, 0.1, 0.2, 0.3])
+rg_ax.set_xlabel(r'$R_g [mm]$')
+rg_ax.set_ylabel(r'$P(R_g)$')
 
-plt.show()
+var_ax.legend(legText, bbox_to_anchor=(1, 0.5), loc=10,  title='Time [ms]')
+
+# SAVE
+plt.tight_layout()
+imgname = imgdir + "shape_measures_evolution"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

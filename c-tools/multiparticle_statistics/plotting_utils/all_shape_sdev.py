@@ -27,6 +27,11 @@ print ""
 root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 print "      Sim root directory set to: " + root
 
+# Create imgdir if necessary
+imgdir = root + "img/shape/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
 # Parameter sweep
 partList = ['500', '1000', '1500', '2000']
 densList = ['rho2.0', 'rho3.3', 'rho4.0', 'rho5.0']
@@ -74,108 +79,99 @@ for pp, part in enumerate(partList):
 
     legendText[stride] = caseDir + ': ' + str(nTetrads[stride])
 
-# Plotting specs
+# Plot specs
 plt.rc('font', family='serif')
+plt.rc('xtick', labelsize=10)
+plt.rc('ytick', labelsize=10)
+plt.rc('axes', labelsize=11)
+plt.rc('figure', titlesize=14)
+plt.rc('figure', figsize=(4,3))
+plt.rc('legend', fontsize=10, numpoints=3)
+plt.rc('lines', markersize=4, linewidth=2)
+labelx = -0.17
 colors = ['r', 'g', 'b', 'k']
 shades = [0.4, 0.57, 0.74, 0.9]
-fsAx = 14
-fSize = (12,8)
-lWidth = 2
-
-# Legend specs
-rho2_spec = mlines.Line2D([],[], color='k', alpha=shades[0], linewidth=lWidth,
- label=r'$\rho^* = 2.0$')
-rho3_spec = mlines.Line2D([],[], color='k', alpha=shades[1], linewidth=lWidth,
- label=r'$\rho^* = 3.3$')
-rho4_spec = mlines.Line2D([],[], color='k', alpha=shades[2], linewidth=lWidth,
- label=r'$\rho^* = 4.0$')
-rho5_spec = mlines.Line2D([],[], color='k', alpha=shades[3], linewidth=lWidth,
- label=r'$\rho^* = 5.0$')
-
-g1si_spec = mlines.Line2D([],[], color='k', linewidth=lWidth,
-  label=r'$\langle(g_1, s_i)\rangle$')
-g2si_spec = mlines.Line2D([],[], color='r', linewidth=lWidth,
-  label=r'$\langle(g_2, s_i)\rangle$')
-g3si_spec = mlines.Line2D([],[], color='b', linewidth=lWidth,
-  label=r'$\langle(g_3, s_i)\rangle$')
 
 ## Radius of Gyration
-rgFig = plt.figure(figsize=(12,8))
-rgFig.suptitle('Sdev of Radius of Gyration', fontsize=16)
+rgFig = plt.figure()
 rg_ax = rgFig.add_subplot(111)
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    rg_ax.loglog(data[i].time, RoG[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
+    rg_ax.loglog(data[i].time, RoG[i].sdev, color=colors[pp], alpha=shades[dd])
 
 xpnts = np.array([100, 10000])
 ypnts = np.power(xpnts, 0.75) / 15
 rg_ax.loglog(xpnts, ypnts, 'k--', linewidth=3)
-rg_ax.text(60, 3.5, 'slope ~ 0.75')
+rg_ax.text(10, 10, 'slope ~ 0.75')
 
-rg_ax.legend(legendText, ncol=2,loc='upper left')
-rg_ax.set_xlabel("Time [ms]", fontsize=16)
-rg_ax.set_ylabel(r"$R$ -- sdev", fontsize=16)
+rg_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
+rg_ax.set_xlabel("Time [ms]")
+rg_ax.set_ylabel(r"$\sigma[R_g]$")
+
+# Save
+imgname = imgdir + "all_rog_sdev"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 # EVar
-vFig = plt.figure(figsize=(12,8))
-vFig.suptitle('Sdev of Eigenvalue variance', fontsize=16)
+vFig = plt.figure()
 v_ax = vFig.add_subplot(111)
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    v_ax.semilogx(data[i].time, EVar[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
+    v_ax.semilogx(data[i].time, EVar[i].sdev, color=colors[pp], 
+      alpha=shades[dd])
 
-v_ax.set_xlabel("Time [ms]", fontsize=16)
-v_ax.set_ylabel("Sdev", fontsize=16)
-v_ax.tick_params(which='major', length=10)
-v_ax.tick_params(which='minor', length=7)
+v_ax.set_xlabel("Time [ms]")
+v_ax.set_ylabel(r"$\sigma[\Delta]$")
+v_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
 
-#xpnts = np.array([10, 90])
-#ypnts = np.power(xpnts, 0.7) / 37
-#v_ax.loglog(xpnts, ypnts, 'k--', linewidth=3)
-#v_ax.text(10, 0.4, 'slope = 0.7')
+# Save
+imgname = imgdir + "all_evar_sdev"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 # Shape
-sFig = plt.figure(figsize=(12,8))
-sFig.suptitle('Sdev of Shape', fontsize=16)
+sFig = plt.figure()
 s_ax = sFig.add_subplot(111)
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    s_ax.semilogx(data[i].time, Shape[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
+    s_ax.semilogx(data[i].time, Shape[i].sdev, color=colors[pp], 
+      alpha=shades[dd])
 
-s_ax.set_xlabel("Time [ms]", fontsize=16)
-s_ax.set_ylabel("Sdev", fontsize=16)
-s_ax.legend(legendText, ncol=2,loc='upper left')
+s_ax.set_xlabel("Time [ms]")
+s_ax.set_ylabel(r"$\sigma[S]$")
+s_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
 
-#xpnts = np.array([9, 110])
-#ypnts = np.power(xpnts, 1.75) / 2000
-#s_ax.loglog(xpnts, ypnts, 'k--', linewidth=3)
-#s_ax.text(10, 0.4, 'slope = 1.75')
+# Save
+imgname = imgdir + "all_shape_sdev"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 ## I_j ##
-iFig = plt.figure(figsize=(12,8))
-iFig.suptitle('Sdev of I', fontsize=16)
+iFig = plt.figure()
 i_ax = iFig.add_subplot(111)
 for pp in range(4):
   for dd in range(4):
     i = 4*pp + dd
-    i_ax.semilogx(data[i].time, I1[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
-    i_ax.semilogx(data[i].time, I2[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
-    i_ax.semilogx(data[i].time, I3[i].sdev, linewidth=3,
-      color=colors[pp], alpha=shades[dd])
+    i_ax.semilogx(data[i].time, I1[i].sdev, color=colors[pp], 
+      alpha=shades[dd])
+    i_ax.semilogx(data[i].time, I2[i].sdev, color=colors[pp], 
+      alpha=shades[dd], label='_nolegend_')
+    i_ax.semilogx(data[i].time, I3[i].sdev, color=colors[pp], 
+      alpha=shades[dd], label='_nolegend_')
 
-i_ax.text(6000, 0.117, 'I1', fontsize=16)
-i_ax.text(6000, 0.102, 'I2', fontsize=16)
-i_ax.text(6000, 0.028, 'I3',fontsize=16)
-i_ax.set_ylabel("Sdev", fontsize=16)
-#i_ax.set_ylim([1e-2, 1])
+i_ax.text(6000, 0.117, 'I1')
+i_ax.text(6000, 0.102, 'I2')
+i_ax.text(6000, 0.028, 'I3')
 
-plt.tight_layout()
-plt.show()
+i_ax.set_xlabel("Time [ms]")
+i_ax.set_ylabel(r"$\sigma[I]$")
+i_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
+
+# Save
+imgname = imgdir + "all_i_sdev"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
