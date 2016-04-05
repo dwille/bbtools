@@ -25,6 +25,12 @@ if not simdir.endswith('/'):
   simdir = simdir + '/'
 datadir = root + simdir + "data-tetrads/"
 
+# Check if datadir exists so we don't go creating extra dirs
+if not os.path.exists(datadir):
+  print "      " + datadir + " does not exist. Exiting..."
+  print ""
+  sys.exit()
+
 # Create imgdir if necessary
 imgdir = root + simdir + "/img/"
 if not os.path.exists(imgdir):
@@ -141,7 +147,7 @@ rg_ax2 = higher_measures.add_subplot(311)
 rg_ax2.plot(time, skewR, 'ko', markevery=15)
 rg_ax2.plot(time, kurtR, 'bo', markevery=15)
 
-rg_ax2.set_ylabel(r"$\langle R \rangle$", rotation=0)
+#rg_ax2.set_ylabel(r"$ R $", rotation=0)
 rg_ax2.yaxis.set_label_coords(labelx, 0.5)
 rg_ax2.set_xlim([time[0], time[-1]])
 rg_ax2.tick_params(axis='x', labelbottom='off')
@@ -156,7 +162,7 @@ var_ax2 = higher_measures.add_subplot(312)
 var_ax2.plot(time, skewEVar, 'ko', markevery=15)
 var_ax2.plot(time, kurtEVar, 'bo', markevery=15)
 
-var_ax2.set_ylabel(r"$\langle \Delta \rangle$", rotation=0)
+#var_ax2.set_ylabel(r"$\Delta $", rotation=0)
 var_ax2.yaxis.set_label_coords(labelx, 0.5)
 var_ax2.set_xlim([time[0], time[-1]])
 var_ax2.set_ylim([-2, 2])
@@ -171,7 +177,7 @@ s_ax2.plot(time, skewShape, 'ko', markevery=15)
 s_ax2.plot(time, kurtShape, 'bo', markevery=15)
 
 s_ax2.set_xlabel('Time [ms]')
-s_ax2.set_ylabel(r"$\langle S \rangle$", rotation=0)
+#s_ax2.set_ylabel(r"$ S $", rotation=0)
 s_ax2.yaxis.set_label_coords(labelx, 0.5)
 s_ax2.set_xlim([time[0], time[-1]])
 s_ax2.set_ylim([-2, 6])
@@ -218,7 +224,7 @@ ISkew.plot(time, skewI1, 'ko', markevery=25)
 ISkew.plot(time, skewI2, 'ro', markevery=25)
 ISkew.plot(time, skewI3, 'bo', markevery=25)
 
-ISkew.set_ylabel('Skewness')
+ISkew.set_ylabel(r'$\mathrm{Skew}[I_j]$')
 ISkew.yaxis.set_label_coords(labelx, 0.5)
 ISkew.set_ylim([-1, 3])
 ISkew.set_yticks([-1, 0, 1, 2, 3])
@@ -231,7 +237,7 @@ IKurt.plot(time, kurtI1, 'ko', markevery=25)
 IKurt.plot(time, kurtI2, 'ro', markevery=25)
 IKurt.plot(time, kurtI3, 'bo', markevery=25)
 
-IKurt.set_ylabel('Excess\nKurtosis')
+IKurt.set_ylabel(r'$\mathrm{Kurt}[I_j] - 3$')
 IKurt.set_xlabel('Time [ms]')
 IKurt.yaxis.set_label_coords(labelx, 0.5)
 IKurt.set_ylim([-4, 12])
@@ -239,7 +245,7 @@ IKurt.set_yticks([-4,0,4,8,12])
 
 IKurt.set_xlim([time[0], time[-1]])
 
-
+# Save
 imgname = imgdir + "shape_principal_axes_moments"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

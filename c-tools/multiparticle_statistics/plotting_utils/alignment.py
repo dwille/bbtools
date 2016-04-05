@@ -19,6 +19,12 @@ if not simdir.endswith('/'):
 datadir = root + simdir + 'data-tetrads/'
 print "      Data directory set to: " + datadir
 
+# Check if datadir exists so we don't go creating extra dirs
+if not os.path.exists(datadir):
+  print "      " + datadir + " does not exist. Exiting..."
+  print ""
+  sys.exit()
+
 # Create imgdir if necessary
 imgdir = root + simdir + "/img/"
 if not os.path.exists(imgdir):

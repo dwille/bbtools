@@ -48,6 +48,12 @@ simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
 
+# Check if datadir exists so we don't go creating extra dirs
+if not os.path.exists(datadir):
+  print "      " + datadir + " does not exist. Exiting..."
+  print ""
+  sys.exit()
+
 # Create imgdir if necessary
 imgdir = root + simdir + "/img/"
 if not os.path.exists(imgdir):
@@ -74,12 +80,12 @@ for i in range(nFiles):
   data[i].I3 = np.zeros(nTetrads)
   data[i].shape = np.zeros(nTetrads)
   data[i].var = np.zeros(nTetrads)
-  data[i].R2 = np.zeros(nTetrads)
+  data[i].RoG = np.zeros(nTetrads)
 
 time = np.zeros(nFiles)
 
 # Enumerate the columns
-R2Col = (0)
+RoGCol = (0)
 varCol = (1)
 shapeCol = (2)
 maxEig = (3)
@@ -93,7 +99,7 @@ for ff, fname in enumerate(files):
   time[ff] = float(ftime[9:])
 
   # Pull data
-  data[ff].R2 = np.genfromtxt(fname, skip_header=1, usecols=R2Col)
+  data[ff].RoG = np.genfromtxt(fname, skip_header=1, usecols=RoGCol)
   data[ff].var = np.genfromtxt(fname, skip_header=1, usecols=varCol)
   data[ff].shape = np.genfromtxt(fname, skip_header=1, usecols=shapeCol)
 
@@ -183,12 +189,12 @@ axVar.set_xticks([0, .15])
 
 # rog
 axR = plt.subplot(gs[1,2])
-plt.hist(np.sqrt(data[0].R2), weights=weights, normed=False, 
+plt.hist(data[0].RoG, weights=weights, normed=False, 
   color='black', alpha=0.6)
 
-axR.set_xlabel(r'$R_g$')
-axR.set_xlim([1.5, 2.5])
-axR.set_xticks([1.5, 2.0, 2.5])
+axR.set_xlabel(r'$R_g [mm]$')
+axR.set_xlim([2.4, 6])
+axR.set_xticks([2.5,3.5,4.5,5.5])
 
 # SAVE
 plt.tight_layout()
@@ -246,7 +252,7 @@ i2_ax.tick_params(axis='x', labelbottom='off')
 
 #i2_ax.legend(legText, bbox_to_anchor=(0.6, 1.), loc=2, borderaxespad=0, 
 #  title='Time [ms]', mode='expand')
-i2_ax.legend(legText, bbox_to_anchor=(0.65, 1.15), loc=2, title='Time [ms]')
+i2_ax.legend(legText, bbox_to_anchor=(0.625, 1.15), loc=2, title='Time [ms]')
 
 # SAVE
 imgname = imgdir + "shape_principal_evolution"
@@ -254,7 +260,7 @@ plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 ## tIME EVOLUTION OF SHAPE ##
-timeShape = plt.figure(figsize=(4.5,3))
+timeShape = plt.figure(figsize=(4,4))
 
 shape_ax = timeShape.add_subplot(313)
 for i,nn in enumerate(tstepplot):
@@ -284,20 +290,19 @@ var_ax.set_ylabel(r'$P(\Delta)$')
 
 rg_ax = timeShape.add_subplot(311)
 for i,nn in enumerate(tstepplot):
-  y,edges = np.histogram(np.sqrt(data[nn].R2), weights=weights, normed=False)
+  y,edges = np.histogram(data[nn].RoG, weights=weights, normed=False)
   centers = 0.5*(edges[1:] + edges[:-1])
   rg_ax.plot(centers, y, 'ko-', alpha=color[i], linewidth=2.0)
 
 rg_ax.set_ylim([0, 0.3])
 rg_ax.set_yticks([0, 0.1, 0.2, 0.3])
-rg_ax.set_xlabel(r'$R_g$')
+rg_ax.set_xlabel(r'$R_g [mm]$')
 rg_ax.set_ylabel(r'$P(R_g)$')
 
-var_ax.legend(legText, bbox_to_anchor=(0.75, 1.15), loc=2,  title='Time [ms]',
-  framealpha=0.95)
+var_ax.legend(legText, bbox_to_anchor=(1, 0.5), loc=10,  title='Time [ms]')
 
 # SAVE
-#plt.tight_layout()
+plt.tight_layout()
 imgname = imgdir + "shape_measures_evolution"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
