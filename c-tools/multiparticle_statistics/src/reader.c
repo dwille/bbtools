@@ -160,7 +160,13 @@ void init_input_files(void)
   }
 
   merge_sort(partFileTime, nFiles, fileMap);
-  printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
+  if (nFiles == 0) {
+    printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
+    printf("Quitting...\n");
+    exit(EXIT_FAILURE);
+  } else {
+    printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
+  }
   simTime = (double*) malloc(nFiles * sizeof(double));
 }
 
