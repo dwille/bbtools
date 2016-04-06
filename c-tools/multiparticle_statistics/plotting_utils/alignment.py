@@ -75,6 +75,7 @@ plt.rc('figure', titlesize=14)
 plt.rc('figure', figsize=(4,3))
 plt.rc('legend', fontsize=11, numpoints=3)
 plt.rc('lines', markersize=4)
+plt.rc('savefig', dpi=250)
 labelx = -0.30
 
 g_s = plt.figure()

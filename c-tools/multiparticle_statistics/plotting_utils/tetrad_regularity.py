@@ -47,6 +47,7 @@ print "      Sim root directory set to: " + root
 simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
+datadir = root + simdir + "data-tetrads/"
 
 # Check if datadir exists so we don't go creating extra dirs
 if not os.path.exists(datadir):
@@ -59,7 +60,6 @@ imgdir = root + simdir + "/img/"
 if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
-datadir = root + simdir + "data-tetrads/"
 infoFile = datadir + "info.dat"
 
 ## Sort output files and find number within time range
@@ -127,8 +127,8 @@ plt.rc('axes', labelsize=11)
 plt.rc('figure', titlesize=14)
 plt.rc('figure', figsize=(4,3))
 plt.rc('legend', fontsize=11, numpoints=3)
-#plt.rc('legend', framealpha=0.7)
 plt.rc('lines', markersize=4)
+plt.rc('savefig', dpi=250)
 labelx = -0.17
 
 # Initial Timestep

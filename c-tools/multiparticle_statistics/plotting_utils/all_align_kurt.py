@@ -140,6 +140,7 @@ plt.rc('figure', titlesize=14)
 plt.rc('figure', figsize=(4,4))
 plt.rc('legend', fontsize=10, numpoints=3)
 plt.rc('lines', markersize=4, linewidth=1.5)
+plt.rc('savefig', dpi=250)
 labelx = -0.175
 labely = 0.5
 colors = ['r', 'g', 'b', 'k']
