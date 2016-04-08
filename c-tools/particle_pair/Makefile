@@ -22,24 +22,24 @@ CUDALIBS = -L $(CUDA_DIR)/lib64 -lcudart
 SRCC =	main.c 		\
 	reader.c
 
-SRCCUDA = myCuda.cu		\
+SRCCUDA = my_cuda.cu		\
 	  cuda_kernel.cu
 
-EXTRA = Makefile	\
+EXTRA = Makefile		\
 	main.h		\
-	myCuda.h	\
+	cuda_kernel.h		\
 	reader.h
 
 # compile normally:
 # make -g -O2 to optimize
 all: COPT += -O2
 all: CUDAOPT += -O2
-all: phasevel
+all: part-pair
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
 debug: CUDAOPT += -DDEBUG -g
-debug: phasevel
+debug: part-pair
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 OBJSCUDA = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCCUDA))))
@@ -53,8 +53,8 @@ $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 $(SRC_DIR)/bblib.o:$(OBJSCUDA)
 	$(NVCC) $(CUDAOPT) -dlink $+ $(CUDALIBS) -o $(SRC_DIR)/bblib.o
 
-phasevel: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/phasevel
+part-pair: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/part-pair
 
 clean:
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/phasevel
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/part-pair

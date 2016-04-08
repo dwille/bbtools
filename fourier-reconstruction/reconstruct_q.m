@@ -91,7 +91,7 @@ nq_ces = zeros(length(evalZ), length(time));  % cesaro sum
 % If we want volume fraction, calculate conversion
 bk = ones(1,order+1);
 if strcmp(qtype, 'volume fraction') == 1
-  bk(1) = 4/3*pi*dom.r^2; 
+  bk(1) = 4/3*pi*dom.r^2;  % TODO: SHOULD BE PI R^3!!!!!!!!!!!!??
   k_l = 2*pi*[1:order]./dom.zl;
   bk(2:end) = 4*pi./k_l.^3.*(sin(k_l.*dom.r) - k_l.*dom.r.*cos(k_l.*dom.r));
 end
