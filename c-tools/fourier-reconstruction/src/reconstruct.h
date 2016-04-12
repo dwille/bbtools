@@ -44,4 +44,7 @@ void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
 void eval_vfrac(double *vFrac_ces, double nql_even, double nql_odd, 
   double *evalZ, double ell, double k_ell);
 
+// normalize nq by n
+void normalize(double *cesaro_sum, double *norm);
+
 #endif

@@ -218,7 +218,35 @@ void create_output(void) {
   }
   fclose(file);
 
-  // Create eval/time file
+  // part-w coefficients even and odd
+  sprintf(path2file, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  file = fopen(path2file, "w");
+  if (file == NULL) {
+    printf("Could not open file %s\n", path2file);
+  }
+  fclose(file);
+  sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  file = fopen(path2file, "w");
+  if (file == NULL) {
+    printf("Could not open file %s\n", path2file);
+  }
+  fclose(file);
+
+  // part-w coefficients even and odd
+  sprintf(path2file, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  file = fopen(path2file, "w");
+  if (file == NULL) {
+    printf("Could not open file %s\n", path2file);
+  }
+  fclose(file);
+  sprintf(path2file, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  file = fopen(path2file, "w");
+  if (file == NULL) {
+    printf("Could not open file %s\n", path2file);
+  }
+  fclose(file);
+
+  /* Create eval/time file */
   sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_OUT_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
@@ -590,7 +618,71 @@ void show_domain(void)
   printf("  nPoints %d\n", npoints);
 }
 
-// Write data at each timestep
+void write_coeffs(int in)
+{
+  char fnameEven[CHAR_BUF_SIZE] = "";
+  char fnameOdd[CHAR_BUF_SIZE] = "";
+
+  // number density
+  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  FILE *fileEven = fopen(fnameEven, "a");
+  FILE *fileOdd = fopen(fnameOdd, "a");
+  if (fileEven == NULL) {
+    printf("Error opening file %s!\n", fnameEven);
+    exit(EXIT_FAILURE);
+  } else if (fileOdd == NULL) {
+    printf("Error opening file %s!\n", fnameOdd);
+    exit(EXIT_FAILURE);
+  }
+
+  if (in == 0) {            // write constant coeffs
+    int cc = 0 + npoints*tt;
+    fprintf(fileEven, "%lf", 0.5*n_ces[cc]);
+    fprintf(fileOdd, "%lf", 0.5*n_ces[cc]);
+  } else if (in == -1) {    // write the rest
+    for (int i = 1; i <= order; i++) {
+      fprintf(fileEven, " %lf", nl_even[i]);
+      fprintf(fileOdd, " %lf", nl_odd[i]);
+    }
+    fprintf(fileEven, "\n");
+    fprintf(fileOdd, "\n");
+  }
+
+  fclose(fileEven);
+  fclose(fileOdd);
+
+  // part-w coeffs
+  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  fileEven = fopen(fnameEven, "a");
+  fileOdd = fopen(fnameOdd, "a");
+  if (fileEven == NULL) {
+    printf("Error opening file %s!\n", fnameEven);
+    exit(EXIT_FAILURE);
+  } else if (fileOdd == NULL) {
+    printf("Error opening file %s!\n", fnameOdd);
+    exit(EXIT_FAILURE);
+  }
+
+  if (in == 0) {            // write constant coeffs
+    int cc = 0 + npoints*tt;
+    fprintf(fileEven, "%lf", 0.5*nw_ces[cc]);
+    fprintf(fileOdd, "%lf", 0.5*nw_ces[cc]);
+  } else if (in == -1) {    // write the rest
+    for (int i = 1; i <= order; i++) {
+      fprintf(fileEven, " %lf", nwl_even[i]);
+      fprintf(fileOdd, " %lf", nwl_odd[i]);
+    }
+    fprintf(fileEven, "\n");
+    fprintf(fileOdd, "\n");
+  }
+
+  fclose(fileEven);
+  fclose(fileOdd);
+}
+
+// Write reconstructed data
 void write_reconstruct(void)
 {
   char fname[CHAR_BUF_SIZE] = "";

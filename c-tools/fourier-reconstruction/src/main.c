@@ -45,6 +45,9 @@ int main(void)
     const_coeffs(up, nu_ces);
     const_coeffs(vp, nv_ces);
     const_coeffs(wp, nw_ces);
+    
+    // write constant coeffs to file
+    write_coeffs(0);
 
     // Calclate nql, add to cesaro sum
     for (int ll = 1; ll <= order; ll++) {
@@ -68,7 +71,15 @@ int main(void)
       eval_series(nv_ces, nvl_even[ll], nvl_odd[ll], evalZ, ell, k_ell);
       eval_series(nw_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
     }
+    // Normalize nq by n to find q
+    normalize(nu_ces, n_ces);
+    normalize(nv_ces, n_ces);
+    normalize(nw_ces, n_ces);
+
+    // write the rest of the coefficients
+    write_coeffs(-1);
   }
+
 
   // write to file
   write_reconstruct();

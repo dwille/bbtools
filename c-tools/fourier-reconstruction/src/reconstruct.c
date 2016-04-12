@@ -153,5 +153,15 @@ void eval_vfrac(double *vFrac_ces, double nql_even, double nql_odd,
     // Add odd
     vFrac_ces[cc] += weight*correction*nql_odd*sin(k_ell * evalZ[zz]);
   }
+}
 
+// normalize nq by n
+void normalize(double *cesaro_sum, double *norm)
+{
+  for (int zz = 0; zz < npoints; zz++) {
+    int cc = zz + npoints*tt;
+
+    // Normalize
+    cesaro_sum[cc] /= norm[cc];
+  }
 }

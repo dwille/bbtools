@@ -115,7 +115,8 @@ void cgns_fill_parts(void);
 // show binDom and bc structures
 void show_domain(void);
 
-// write each timestep
+// write
+void write_coeffs(int in);
 void write_reconstruct(void);
 
 // Free parts
