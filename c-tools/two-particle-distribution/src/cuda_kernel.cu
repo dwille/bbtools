@@ -173,7 +173,7 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
               j = partInd[target];
               if (j != i) {                   // if its not original part
 
-                /* Find part separation, check for neighbors across boundaries */
+                /* Find part separation, check for periodic neighbors */
                 // X
                 xi = parts[i].x;
                 xj = parts[j].x;

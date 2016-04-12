@@ -57,10 +57,10 @@ void cuda_find_pairs()
   dim3 numBlocks(blocks);
 
   // set up bins and search for tetrads
-  if (nparts < 4) {
+  if (nparts < 2) {
     printf("nparts = %d, no tetrads to find.\n", nparts);
     exit(EXIT_FAILURE);
-  } else if (nparts >= 4) {
+  } else if (nparts >= 2) {
 
     int nBins = binDom.Gcc.s3;
 
