@@ -29,6 +29,10 @@ all: f-reconstruct
 debug: COPT += -DDEBUG -g
 debug: f-reconstruct
 
+# compile with profiler
+profiler: COPT += -pg
+profiler: f-reconstruct
+
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c

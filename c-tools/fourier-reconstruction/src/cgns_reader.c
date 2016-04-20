@@ -498,13 +498,15 @@ void domain_init(void)
   dom.Gcc.s2 = dom.Gcc.jn * dom.Gcc.s1;
   dom.Gcc.s3 = dom.Gcc.kn * dom.Gcc.s2;
 
-  // Calculate order using sampling theorem -- 2 points / wave minimum
+  // Calculate order using sampling theorem -- 1 wave / 1 diameters
   if (order == -1) {
-    order = (int) floor(0.5 * dom.zn);
+    order = (int) floor(dom.zn / (2. * meanR) );
   }
+  printf("Order = %d\n", order);
   // Number of points to reconstruct at
   // Just because we can only resolve xn/2 doesnt mean we should underresolve 
   //  the reconstruction...
+  // TODO: how does this affect?
   npoints = 2*dom.zn + 1;
 
   #ifdef DEBUG

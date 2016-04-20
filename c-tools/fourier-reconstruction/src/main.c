@@ -77,6 +77,7 @@ int main(void)
     normalize(nw_ces, n_ces);
 
     // write the rest of the coefficients
+    // TODO: write once
     write_coeffs(-1);
   }
 

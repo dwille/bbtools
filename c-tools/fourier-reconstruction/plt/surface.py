@@ -10,6 +10,7 @@ print ""
 
 # SIMULATION PARAMETERS
 partR = 2.1
+ts = 500
 
 # DEVEL
 root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/"
@@ -24,6 +25,8 @@ datadir = root + simdir + "data-reconstruct/"
 #datadir = root + simdir + "data-reconstruct/"
 
 print "      Sim root directory set to: " + root
+print "      Particle Radius set to: " + str(partR)
+print "      Steady state index set to: " + str(ts)
 
 # Check if datadir exists so we don't go creating extra dirs
 if not os.path.exists(datadir):
@@ -46,6 +49,9 @@ wpFile = datadir + "part-w"
 
 # Find time and evalZ
 time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+print "      Steady state time set to: " + str(time[ts])
+time = time[ts:] - time[ts]
+nt = np.size(time)
 evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
 
 # Find output data
@@ -69,10 +75,11 @@ labelx = -0.17
 ## NUMBER DENSITY ##
 nDensFig = plt.figure()
 plt.imshow(numDens, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=0, vmax=0.025)
-plt.colorbar(format="%.1e", ticks=[0, 0.005, 0.010, 0.015, 0.020, 0.025])
-plt.xlabel(r'Time [ms]')
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+plt.colorbar(format="%.1e")
+plt.title(r"$n$")
+plt.xlabel(r"$t - t_0$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
 plt.ylabel(r'$z/a$')
 
 imgname = imgdir + "number-density"
@@ -82,11 +89,12 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 ## VOLUME FRACTION ##
 vFracFig = plt.figure()
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=0., vmax=0.5)
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+#  vmin=0., vmax=0.5)
 cbar = plt.colorbar()
-cbar.ax.set_ylabel('Volume Fraction')
-plt.xlabel(r'Time [ms]')
+plt.title(r'$Volume\ Fraction$')
+plt.xlabel(r"$t - t_0$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
 plt.ylabel(r'$z/a$')
 
 imgname = imgdir + "volume-fraction"
@@ -96,10 +104,11 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 ## U_PART ##
 upFig = plt.figure()
 plt.imshow(up, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-1.5e-4, vmax=1.5e-4)
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
 plt.colorbar()
-plt.xlabel(r'Time [ms]')
+plt.title(r"$U_p [mm/ms]$")
+plt.xlabel(r"$t - t_0$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
 plt.ylabel(r'$z/a$')
 
 imgname = imgdir + "part-u"
@@ -109,10 +118,11 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 ## V_PART ##
 vpFig = plt.figure()
 plt.imshow(vp, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-1.5e-4, vmax=1.5e-4)
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
 plt.colorbar()
-plt.xlabel(r'Time [ms]')
+plt.title(r"$V_p [mm/ms]$")
+plt.xlabel(r"$t - t_0$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
 plt.ylabel(r'$z/a$')
 
 imgname = imgdir + "part-v"
@@ -124,8 +134,9 @@ wpFig = plt.figure()
 plt.imshow(wp, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
 cbar = plt.colorbar()
-cbar.ax.set_ylabel(r"$W_p [mm/ms]$")
-plt.xlabel(r'Time [ms]')
+plt.title(r"$W_p [mm/ms]$")
+plt.xlabel(r"$t - t_0$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
 plt.ylabel(r'$z/a$')
 
 imgname = imgdir + "part-w"
