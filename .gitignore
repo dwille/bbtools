@@ -29,6 +29,6 @@ ts_*
 # other
 out
 tetrad.out
-.git_placeholder
+.keep
 *.sh
 sppressions
