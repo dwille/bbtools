@@ -79,6 +79,9 @@ void cuda_save_parts_prev(void);
 // calculate higher order statistics
 void cuda_higher_moments(double *_array, int length, double *moments);
 
+// init cuda threads blocks
+void cuda_init_threads_blocks(int *threads, int *blocks, int length);
+
 // wrap cast to pointer and reduce in one function
 double cuda_sum(double *_array, int N);
 
@@ -89,7 +92,7 @@ void cuda_dev_free(void);
 // Shape Moments
 // m[0] -- mean, m[1] -- sdev
 // m[2] -- skew, m[3] -- kurt
-extern double m_RoG[4];
+extern double m_rSep[4];
 
 // Alignment moments 
 extern double m_g1_s1[4];   // Alignment of principal shape axes with initial 

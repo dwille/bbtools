@@ -26,8 +26,8 @@ BC *_bc;
 pair_struct *pairs;
 pair_struct *_pairs;
 
-double *RoG;
-double *_RoG;
+double *rSep;
+double *_rSep;
 
 // Read main.config input file
 void read_input(void)
@@ -241,7 +241,7 @@ void init_output(void)
     printf("Could not open file %s\n", path2mean);
     exit(EXIT_FAILURE);
   }
-  fprintf(fmean, "time RoG\n");
+  fprintf(fmean, "time rSep\n");
   fclose(fmean);
 
   // open file for reading -- stat.sdev
@@ -250,7 +250,7 @@ void init_output(void)
     printf("Could not open file %s\n", path2sdev);
     exit(EXIT_FAILURE);
   }
-  fprintf(fsdev, "time RoG\n");
+  fprintf(fsdev, "time rSep\n");
   fclose(fsdev);
 
   // open file for reading -- stat.skew
@@ -259,7 +259,7 @@ void init_output(void)
     printf("Could not open file %s\n", path2skew);
     exit(EXIT_FAILURE);
   }
-  fprintf(fskew, "time RoG\n");
+  fprintf(fskew, "time rSep\n");
   fclose(fskew);
 
   // open file for reading -- stat.kurt
@@ -268,7 +268,7 @@ void init_output(void)
     printf("Could not open file %s\n", path2kurt);
     exit(EXIT_FAILURE);
   }
-  fprintf(fkurt, "time RoG\n");
+  fprintf(fkurt, "time rSep\n");
   fclose(fkurt);
 
   /* ALIGN.DAT */
@@ -698,7 +698,7 @@ void domain_init(void)
 void alloc_pair_arrays(void)
 {
   // Size measures
-  RoG = malloc(sizeof(double) * nPairs);
+  rSep = malloc(sizeof(double) * nPairs);
 }
 
 // Show binDom
@@ -898,13 +898,13 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
 
-  fprintf(fdat, "RoG\n");
+  fprintf(fdat, "rSep\n");
 
   for (int i = 0; i < nPairs; i++) {
        // int p3 = nDim * i;    // index for 3-scalar arrays
        // int p9 = nDim2 * i;   // index for 3-vector arrays
         
-        fprintf(fdat, "%lf ", RoG[i]);
+        fprintf(fdat, "%lf ", rSep[i]);
   }
   fclose(fdat);
 
@@ -933,7 +933,7 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
   fprintf(fmean, "%lf ", simTime[tt]);
-  fprintf(fmean, "%lf\n", m_RoG[0]);
+  fprintf(fmean, "%lf\n", m_rSep[0]);
   fclose(fmean);
 
   // sdev
@@ -943,7 +943,7 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
   fprintf(fsdev, "%lf ", simTime[tt]);
-  fprintf(fsdev, "%lf\n", m_RoG[1]);
+  fprintf(fsdev, "%lf\n", m_rSep[1]);
   fclose(fsdev);
 
   // skew
@@ -953,7 +953,7 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
   fprintf(fskew, "%lf ", simTime[tt]);
-  fprintf(fskew, "%lf\n", m_RoG[2]);
+  fprintf(fskew, "%lf\n", m_rSep[2]);
   fclose(fskew);
 
   // kurt
@@ -963,58 +963,58 @@ void write_timestep(void)
     exit(EXIT_FAILURE);
   }
   fprintf(fkurt, "%lf ", simTime[tt]);
-  fprintf(fkurt, "%lf\n", m_RoG[3]);
+  fprintf(fkurt, "%lf\n", m_rSep[3]);
   fclose(fkurt);
 
   /* Print alignment stats */
-  // correct path for multruns
-  if (multRuns == 1) {
-    sprintf(path2mean, "%s/align.mean", runDir);
-    sprintf(path2sdev, "%s/align.sdev", runDir);
-    sprintf(path2skew, "%s/align.skew", runDir);
-    sprintf(path2kurt, "%s/align.kurt", runDir);
-  } else {
-    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_OUT_DIR);
-  }
-
-  // Print mean
-  fmean = fopen(path2mean, "a");
-  if (fmean == NULL) {
-    printf("Could not open file %s\n", path2mean);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(fmean, "%lf ", simTime[tt]);
-  fclose(fmean);
-
-  // Print sdev
-  fsdev = fopen(path2sdev, "a");
-  if (fsdev == NULL) {
-    printf("Could not open file %s\n", path2sdev);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(fsdev, "%lf ", simTime[tt]);
-  fclose(fsdev);
-
-  // Print skew
-  fskew = fopen(path2skew, "a");
-  if (fskew == NULL) {
-    printf("Could not open file %s\n", path2skew);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(fskew, "%lf ", simTime[tt]);
-  fclose(fskew);
-
-  // Print kurt
-  fkurt = fopen(path2kurt, "a");
-  if (fkurt == NULL) {
-    printf("Could not open file %s\n", path2kurt);
-    exit(EXIT_FAILURE);
-  }
-  fprintf(fkurt, "%lf ", simTime[tt]);
-  fclose(fkurt);
+//  // correct path for multruns
+//  if (multRuns == 1) {
+//    sprintf(path2mean, "%s/align.mean", runDir);
+//    sprintf(path2sdev, "%s/align.sdev", runDir);
+//    sprintf(path2skew, "%s/align.skew", runDir);
+//    sprintf(path2kurt, "%s/align.kurt", runDir);
+//  } else {
+//    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_OUT_DIR);
+//    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_OUT_DIR);
+//    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_OUT_DIR);
+//    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_OUT_DIR);
+//  }
+//
+//  // Print mean
+//  fmean = fopen(path2mean, "a");
+//  if (fmean == NULL) {
+//    printf("Could not open file %s\n", path2mean);
+//    exit(EXIT_FAILURE);
+//  }
+//  fprintf(fmean, "%lf ", simTime[tt]);
+//  fclose(fmean);
+//
+//  // Print sdev
+//  fsdev = fopen(path2sdev, "a");
+//  if (fsdev == NULL) {
+//    printf("Could not open file %s\n", path2sdev);
+//    exit(EXIT_FAILURE);
+//  }
+//  fprintf(fsdev, "%lf ", simTime[tt]);
+//  fclose(fsdev);
+//
+//  // Print skew
+//  fskew = fopen(path2skew, "a");
+//  if (fskew == NULL) {
+//    printf("Could not open file %s\n", path2skew);
+//    exit(EXIT_FAILURE);
+//  }
+//  fprintf(fskew, "%lf ", simTime[tt]);
+//  fclose(fskew);
+//
+//  // Print kurt
+//  fkurt = fopen(path2kurt, "a");
+//  if (fkurt == NULL) {
+//    printf("Could not open file %s\n", path2kurt);
+//    exit(EXIT_FAILURE);
+//  }
+//  fprintf(fkurt, "%lf ", simTime[tt]);
+//  fclose(fkurt);
 }
 
 // Free parts
@@ -1030,5 +1030,5 @@ void free_parts(void)
   free(partFileTime);
   free(simTime);
 
-  free(RoG);
+  free(rSep);
 }

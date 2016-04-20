@@ -78,16 +78,14 @@ __global__ void bin_start(int *binStart, int *binEnd, int *partBin, int nparts)
 
 __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom, 
   BC bc, int *binStart, int *binEnd, int *partBin, int *partInd, 
-  dom_struct *binDom, int *neighborList, int *neighborCount, int nMax, 
-  double R0_a, double eps_a, double rmax)
+  dom_struct *binDom, int *partI, int *partJ, int *keepIJ, int *iMatches,
+  int *initFlipCount, int nMax, double R0_a, double eps_a, double rmax)
 {
   int index = threadIdx.x + blockIdx.x*blockDim.x;
-  double r2, minR, maxR;
-  double rx, ry, rz;  // separation distances
-  int inRange;
 
   if (index < nparts) {
     int i = partInd[index];
+    /* NBODY variables */
     int bin = partBin[index];
 
     int kbin = floorf(bin/binDom->Gcc.s2);
@@ -99,7 +97,29 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
     int adjBin, adjStart, adjEnd;         // adjacent bin stuff
     int iStride, kStride, jStride;        // how to get to Sesame Street
 
-    int cc = 0;                           // counter for inner neighborlist
+    /* Particle pair variables */
+    // Initialize all
+    for (int aa = 0; aa < nMax; aa++) {
+      partI[aa + nMax*i] = i;             // fill partI with i
+      partJ[aa + nMax*i] = -1;
+      keepIJ[aa + nMax*i] = 0;
+      initFlipCount[0 + 3*aa + nMax*i] = 0;
+      initFlipCount[1 + 3*aa + nMax*i] = 0;
+      initFlipCount[2 + 3*aa + nMax*i] = 0;
+    }
+    iMatches[i] = 0;
+    int cc = 0;                              // counter for filling arrays
+
+    double ri[3], rj[3];                     // i, j positions
+    double rx, ry, rz, r2;                   // i, j separations
+    double minR0 = rmax*rmax*(R0_a - eps_a)*(R0_a - eps_a); // tolerance
+    double maxR0 = rmax*rmax*(R0_a + eps_a)*(R0_a + eps_a); // tolerance
+    int inRange;                             // meets tolerance
+    
+    // tmp variables for init flip
+    int flipX = 0., flipY = 0., flipZ = 0.;  // tmp holder for init flip
+    double dx, dx2, flipL, flipR;
+    int flipFlag;
 
     // predefine face locations 
     // -1, -2 due to local vs global indexing and defiinition of dom_struct
@@ -169,26 +189,54 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
             for (target = adjStart; target < adjEnd; target++) {
               j = partInd[target];
               
-              // Calculate distance
-              rx = parts[i].x - parts[j].x;
-              ry = parts[i].y - parts[j].y;
-              rz = parts[i].z - parts[j].z;
+              // check for neighbors when using periodic boundaries
+              #define flip(s1,s2,l,i,count) \
+                {dx = s1[i] - s2[i]; \
+                 dx2 = dx*dx; \
+                 flipL = s1[i] - (s2[i] + l); \
+                 flipR = s1[i] - (s2[i] - l); \
+                 flipFlag = (flipL*flipL < dx2) - (flipR*flipR < dx2); \
+                 s2[i] += l*(flipFlag); \
+                 count += flipFlag; }
 
+              // Pull positions
+              ri[0] = parts[i].x; ri[1] = parts[i].y; ri[2] = parts[i].z;
+              rj[0] = parts[j].x; rj[1] = parts[j].y; rj[2] = parts[j].z;
+
+              // Determine if particles are over periodic boundary
+              // increment appropriate tmp counter if so
+              flip(ri, rj, dom->xl, 0, flipX);
+              flip(ri, rj, dom->yl, 1, flipY);
+              flip(ri, rj, dom->zl, 2, flipZ);
+
+              // separation in x,y,z and r2
+              rx = ri[0] - rj[0];
+              ry = ri[1] - rj[1];
+              rz = ri[2] - rj[2];
               r2 = rx*rx + ry*ry + rz*rz;
-              minR = rmax*rmax*(R0_a + eps_a)*(R0_a + eps_a);
-              maxR = rmax*rmax*(R0_a - eps_a)*(R0_a - eps_a);
-
-              inRange = (r2 < maxR) && (r2 > minR);
 
               // If particles are different and separation is in range
+              inRange = (r2 < maxR0) && (r2 > minR0);
               if (j != i && inRange == 1) {
+                int stride = i*nMax + cc;    // counter for partI,J arrays
 
-                // Add particle j to neighborList
-                int nStride = i*nMax + cc;    // increment a counter
-                neighborList[nStride] = j;
-                neighborCount[i]++;
+                // Add particle j to partI/partJ -- sort
+                partI[stride] = i*(i < j) + j*(j < i);
+                partJ[stride] = i*(i > j) + j*(j > i);
+                keepIJ[stride] = 1;
+                iMatches[i] += 1;
+
+                // account for periodicity
+                int sX = 0 + 3*cc + i*nMax;
+                int sY = 1 + 3*cc + i*nMax;
+                int sZ = 2 + 3*cc + i*nMax;
+                initFlipCount[sX] += flipX;
+                initFlipCount[sY] += flipY;
+                initFlipCount[sZ] += flipZ;
+
                 cc++;
               }
+              #undef flip
             }
           }
         }
@@ -196,6 +244,8 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
     }
   }
 }
+
+__global__ void find_strides(int *keepIJ, int *strides, int nparts, int nMax);
 
 __global__ void choose2(int *neighborCount, int *nChoose2, int nparts)
 {
@@ -426,30 +476,21 @@ __global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
 }
 
 __global__ void pair_statistics(part_struct *parts, pair_struct *pairs,
-  dom_struct *dom, double *RoG, int nPairs, int tt)
+  dom_struct *dom, double *rSep, int nPairs, int tt)
 {
   int p = threadIdx.x + blockIdx.x*blockDim.x;
 
   /* Tetrahedron Geometry Variables */
-  double XCM = 0;       // Tetrad center of mass -- x
-  double YCM = 0;       // Tetrad center of mass -- y
-  double ZCM = 0;       // Tetrad center of mass -- x
-  double r1[nDim];      // Node 1 relative coordinates
-  double r2[nDim];      // Node 2 relative coordinates
-
-  /* Shape Tensor Variables */
-  double R2;       // Square of radius of gyration and 1/
+  double r1[3], r2[3];        // position of particles post flip
+  double rx, ry, rz;    // separation of particles
 
   /* Velocity variables */
-  double UCM = 0;       // Tetrad center of vel -- u
-  double VCM = 0;       // Tetrad center of vel -- v
-  double WCM = 0;       // Tetrad center of vel -- w
-  double u1[nDim];      // Node 1 relative vel
-  double u2[nDim];      // Node 2 relative vel
+ // double u1[nDim];      // Node 1 relative vel
+ // double u2[nDim];      // Node 2 relative vel
 
   /* Misc */
   int N1, N2;           // pair nodes
-//  int nrot;             // number of jacobi rotations
+//int nrot;             // number of jacobi rotations
 
   if (p < nPairs) {
     /*  POSITION  */
@@ -471,110 +512,21 @@ __global__ void pair_statistics(part_struct *parts, pair_struct *pairs,
     r2[1] += dom->yl * pairs[p].N2_initFlip_Y;
     r2[2] += dom->zl * pairs[p].N2_initFlip_Z;
 
-    // Calculate pair center of mass
-    XCM = 0.5*(r1[0] + r2[0]);
-    YCM = 0.5*(r1[1] + r2[1]);
-    ZCM = 0.5*(r1[2] + r2[2]);
-
-    // Relate nodes to center of mass
-    r1[0] -= XCM;
-    r1[1] -= YCM;
-    r1[2] -= ZCM;
-            
-    r2[0] -= XCM;
-    r2[1] -= YCM;
-    r2[2] -= ZCM;
-
-    // Length
-    R2 = 1.;
-    RoG[p] = sqrt(R2);
-
-    // Calculate pair center of vel
-    UCM = 0.5*(parts[N1].u + parts[N2].u);
-    VCM = 0.5*(parts[N1].v + parts[N2].v);
-    WCM = 0.5*(parts[N1].w + parts[N2].w);
+    // separation distance
+    rx = r1[0] - r2[0];
+    ry = r1[1] - r2[1];
+    rz = r1[2] - r2[2];
+    rSep[p] = sqrt(rx*rx + ry*ry + rz*rz);
 
     // Relate nodes to center of vel
-    u1[0] = parts[N1].u - UCM;
-    u1[1] = parts[N1].v - VCM;
-    u1[2] = parts[N1].w - WCM;
+  //  u1[0] = parts[N1].u;
+  //  u1[1] = parts[N1].v;
+  //  u1[2] = parts[N1].w;
 
-    u2[0] = parts[N2].u - UCM;
-    u2[1] = parts[N2].v - VCM;
-    u2[2] = parts[N2].w - WCM;
+  //  u2[0] = parts[N2].u;
+  //  u2[1] = parts[N2].v;
+  //  u2[2] = parts[N2].w;
   }
-}
-
-__global__ void matrixTests(void)
-{
-  // TEST MATRIX FUNCTIONS
-    double A[9];
-    double a_in[9];
-    double B[9];
-    double R[9];
-    double invA[9];
-    double d[3];
-    double v[9];
-    int nrot = 0;
-
-  // INITIALIZE MATRICES
-    A[0] = 0.1875; A[1] = -0.0625; A[2] = -0.0625; 
-    A[3] = -0.0625; A[4] = 0.1875; A[5] = -0.0625;
-    A[6] = -0.0625; A[7] = -0.0625; A[8] = 0.1875;
-
-    B[0] = 2; B[1] = 6; B[2] = 1; 
-    B[3] = 2; B[4] = 6; B[5] = 1;
-    B[6] = 2; B[7] = 6; B[8] = 1;
-
-    R[0] = 0.; R[1] = 0.; R[2] = 0.; 
-    R[3] = 0.; R[4] = 0.; R[5] = 0.;
-    R[7] = 0.; R[7] = 0.; R[8] = 0.;
-
-    invA[0] = 0.; invA[3] = 0.; invA[6] = 0.; 
-    invA[1] = 0.; invA[4] = 0.; invA[7] = 0.;
-    invA[2] = 0.; invA[5] = 0.; invA[8] = 0.;
-
-    d[0] = 0.; d[1] = 0.; d[2] = 0.; 
-
-    v[0] = 0.; v[1] = 0.; v[2] = 0.; 
-    v[1] = 0.; v[4] = 0.; v[5] = 0.;
-    v[2] = 0.; v[7] = 0.; v[8] = 0.;
-    
-
-    // Copy input matrix
-    for (int i = 0; i < 3; i++) {
-      for (int j = 0; j < 3; j++) {
-        a_in[3*i + j] = A[3*i + j];
-      }
-    }
-
-    matrixInverse3(A, invA);
-    matrixMult3(A, B, R);
-
-    jacobiEig3(a_in, d, v, &nrot);
-
-    printf("A = %lf, %lf, %lf\n\
-    %lf, %lf, %lf,\n\
-    %lf, %lf, %lf\n", A[0], A[1], A[2],
-         A[3], A[4], A[5], A[6], A[7], A[8]);
-
-    printf("invA = %lf, %lf, %lf\n\
-       %lf, %lf, %lf,\n\
-       %lf, %lf, %lf\n", invA[0], invA[1], invA[2],
-         invA[3], invA[4], invA[5], invA[6], invA[7], invA[8]);
-
-    printf("R = %lf, %lf, %lf\n\
-    %lf, %lf, %lf,\n\
-    %lf, %lf, %lf\n", R[0], R[1], R[2],
-         R[3], R[4], R[5], R[6], R[7], R[8]);
-
-    printf("d = %lf, %lf, %lf; nrot = %d\n", d[0], d[1], d[2], nrot);
-
-    printf("v = %lf, %lf, %lf\n\
-    %lf, %lf, %lf,\n\
-    %lf, %lf, %lf\n", v[0], v[1], v[2],
-                      v[3], v[4], v[5], 
-                      v[6], v[7], v[8]);
 }
 
 __device__ void periodic_flip(double *r1, double *r2, pair_struct *pairs, 
@@ -619,235 +571,18 @@ __device__ void periodic_flip(double *r1, double *r2, pair_struct *pairs,
   #undef flip
 }
 
-__device__ double matrixDet3(double *A)
-{
-  double detA;
-  detA = A[0]*(A[8]*A[4] - A[5]*A[7])
-       - A[3]*(A[8]*A[1] - A[2]*A[7])
-       + A[6]*(A[5]*A[1] - A[2]*A[4]);
-
-  return detA;
-}
-
-__device__ double matrixTrace3(double *A)
-{
-  double trace = 0;
-  for (int i = 0; i < 3; i++) {
-    trace += A[nDim*i + i];
-  }
-  return trace;
-}
-
-__device__ double matrixSquaredTrace3(double *A)
-{
-  // computes trace(A^2) by first calculating A^2
-  double A2[9] = {0,0,0,0,0,0,0,0,0};
-
-  matrixMult3(A,A,A2);
-
-  double trace = matrixTrace3(A2);
-
-  return trace;
-}
-
-__device__ void matrixInverse3(double *A, double *invA)
-{
-  //     | A11 A12 A13 |   | A[0] A[1] A[2] |
-  // A = | A21 A22 A23 | = | A[3] A[4] A[5] |
-  //     | A31 A32 A33 |   | A[6] A[7] A[8] |
-  double detA = matrixDet3(A);
-
-  double invDETA = 1./detA;             
-
-  // If it's bigger than this, the matrix is probably singular
-  // 1 if okay, 0 if not
-  int detCheck = (invDETA < 1e10);
-
-  invA[0] = A[8]*A[4] - A[5]*A[7];
-  invA[1] = -(A[8]*A[3] - A[6]*A[5]);
-  invA[2] = A[7]*A[3] - A[6]*A[4];
-  invA[3] = -(A[8]*A[1] - A[7]*A[2]);
-  invA[4] = A[8]*A[0] - A[2]*A[6];
-  invA[5] = -(A[7]*A[0] - A[1]*A[6]);
-  invA[6] = A[5]*A[1] - A[4]*A[2];
-  invA[7] = -(A[5]*A[0] - A[3]*A[2]);
-  invA[8] = A[4]*A[0] - A[1]*A[3];
-
-  for (int i = 0; i < 9; i++) {
-    invA[i] *= detCheck*invDETA;
-  }
-}
-
-__device__ void matrixMult3(double *A, double *B, double *R)
-{
-  // R = A*B
-  // Rij = Aim*Bmj
-  for (int i = 0; i < 3; i++) {
-    for (int j = 0; j < 3; j++) {
-      R[3*i + j] = 0;
-      for (int m = 0; m < 3; m++) {
-        R[3*i + j] += A[3*i + m]*B[3*m + j];
-      }
-    }
-  }
-}
-
-__device__ void jacobiEig3(double *a, double *d, double *v, int *nrot)
-{
-  // Modified from Numerical Recipes
-  int i,j,ip,iq;
-  double thresh, theta, tau, t, sm, s, h, g, c;
-  int n = 3;
-  double b[3], z[3];
-
-  // Initialize v to identity
-  for (ip = 0; ip < n; ip++) {
-    for (iq = 0; iq < n; iq++) {
-      v[3*ip + iq] = (ip == iq);
-    }
-  }
-
-  // Intialize b,d to diagonal of a; z to 0
-  for (ip = 0; ip < n; ip++) {
-    b[ip] = a[3*ip + ip];
-    d[ip] = a[3*ip + ip];
-    z[ip] = 0.;
-  }
-
-  // Main loop
-  for (i = 1; i < 50; i++) {
-    sm = 0.0;
-    // Sum magnitude of off-diagonal elements of a
-    for (ip = 0; ip < n-1; ip++) {
-      for (iq = ip + 1; iq < n; iq++) {
-        sm += abs(a[3*ip + iq]);
-      }
-    }
-
-    // Normal return, relies on quadratic convergence to machine underflow
-    if (sm == 0.0) {
-      eigsrt(d,v);
-      return;
-    }
-
-    if (i < 4) {
-      thresh = 0.2*sm/(n*n);    // On first 3 sweeps...
-    } else {
-      thresh = 0.;               // ...thereafter
-    }
-
-    for (ip = 0; ip < n - 1; ip++) {
-      for (iq = ip + 1; iq < n; iq++) {
-        g = 100.0*abs(a[3*ip + iq]);
-
-        // After 4 sweeps, skip the rotation if the off-diagonal element is sm.
-        if (i > 4 && g <= DBL_EPSILON*abs(d[ip]) && g <= DBL_EPSILON*abs(d[iq])) {
-          a[3*ip + iq] = 0; 
-        } else if (abs(a[3*ip + iq]) > thresh) {
-          h = d[iq] - d[ip];
-          if (g <= DBL_EPSILON*abs(h)) {
-            t = a[3*ip + iq]/h;   // t = 1/(2theta)
-          } else {
-            theta = 0.5*h/a[3*ip + iq];
-            t = 1.0/(abs(theta) + sqrt(1.0 + theta*theta));
-            if (theta < 0.0) {
-              t = -t;
-            }
-          }
-          c = 1.0/sqrt(1.0 + t*t);
-          s = t*c;
-          tau = s/(1.0 + c);
-          h = t*a[3*ip + iq];
-          z[ip] -= h;
-          z[iq] += h;
-          d[ip] -= h;
-          d[iq] += h;
-          a[3*ip + iq] = 0.0;
-          for (j = 0; j < ip; j++) {  // Case 0 <= j < p
-            rot(a,s,tau,j,ip,j,iq);
-          }
-          for (j = ip + 1; j < iq; j++) {  // Case p < j < q
-            rot(a,s,tau,ip,j,j,iq);
-          }
-          for (j = iq + 1; j < n; j++) {  // Case q < j < n
-            rot(a,s,tau,ip,j,iq,j);
-          }
-          for (j = 0; j < n; j++) {  // Case 0 <= j < p
-            rot(v,s,tau,j,ip,j,iq);
-          }
-          (*nrot)++;
-        }
-      }
-    }
-
-    // Update d with sum of t*a_pq and reinit z
-    for (ip = 0; ip < n; ip++) {
-      b[ip] += z[ip];
-      d[ip] = b[ip];
-      z[ip] = 0.0;
-    }
-  }
-//  //printf("Too many iterations in routine jacobi\n");
-//  //return EXIT_FAILURE;
-}
-
-// rotation kernel
-__device__ void rot(double *a, double s, double tau, int i, int j, int k, 
-  int l)
-{
-  double g = a[3*i + j];
-  double h = a[3*k + l];
-  a[3*i + j] = g - s*(h + g*tau);
-  a[3*k + l] = h + s*(g - h*tau);
-}
-
-// sort eigen values and eigenvectors into descending order
-__device__ void eigsrt(double *d, double *v)
-{
-  int k;
-  int n = 3;
-  double p;
-
-  // Loop over all eigenvalues (find max)
-  for (int i = 0; i < n - 1; i++) {
-    k = i;      // Index of currEig
-    p = d[k];   // Value of currEig
-
-    // Loop over all other eigenvalues
-    for (int j = i; j < n; j++) {
-
-      // If targetEig > currEig
-      if (d[j] >= p) {
-        k = j;      // Index of targetEig
-        p = d[k];   // Value of targetEig
-      }
-    }
-
-    // If we've found a targetEig > currEig
-    if (k != i) {
-      d[k] = d[i];  // Set value of targetEig to currEig
-      d[i] = p;     // Set value of currEig to targetEig
-
-      // Arrange eigenvectors
-      for (int j = 0; j < n; j++) {
-        p = v[3*j + i];
-        v[3*j + i] = v[3*j + k];
-        v[3*j + k] = p;
-      }
-    }
-  }
-}
-
 __global__ void higher_moments_kernel(double *array, double mean, int length,
-  double *diff, double *diff2, double *skew, double *kurt)
+  double *sum2, double *skew, double *kurt) //double *diff, double *diff2)
 {
   int n = threadIdx.x + blockIdx.x*blockDim.x;
+  double diff, diff2;
 
   if (n < length) {
-    diff[n] = array[n] - mean;    // xi - x_bar
-    diff2[n] = diff[n]*diff[n];   // (xi - x_bar)^2
-    skew[n] = diff2[n]*diff[n];   // (xi - x_bar)^3
-    kurt[n] = diff2[n]*diff2[n];  // (xi - xbar)^4
+    sum2[n] = array[n]*array[n];  // xi*xi
+    diff = array[n] - mean;    // xi - x_bar
+    diff2 = diff*diff;         // (xi - x_bar)^2
+    skew[n] = diff2*diff;      // (xi - x_bar)^3
+    kurt[n] = diff2*diff2;     // (xi - xbar)^4
   } 
 }
 

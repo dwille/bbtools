@@ -87,6 +87,6 @@ int main(void)
   return EXIT_SUCCESS;
 }
 
-double m_RoG[4];
+double m_rSep[4];
 double m_g1_s1[4];  // Alignment of principal shape axes with initial 
 double *_g1_s1;   // Alignment of principal shape axes with initial strain axes

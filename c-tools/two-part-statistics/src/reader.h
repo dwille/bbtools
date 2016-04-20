@@ -122,8 +122,8 @@ extern pair_struct *pairs;
 extern pair_struct *_pairs;
 
 // Host and Dev pair data
-extern double *RoG;
-extern double *_RoG;
+extern double *rSep;        // pair separation distance
+extern double *_rSep;
 
 /**** FUNCTIONS ****/
 // read main.config input file
