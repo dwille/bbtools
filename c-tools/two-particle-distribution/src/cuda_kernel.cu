@@ -116,7 +116,7 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
     double rx1, ry1, rz1;
     double rx2, ry2, rz2;
     double rx, ry, rz;
-    double r_ij, mu_ij;
+    double r_ij, r2_ij, mu_ij;
 
     // loop over adjacent bins and take care of periodic conditions 
     for (n = -1; n <= 1; n++) {
@@ -180,7 +180,7 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
                 rx = xi - xj;
                 // check and correct for separation
                 rx1 = xi - (xj + dom->xl);
-                rx1 = xi - (xj - dom->xl);
+                rx2 = xi - (xj - dom->xl);
                 rx = rx1*(rx1*rx1 < rx*rx) + rx2*(rx2*rx2 < rx*rx);
                 rx = (bc.pW == PERIODIC)*rx + (bc.pW != PERIODIC)*(xi - xj);
                 
@@ -190,7 +190,7 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
 
                 // check and correct for separation
                 ry1 = yi - (yj + dom->yl);
-                ry1 = yi - (yj - dom->yl);
+                ry2 = yi - (yj - dom->yl);
                 ry = ry1*(ry1*ry1 < ry*ry) + ry2*(ry2*ry2 < ry*ry);
                 ry = (bc.pS == PERIODIC)*ry + (bc.pS != PERIODIC)*(yi - yj);
 
@@ -200,16 +200,18 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
                 rz = zi - zj;
                 // check and correct for separation
                 rz1 = zi - (zj + dom->zl);
-                rz1 = zi - (zj - dom->zl);
+                rz2 = zi - (zj - dom->zl);
                 rz = rz1*(rz1*rz1 < rz*rz) + rz2*(rz2*rz2 < rz*rz);
                 rz = (bc.pB == PERIODIC)*rz + (bc.pB != PERIODIC)*(zi - zj);
 
                 // corrected separation
-                r_ij = sqrt(rx*rx + ry*ry + rz*rz);
+                r2_ij = rx*rx + ry*ry + rz*rz;
+                r_ij = sqrt(r2_ij);
 
                 // angle mu = cos(th) = z/r -- TODO: symmetric over pi/2?
                 mu_ij = rz/r_ij;
 
+                // TODO: r > r0?
                 // Loop over L, N
                 for (int enn = 0; enn < orderN; enn++) {
                     kn = enn*PI/L
@@ -217,7 +219,8 @@ __global__ void find_nodes(part_struct *parts, int nparts, dom_struct *dom,
                     // Calculate coefficients for g_ln
                     // Calculate P_l(mu)
                     P_ell = eval_legendre_poly(mu_ij, ell)
-                    // Calculate kernel, p_l(mu)/r^2*sin(kn
+                    // Calculate kernel, p_l(mu)/r^2
+                    kernel = P_ell/r2_ij;
                   }
                 }
 
@@ -240,4 +243,6 @@ __device__ double eval_legendre_poly(double mu_ij, int ell)
     p2 = p1;
     p1 = ((2.*j + 1.)*mu*p2 - j*p3)/(j + 1.);
   }
+  // p1 has answer
+  return p1;
 }
