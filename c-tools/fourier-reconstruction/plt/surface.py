@@ -35,7 +35,7 @@ if not os.path.exists(datadir):
   sys.exit()
 
 # Create imgdir if necessary
-imgdir = root + simdir + "/img/"
+imgdir = root + simdir + "img/"
 if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
@@ -142,5 +142,3 @@ plt.ylabel(r'$z/a$')
 imgname = imgdir + "part-w"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-
-

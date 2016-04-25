@@ -2,21 +2,41 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import sys, os
 os.system('clear')
 
 ## GET INFO
-print "   Phase-Averaged Fluid Velocity Plotting Utility"
+print " ---- Phase-Averaged Fluid Velocity Plotting Utility ---- "
 print ""
+
+# DEVEL
+#root = "/home/dwille/bbtools/c-tools/phase-averaged-velocity/"
+#simdir = "sim/"
+#datadir = root + simdir + "data-reconstruct/"
+
+# MARCC
 root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-print "Root directory set to: " + root
-simdir = raw_input("Simulation directory: ")
+simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
-dataFile = root + simdir + "data/phaseAveragedVel"
-print ""
-print "Using location: " + dataFile
+datadir = root + simdir + "data/"
 
+print "      Sim root directory set to: " + root
+print "      Using location: " + datadir
+
+# Check if datadir exists so we don't go creating extra dirs
+if not os.path.exists(datadir):
+  print "      " + datadir + " does not exist. Exiting..."
+  print ""
+  sys.exit()
+
+# Create imgdir if necessary
+imgdir = root + simdir + "img/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
+# Set up output file paths
+dataFile = datadir + "phaseAveragedVel"
 
 time = np.genfromtxt(dataFile, skip_header=1, usecols=0)
 uf = np.genfromtxt(dataFile, skip_header=1, usecols=1)
