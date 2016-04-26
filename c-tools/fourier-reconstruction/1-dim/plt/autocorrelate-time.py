@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
 
+os.system('clear')
+
 # stackoverflow 16044491 statistical scaling of autocorrelation using numpy.fft
 def AutoCorrelation(x):
   x = np.asarray(x)
@@ -67,11 +69,11 @@ vpFile = datadir + "part-v"
 wpFile = datadir + "part-w"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] #/ partR
 nz = np.size(evalZ)
 
 # Find output data -- each column is a different time
@@ -82,14 +84,14 @@ vp = np.genfromtxt(vpFile).T[:,ts:]
 wp = np.genfromtxt(wpFile).T[:,ts:]
 
 # Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-#plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=2)
-plt.rc('savefig', dpi=250)
+#plt.rc('xtick', labelsize=10)
+#plt.rc('ytick', labelsize=10)
+#plt.rc('axes', labelsize=11)
+##plt.rc('figure', titlesize=14)
+#plt.rc('figure', figsize=(4,3))
+#plt.rc('legend', fontsize=11, numpoints=3)
+#plt.rc('lines', markersize=2)
+#plt.rc('savefig', dpi=250)
 labelx = -0.17
 
 # Autocorrelation of volume fraction
@@ -122,8 +124,9 @@ for zz, zval in enumerate(evalZ):
 tauVal = np.mean(vfFirstMaxima[:,0])
 tauMean = np.mean(vfFirstMaxima[:,2])
 print ""
-print "      Mean = %.2f at tau = %.2f" % (tauVal, tauMean)
+print "      Mean = %.2f at tau = %.4f" % (tauMean, tauVal)
 print "      omega = 2pi/tau = %.4f" % (2.*np.pi/tauVal)
+print "      Freq = 1/tau = %.4f" % (1./tauVal)
 
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
@@ -132,14 +135,15 @@ plt.colorbar()
 plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
 
 plt.plot([tauVal, tauVal], [evalZ[0], evalZ[-1]], 'k:')
-txtString = r"$\bar \tau = %.2f$" % tauVal
-plt.text(1000, 0, txtString, fontsize=12)
+txtString = r"$\bar \tau = %.4f$" % tauVal
+plt.text(1, 0, txtString, fontsize=12)
 
-plt.xlabel(r"$\tau$")
-plt.ylabel(r"$z/a$",rotation=0)
+plt.xlabel(r"$\tau\ [s]$")
+plt.ylabel(r"$z\ [mm]$",rotation=0)
 plt.title(r"$\langle \alpha(t) \alpha(t + \tau) \rangle $")
 plt.xlim([time[0], time[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+plt.ylim([evalZ[0], evalZ[-1]])
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
 imgname = imgdir + "autocorr-time-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -166,13 +170,14 @@ for zz, zval in enumerate(evalZ):
 plt.imshow(wpAutoCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
 plt.colorbar()
-plt.plot(wpMaxima[:,0], wpMaxima[:,1], 'ko--')
+plt.plot(wpMaxima[:,0], wpMaxima[:,1], 'k--')
 
-plt.xlabel(r"$\tau$")
-plt.ylabel(r"$z/a$",rotation=0)
+plt.xlabel(r"$\tau\ [s]$")
+plt.ylabel(r"$z\ [mm]$",rotation=0)
 plt.title(r"$\langle w_p(t) w_p(t + \tau) \rangle $")
 plt.xlim([time[0], time[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+plt.ylim([evalZ[0], evalZ[-1]])
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
 imgname = imgdir + "autocorr-time-wp"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

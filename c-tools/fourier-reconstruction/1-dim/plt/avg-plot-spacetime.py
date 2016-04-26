@@ -47,11 +47,11 @@ infoFile = datadir + "info"
 vfSaveFile = datadir + "z-averaged-vfrac-xcorr"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] #/ partR
 nz = np.size(evalZ)
 dz = evalZ - evalZ[0]
 
@@ -76,7 +76,7 @@ for zz in np.arange(0,nz):
 # Find slope of maxima -- wavespeed
 for zz in np.arange(1,nz):
   # if the time changes drastically, cut the array
-  if np.abs(vfFirstMaxima[zz,0] - vfFirstMaxima[zz-1,0]) > 100:
+  if np.abs(vfFirstMaxima[zz,0] - vfFirstMaxima[zz-1,0]) > .100:
     firstWave = vfFirstMaxima[0:zz-1,:]
 
 tau = firstWave[:,0]
@@ -94,17 +94,6 @@ p, _, _, _ = np.linalg.lstsq(tau, dzMax)
 xFit = firstWave[:,0]
 yFit = p[0,0]*xFit
 
-# Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-#plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=2)
-plt.rc('savefig', dpi=250)
-labelx = -0.17
-
 ## PLOTTING ##
 # Volume Fraction
 vfFig = plt.figure()
@@ -114,28 +103,32 @@ plt.colorbar()
 plt.plot(firstWave[:,0], firstWave[:,1], 'ko', markevery=25, 
   markerfacecolor="None")
 plt.plot(xFit, yFit, '--')
-txtString = r"$slope = %.4f$" % p[0,0]
-plt.text(xFit[-1], yFit[-1], txtString, fontsize=12)
+cTxtString = r"$dz = %.4f\tau$" % p[0,0]
+plt.text(xFit[-1], yFit[-1], cTxtString, fontsize=12)
 
-plt.xlabel(r"$\tau$")
+plt.xlabel(r"$\tau\ [s]$")
 plt.xlim([0, time[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r"$dz / a$", rotation=0)
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
+
+plt.ylabel(r"$dz\ [mm]$", rotation=0)
+plt.ylim([dz[0], dz[-1]])
+
+
 plt.title(r"$\langle \alpha(t,z) \alpha(t + \tau, z + \Delta z) \rangle$")
 
 imgname = imgdir + "avg-crosscorr-spacetime-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 
-# Particle vertical velocity
-wpFig = plt.figure()
-plt.imshow(wpCrossCorr, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], dz[0], dz[-1]])
-plt.colorbar()
-
-plt.xlabel(r"$\tau$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r"$dz / a$", rotation=0)
-plt.title(r"$\langle w_p(t,z) w_p(t + \tau, z + \Delta z) \rangle$")
-
-imgname = imgdir + "avg-crosscorr-spacetime-wp"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# # Particle vertical velocity
+# wpFig = plt.figure()
+# plt.imshow(wpCrossCorr, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], dz[0], dz[-1]])
+# plt.colorbar()
+# 
+# plt.xlabel(r"$\tau\ [s]$")
+# plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
+# plt.ylabel(r"$dz\ [mm]$", rotation=0)
+# plt.title(r"$\langle w_p(t,z) w_p(t + \tau, z + \Delta z) \rangle$")
+# 
+# imgname = imgdir + "avg-crosscorr-spacetime-wp"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

@@ -72,12 +72,12 @@ vpFile = datadir + "part-v"
 wpFile = datadir + "part-w"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 print "      Steady state time set to: " + str(time[ts])
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] # / partR
 nz = np.size(evalZ)
 dz = evalZ - evalZ[0]
 

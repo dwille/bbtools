@@ -68,31 +68,20 @@ vpFile = datadir + "part-v"
 wpFile = datadir + "part-w"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] # / partR
 nz = np.size(evalZ)
 dz = evalZ - evalZ[0]
 
 # Find output data -- each column is a different time
-numDens = np.genfromtxt(nDensFile).T[:,ts:]
+#numDens = np.genfromtxt(nDensFile).T[:,ts:]
 vFrac = np.genfromtxt(vFracFile).T[:,ts:]
-up = np.genfromtxt(upFile).T[:,ts:]
-vp = np.genfromtxt(vpFile).T[:,ts:]
+#up = np.genfromtxt(upFile).T[:,ts:]
+#vp = np.genfromtxt(vpFile).T[:,ts:]
 wp = np.genfromtxt(wpFile).T[:,ts:]
-
-# Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-#plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=2)
-plt.rc('savefig', dpi=250)
-labelx = -0.17
 
 # Autocorrelation of volume fraction
 vfFig = plt.figure()
@@ -127,12 +116,12 @@ plt.colorbar()
 plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
 plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
 
-plt.xlabel(r"$t - t_0$")
-plt.ylabel(r"$\Delta z / a$",rotation=0)
+plt.xlabel(r"$t - t_0\ [s]$")
+plt.ylabel(r"$\Delta z\ [mm]$",rotation=0)
 plt.title(r"$\langle \alpha(z) \alpha(z + \Delta z) \rangle $")
 plt.xlim([time[0], time[-1]])
 plt.ylim([dz[0], dz[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
 imgname = imgdir + "autocorr-space-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -170,12 +159,12 @@ plt.colorbar()
 
 #plt.plot(wpMaxima[:,0], wpMaxima[:,1], 'ko--')
 
-plt.xlabel(r"$t - t_0$")
-plt.ylabel(r"$\Delta z / a$",rotation=0)
+plt.xlabel(r"$t - t_0\ [s]$")
+plt.ylabel(r"$\Delta z\ [mm]$",rotation=0)
 plt.title(r"$\langle w_p(z) w_p(z + \Delta z) \rangle $")
 plt.xlim([time[0], time[-1]])
 plt.ylim([dz[0], dz[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
 imgname = imgdir + "autocorr-space-wp"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

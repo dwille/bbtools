@@ -73,12 +73,12 @@ vpFile = datadir + "part-v"
 wpFile = datadir + "part-w"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 print "      Steady state time set to: " + str(time[ts])
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] # / partR
 print "      Starting z set to: " + str(evalZ[zs])
 nz = np.size(evalZ)
 dz = evalZ - evalZ[zs]
@@ -136,7 +136,7 @@ vfCrossCorr /= vfCrossCorr[0,0]
 ## Find slope of maxima
 for zz in np.arange(1,nz):
   # if the time changes drastically, make not of it
-  if np.abs(vfFirstMaxima[zz,0] - vfFirstMaxima[zz-1,0]) > 100:
+  if np.abs(vfFirstMaxima[zz,0] - vfFirstMaxima[zz-1,0]) > .1:
     firstWave = vfFirstMaxima[0:zz-1,:]
 
 tau = firstWave[:,0]
@@ -153,22 +153,6 @@ p, _, _, _ = np.linalg.lstsq(tau, dzMax)
 xFit = firstWave[:,0]
 yFit = p[0,0]*xFit
 
-# Find k, omega from maxima
-i1 = 500
-i2 = 501
-
-t1 = tau[i1]
-t2 = tau[i2]
-z1 = dzMax[i1]
-z2 = dzMax[i2]
-
-print "(t1, z1) = (%.2f, %.2f)" % (t1, z1)
-print "(t2, z2) = (%.2f, %.2f)" % (t2, z2)
-k = 2*np.pi*(t2 - t1)/(z2*t1 - z1*t2)
-omega = 2*np.pi*(z2 - z1)/(z2*t1 - z1*t2)
-print "Wavenumber k = %.4f" % k
-print "Freq omega = %.4f" % omega
-
 # Plot
 plt.imshow(vfCrossCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], dz[0], dz[-1]])
@@ -177,13 +161,15 @@ plt.plot(firstWave[:,0], firstWave[:,1], 'ko', markevery=25,
   markerfacecolor="None")
 plt.plot(xFit, yFit, '--')
 
-cTxtString = r"$dz^* = %.4f\tau$" % p[0,0]
+cTxtString = r"$dz = %.4f\tau$" % p[0,0]
 plt.text(xFit[-1], yFit[-1], cTxtString, fontsize=12)
 
-plt.xlabel(r"$\tau$")
+plt.xlabel(r"$\tau\ [s]$")
 plt.xlim([0, time[-1]])
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r"$dz / a$", rotation=0)
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
+plt.ylabel(r"$dz\ [mm]$", rotation=0)
+plt.ylim([0, dz[-1]])
+
 plt.title(r"$\langle \alpha(t,z) \alpha(t + \tau, z + \Delta z) \rangle,\ zs ="+
   str(zs) + "$")
 
@@ -208,9 +194,9 @@ plt.imshow(wpCrossCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], dz[0], dz[-1]])
 plt.colorbar()
 
-plt.xlabel(r"$\tau$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r"$dz / a$", rotation=0)
+plt.xlabel(r"$\tau\ [s]$")
+plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
+plt.ylabel(r"$dz\ [mm]$", rotation=0)
 plt.title(r"$\langle w_p(t,z) w_p(t + \tau, z + \Delta z) \rangle,\ zs ="+
   str(zs) + "$")
 

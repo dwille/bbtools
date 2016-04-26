@@ -4,7 +4,9 @@ import sys, os
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import signal
-from scipy.fftpack import rfft, irfft, fftfreq
+import scipy.fftpack as scifft
+
+os.system("clear")
 
 def AutoCorrelationFFT(x1):
   x1 = np.asarray(x1)
@@ -18,7 +20,7 @@ def AutoCorrelationFFT(x1):
 
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
-print "                 Autocorrelate"
+print "              Power Spectrum -- Time"
 print ""
 
 # SIMULATION PARAMETERS
@@ -59,57 +61,79 @@ vpFile = datadir + "part-v"
 wpFile = datadir + "part-w"
 
 # Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
+time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
 time = time[ts:] - time[ts]
 nt = np.size(time)
 
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
+evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] # / partR
 nz = np.size(evalZ)
 
 # Find output data -- each column is a different time
-#numDens = np.genfromtxt(nDensFile).T[:,ts:]
 vFrac = np.genfromtxt(vFracFile).T[:,ts:]
-#up = np.genfromtxt(upFile).T[:,ts:]
-#vp = np.genfromtxt(vpFile).T[:,ts:]
-#wp = np.genfromtxt(wpFile).T[:,ts:]
 
-# Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-#plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,5))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=2)
-plt.rc('savefig', dpi=250)
-labelx = -0.17
 
+dt = np.mean(np.diff(time))
+samplingRate = 1./dt
+freq = scifft.fftfreq(nt, dt)
 # Autocorrelation of volume fraction
+vfAutoCorr = np.zeros((nz, nt))
+vfPowerSpec = np.zeros((nz,nt))
+for zz, zval in enumerate(evalZ):
+  # length of result is ceil(length(time)/2)
+  vfAutoCorr[zz,:] = AutoCorrelationFFT(vFrac[zz,:])
+  vfPowerSpec[zz,:] = np.abs(scifft.fft(vfAutoCorr[zz,:]))**2
+
+vfPowerSpec /= (nt*nt)
+vfAutoCorrMean = np.mean(vfAutoCorr, 0)
+vfPowerSpecMean = np.mean(vfPowerSpec, 0)
+
+plt.rc('figure', figsize=(4,5))
 vfFig = plt.figure()
-#vfAutoCorr = np.zeros((nz, nt))
-#vfPowerSpec = np.zeros((nz,3))
-#for zz, zval in enumerate(evalZ):
+vfFig.add_subplot(311)
+plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+
+vfFig.add_subplot(312)
+plt.imshow(vfPowerSpec, origin="lower", aspect="auto", interpolation="none",
+  extent=[0, np.max(freq*2), evalZ[0], evalZ[-1]])
+#plt.plot(freq, np.sqrt(vfPowerSpecMean), "ko:")
+plt.xlim([0, 5])
+
+
+#vfAutoCorr = AutoCorrelationFFT(vFrac[zs,:])
+
+# Plot autocorrelation
+#vfFig.add_subplot(211)
+#plt.plot(time, vfAutoCorr)
+#plt.xlabel('Tau')
+#plt.ylabel('Autocorrelation')
+#plt.yticks([-1, -.5, 0, 0.5, 1])
 #
-#  # length of result is ceil(length(time)/2)
-#  vfAutoCorr[zz,:] = AutoCorrelationFFT(vFrac[zz,:])
-#  vfPowerSpec[zz,:] = np.abs(np.fft.fft(vfAutoCorr[zz,:]))**2
-vfAutoCorr = AutoCorrelationFFT(vFrac[0,:])
-dt = np.mean(np.diff(time))/1000
-W = fftfreq(nt, dt)
-fftSignal = rfft(vfAutoCorr)
+vfFig.add_subplot(313)
+# Method 1
+#fftSignal = np.abs(scifft.fft(vfAutoCorr[0,:]))**2
+#W = scifft.fftfreq(nt, dt)
+#plt.plot(W, np.sqrt(fftSignal), "ko:")
 
-vfFig.add_subplot(211)
-plt.plot(time, vfAutoCorr)
+zval = 480
+# Method 2
+freqs = np.fft.fftfreq(nt, dt)
+idx = np.argsort(freqs)
 
-#vfFig.add_subplot(312)
-#plt.bar(W, fftSignal, 0.25)
-#plt.xlim([0,5])
+ps = np.abs(np.fft.fft(vfAutoCorr[0,:]))**2/(nt*nt)
+plt.plot(freqs[idx], ps[idx], "ro:")
 
-vfFig.add_subplot(212)
-plt.bar(W, np.log(np.sqrt(fftSignal**2)), 0.25)
-plt.yscale('log')
-plt.xlim([0,5])
-plt.ylabel("log(sqrt(FT(autocorrelation)))")
+ps = np.abs(np.fft.fft(vfAutoCorr[zval,:]))**2/(nt*nt)
+plt.plot(freqs[idx], ps[idx], "bo:")
+
+plt.legend(["z = %.2f" % evalZ[0], "z = %2.f" % evalZ[zval]])
+
+
+plt.xlabel("Freq")
+plt.ylabel(r"$PS$")
+
+plt.xlim([0, 5])
+plt.ylim([0, 0.005])
 
 #vfFig.add_subplot(313)
 #f, Pxx_den = signal.periodogram(vfAutoCorr, 1./dt)
