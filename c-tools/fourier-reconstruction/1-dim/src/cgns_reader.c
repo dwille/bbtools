@@ -166,11 +166,16 @@ void merge(double *A, int n, int m, int *A2)
 
 // Create direcotry for output data
 void create_output(void) {
-  // Create output directory if it doesn't exist
+  // Create data directory if it doesn't exist
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  if (stat(buf, &st) == -1) {
+    mkdir(buf, 0700);
+  }
+  // Create data sub-directory if it doesn't exist
+  sprintf(buf, "%s/%s/%s", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -179,7 +184,7 @@ void create_output(void) {
   char path2file[FILE_NAME_SIZE] = "";
 
   // number density
-  sprintf(path2file, "%s/%s/number-density", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR,DATA_SUBDIR);
   FILE *file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -187,7 +192,7 @@ void create_output(void) {
   fclose(file);
 
   // volume fraction
-  sprintf(path2file, "%s/%s/volume-fraction", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/volume-fraction", ROOT_DIR,DATA_DIR,DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -195,7 +200,7 @@ void create_output(void) {
   fclose(file);
 
   // part-u
-  sprintf(path2file, "%s/%s/part-u", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/part-u", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -203,7 +208,7 @@ void create_output(void) {
   fclose(file);
 
   // part-v
-  sprintf(path2file, "%s/%s/part-v", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/part-v", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -211,7 +216,7 @@ void create_output(void) {
   fclose(file);
 
   // part-w
-  sprintf(path2file, "%s/%s/part-w", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/part-w", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -219,13 +224,15 @@ void create_output(void) {
   fclose(file);
 
   // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR,
+    DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
   }
   fclose(file);
-  sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR,
+    DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -233,13 +240,15 @@ void create_output(void) {
   fclose(file);
 
   // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
   }
   fclose(file);
-  sprintf(path2file, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -247,7 +256,7 @@ void create_output(void) {
   fclose(file);
 
   /* Create eval/time file */
-  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/%s/info", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -626,8 +635,10 @@ void write_coeffs(int in)
   char fnameOdd[CHAR_BUF_SIZE] = "";
 
   // number density
-  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fnameEven, "%s/%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
+  sprintf(fnameOdd, "%s/%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
   FILE *fileEven = fopen(fnameEven, "a");
   FILE *fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -655,8 +666,10 @@ void write_coeffs(int in)
   fclose(fileOdd);
 
   // part-w coeffs
-  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fnameEven, "%s/%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
+  sprintf(fnameOdd, "%s/%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
   fileEven = fopen(fnameEven, "a");
   fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -690,7 +703,7 @@ void write_reconstruct(void)
   char fname[CHAR_BUF_SIZE] = "";
 
   /* number desnity */
-  sprintf(fname, "%s/%s/number-density", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   FILE *file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -708,7 +721,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* volume fraction */
-  sprintf(fname, "%s/%s/volume-fraction", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/%s/volume-fraction", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -726,7 +739,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-u */
-  sprintf(fname, "%s/%s/part-u", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/%s/part-u", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -744,7 +757,7 @@ void write_reconstruct(void)
   fclose(file);
   
   /* part-v */
-  sprintf(fname, "%s/%s/part-v", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/%s/part-v", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -762,7 +775,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-w */
-  sprintf(fname, "%s/%s/part-w", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/%s/part-w", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);

@@ -3,6 +3,9 @@
 
 #include <float.h>
 #include <math.h>
+#include <complex.h>
+#undef I
+#define J _Complex_I
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +22,8 @@
 #define ROOT_DIR "."
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_OUT_DIR "data-reconstruct"
+#define DATA_DIR "data"
+#define DATA_SUBDIR "reconstruct-3D"
 
 #define PERIODIC 0
 #define DIRICHLET 1
@@ -34,12 +38,9 @@
 // Declare global variables
 extern double tStart;       // start time
 extern double tEnd;         // end time
-extern int order;           // order of fourier expansion
-extern int npoints;         // number of points to evaluate at
+extern int orderL;          // order of fourier expansion
+extern int orderM;
+extern int orderN;
 extern int tt;              // time iterator
-
-// constants
-extern double pref;         // prefactor constant
-
 
 #endif

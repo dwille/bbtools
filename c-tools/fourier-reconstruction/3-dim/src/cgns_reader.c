@@ -9,12 +9,8 @@ int sigFigPre;
 int sigFigPost;
 int nparts;
 double meanR;
-double *up;
-double *vp;
-double *wp;
 part_struct *parts;
 dom_struct dom;
-BC bc;
 
 // Read main.config input file
 void main_read_input(void)
@@ -31,7 +27,8 @@ void main_read_input(void)
   fret = fscanf(infile, "tStart %lf\n", &tStart);
   fret = fscanf(infile, "tEnd %lf\n", &tEnd);
   fret = fscanf(infile, "\n");
-  fret = fscanf(infile, "order %d\n", &order);
+  fret = fscanf(infile, "Fourier Order in (X,Y,Z) (%d,%d,%d)\n", &orderL, 
+    &orderM, &orderN);
   fclose(infile);
 }
 
@@ -166,107 +163,32 @@ void merge(double *A, int n, int m, int *A2)
 
 // Create direcotry for output data
 void create_output(void) {
-  // Create output directory if it doesn't exist
+  // Create DATA_DIR directory if it doesn't exist
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  if (stat(buf, &st) == -1) {
+    mkdir(buf, 0700);
+  }
+  // Create DATA_SUBDIR if it doesn't exist
+  sprintf(buf, "%s/%s/%s", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
 
-  // Create output files
-  char path2file[FILE_NAME_SIZE] = "";
-
-  // number density
-  sprintf(path2file, "%s/%s/number-density", ROOT_DIR, DATA_OUT_DIR);
-  FILE *file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // volume fraction
-  sprintf(path2file, "%s/%s/volume-fraction", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // part-u
-  sprintf(path2file, "%s/%s/part-u", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // part-v
-  sprintf(path2file, "%s/%s/part-v", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // part-w
-  sprintf(path2file, "%s/%s/part-w", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-  sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-  sprintf(path2file, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-  fclose(file);
-
-  /* Create eval/time file */
-  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-  }
-
-  // Print time on first row
-  fprintf(file, "time ");
-  for (int t = 0; t < nFiles; t++) {
-    fprintf(file, "%lf ", partFileTime[t]);
-  }
-  fprintf(file, "\n");
-
-  // Print evalZ on second row
-  fprintf(file, "evalZ ");
-  for (int i = 0; i < npoints; i++) {
-    fprintf(file, "%lf ", evalZ[i]);
-  }
-
-  fclose(file);
+//  // Create output files
+//  char path2file[FILE_NAME_SIZE] = "";
+//
+//  // number density
+//  sprintf(path2file, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR, 
+//    DATA_SUBDIR);
+//  FILE *file = fopen(path2file, "w");
+//  if (file == NULL) {
+//    printf("Could not open file %s\n", path2file);
+//  }
+//
+//  fclose(file);
 }
 
 // read number of particles from cgns file
@@ -296,18 +218,18 @@ int cgns_read_nparts(void)
 void parts_init(void)
 {
   parts = (part_struct*) malloc(nparts * sizeof(part_struct));
-  up = (double*) malloc(nparts * sizeof(double));
-  vp = (double*) malloc(nparts * sizeof(double));
-  wp = (double*) malloc(nparts * sizeof(double));
+//  up = (double*) malloc(nparts * sizeof(double));
+//  vp = (double*) malloc(nparts * sizeof(double));
+//  wp = (double*) malloc(nparts * sizeof(double));
 
   for(int p = 0; p < nparts; p++) {
     parts[p].x = -1;
     parts[p].y = -1;
     parts[p].z = -1;
     parts[p].r = -1;
-    up[p] = 0.;
-    vp[p] = 0.;
-    wp[p] = 0.;
+    //up[p] = 0.;
+    //vp[p] = 0.;
+    //wp[p] = 0.;
   }
 
   // Open cgns file and get cgns file index number fn
@@ -357,118 +279,12 @@ void domain_init(void)
     exit(EXIT_FAILURE);
   }
   
-  // read buffers
-  int ibuf = 0;
-  char cbuf[CHAR_BUF_SIZE] = "";
-  double dbuf = 0;
-
   // read domain
   fret = fscanf(infile, "DOMAIN\n");
   fret = fscanf(infile, "(Xs, Xe, Xn) %lf %lf %d\n", &dom.xs, &dom.xe, &dom.xn);
   fret = fscanf(infile, "(Ys, Ye, Yn) %lf %lf %d\n", &dom.ys, &dom.ye, &dom.yn);
   fret = fscanf(infile, "(Zs, Ze, Zn) %lf %lf %d\n", &dom.zs, &dom.ze, &dom.zn);
   fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "GPU DOMAIN DECOMPOSITION\n");
-  fret = fscanf(infile, "DEV RANGE %d %d\n", &ibuf, &ibuf);
-  fret = fscanf(infile, "n %d\n", &ibuf);
-  fret = fscanf(infile, "(Xs, Xe, Xn) %lf %lf %d\n", &dbuf, &dbuf, &ibuf);
-  fret = fscanf(infile, "(Ys, Ye, Yn) %lf %lf %d\n", &dbuf, &dbuf, &ibuf);
-  fret = fscanf(infile, "(Zs, Ze, Zn) %lf %lf %d\n", &dbuf, &dbuf, &ibuf);
-  fret = fscanf(infile, "E %d W %d N %d S %d T %d B %d\n", &ibuf, &ibuf, &ibuf,
-    &ibuf, &ibuf, &ibuf);
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "PHYSICAL PARAMETERS\n");
-  fret = fscanf(infile, "rho_f %lf\n", &dbuf);
-  fret = fscanf(infile, "nu %lf\n", &dbuf);
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "SIMULATION PARAMETERS\n");
-  fret = fscanf(infile, "duration %lf\n", &dbuf);
-  fret = fscanf(infile, "CFL %lf\n", &dbuf);
-  fret = fscanf(infile, "pp_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "pp_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "lamb_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_relax %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_cut %lf\n", &dbuf);
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "BOUNDARY CONDITIONS\n");
-  fret = fscanf(infile, "vel_tDelay %lf\n", &dbuf);
-
-  fret = fscanf(infile, "PRESSURE\n");
-  fret = fscanf(infile, "bc.pW %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pW = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pW = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error -- read %s\n",cbuf);
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pE %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pE = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pE = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pS %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pS = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pS = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pN %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pN = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pN = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pB %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pB = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pB = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pT %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pT = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pT = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
 
   /**** dom ****/
   // Calculate domain sizes
@@ -482,9 +298,9 @@ void domain_init(void)
   dom.dz = dom.zl / dom.zn;
 
   // Set up grids
-  dom.Gcc.is = 1;
-  dom.Gcc.js = 1;
-  dom.Gcc.ks = 1;
+  dom.Gcc.is = 0;
+  dom.Gcc.js = 0;
+  dom.Gcc.ks = 0;
 
   dom.Gcc.in = dom.xn;
   dom.Gcc.jn = dom.yn;
@@ -499,15 +315,31 @@ void domain_init(void)
   dom.Gcc.s3 = dom.Gcc.kn * dom.Gcc.s2;
 
   // Calculate order using sampling theorem -- 1 wave / 1 diameters
-  if (order == -1) {
-    order = (int) floor(dom.zn / (2. * meanR) );
+  if (orderL == -1) {
+    orderL = (int) floor(dom.xn / (2. * meanR) );
   }
-  printf("Order = %d\n", order);
+  printf("Fourier order in X = %d\n", orderL);
+
+  if (orderM == -1) {
+    orderM = (int) floor(dom.yn / (2. * meanR) );
+  }
+  printf("Fourier order in Y = %d\n", orderM);
+
+  if (orderN == -1) {
+    orderN = (int) floor(dom.zn / (2. * meanR) );
+  }
+  printf("Fourier order in Z = %d\n", orderN);
+
   // Number of points to reconstruct at
   // Just because we can only resolve xn/2 doesnt mean we should underresolve 
   //  the reconstruction...
   // TODO: how does this affect?
-  npoints = 2*dom.zn + 1;
+  // TODO: make this = grid size, so that dx=dy=dz??
+  // TODO: I should really make a domain struct for this...
+  // TODO: for now, is just going to be dom.*n
+  //nPointsX = 2*dom.yn + 1;
+  //nPointsY = 2*dom.xn + 1;
+  //nPointsZ = 2*dom.zn + 1;
 
   #ifdef DEBUG
     show_domain();
@@ -527,7 +359,7 @@ void cgns_fill_parts(void)
   // Set base, zone, and solutions index numbers
   int bn = 1;
   int zn = 1;
-  int sn = 1;
+  //int sn = 1;
 
   // Read part coords
   double *x = malloc(nparts * sizeof(double));
@@ -552,31 +384,14 @@ void cgns_fill_parts(void)
     parts[p].z = z[p];
   }
 
-  // Read part vel
-  //double *u = malloc(nparts * sizeof(double));
-  //double *v = malloc(nparts * sizeof(double));
-  //double *w = malloc(nparts * sizeof(double));
-  //for (int p = 0; p < nparts; p++) {
-  //  w[p] = 0;
-  //  v[p] = 0;
-  //  w[p] = 0;
-  //}
-  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, &range_min, &range_max, up);
-  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, &range_min, &range_max, vp);
-  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, &range_min, &range_max, wp);
-
-  //for (int p = 0; p < nparts; p++) {
-  //  parts[p].u = u[p];
-  //  parts[p].v = v[p];
-  //  parts[p].w = w[p];
-  //}
+//  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, &range_min, &range_max, up);
+//  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, &range_min, &range_max, vp);
+//  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, &range_min, &range_max, wp);
+//
 
   free(x);
   free(y);
   free(z);
-  //free(u);
-  //free(v);
-  //free(w);
   
   cg_close(fn);
 }
@@ -601,186 +416,103 @@ void show_domain(void)
      dom.Gcc.s3);
   printf("\n");
 
-  printf("Boundary Condition Structure\n");
-  printf("  PERIODIC = 0\n");
-  printf("  DIRICHLET 1\n");
-  printf("  NEUMANN = 2\n");
-  printf("    bc.pW = %d\n", bc.pW);
-  printf("    bc.pE = %d\n", bc.pE);
-  printf("    bc.pS = %d\n", bc.pS);
-  printf("    bc.pN = %d\n", bc.pN);
-  printf("    bc.pB = %d\n", bc.pB);
-  printf("    bc.pT = %d\n", bc.pT);
-  printf("\n");
-
   printf("Input Parameters\n");
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
-  printf("  order %d\n", order);
-  printf("  nPoints %d\n", npoints);
 }
 
-void write_coeffs(int in)
+// Get sigfigs
+void get_sigfigs(void) 
 {
-  char fnameEven[CHAR_BUF_SIZE] = "";
-  char fnameOdd[CHAR_BUF_SIZE] = "";
+  // print the last file name (longest time) to temp variable
+  char tempLastFile[CHAR_BUF_SIZE] = "";
+  sprintf(tempLastFile, partFiles[partFileMap[nFiles - 1]]);
 
-  // number density
-  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
-  FILE *fileEven = fopen(fnameEven, "a");
-  FILE *fileOdd = fopen(fnameOdd, "a");
-  if (fileEven == NULL) {
-    printf("Error opening file %s!\n", fnameEven);
-    exit(EXIT_FAILURE);
-  } else if (fileOdd == NULL) {
-    printf("Error opening file %s!\n", fnameOdd);
-    exit(EXIT_FAILURE);
-  }
+  // We expect part-*.*.cgns, so split along "-"
+  char *tempDash;
+  tempDash = strtok(tempLastFile, "-");
+  tempDash = strtok(NULL, "-");
 
-  if (in == 0) {            // write constant coeffs
-    int cc = 0 + npoints*tt;
-    fprintf(fileEven, "%lf", 0.5*n_ces[cc]);
-    fprintf(fileOdd, "%lf", 0.5*n_ces[cc]);
-  } else if (in == -1) {    // write the rest
-    for (int i = 1; i <= order; i++) {
-      fprintf(fileEven, " %lf", nl_even[i]);
-      fprintf(fileOdd, " %lf", nl_odd[i]);
-    }
-    fprintf(fileEven, "\n");
-    fprintf(fileOdd, "\n");
-  }
-
-  fclose(fileEven);
-  fclose(fileOdd);
-
-  // part-w coeffs
-  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
-  fileEven = fopen(fnameEven, "a");
-  fileOdd = fopen(fnameOdd, "a");
-  if (fileEven == NULL) {
-    printf("Error opening file %s!\n", fnameEven);
-    exit(EXIT_FAILURE);
-  } else if (fileOdd == NULL) {
-    printf("Error opening file %s!\n", fnameOdd);
-    exit(EXIT_FAILURE);
-  }
-
-  if (in == 0) {            // write constant coeffs
-    int cc = 0 + npoints*tt;
-    fprintf(fileEven, "%lf", 0.5*nw_ces[cc]);
-    fprintf(fileOdd, "%lf", 0.5*nw_ces[cc]);
-  } else if (in == -1) {    // write the rest
-    for (int i = 1; i <= order; i++) {
-      fprintf(fileEven, " %lf", nwl_even[i]);
-      fprintf(fileOdd, " %lf", nwl_odd[i]);
-    }
-    fprintf(fileEven, "\n");
-    fprintf(fileOdd, "\n");
-  }
-
-  fclose(fileEven);
-  fclose(fileOdd);
+  // Now expect *.*.cgns, split along "."
+  char *tempDot;
+  tempDot = strtok(tempDash, ".");
+  sigFigPre = strlen(tempDot);
+  tempDot = strtok(NULL, ".");
+  sigFigPost = strlen(tempDot);
 }
 
 // Write reconstructed data
-void write_reconstruct(void)
+void cgns_write_field(void)
 {
-  char fname[CHAR_BUF_SIZE] = "";
+  // Set up the cgns filename
+  char format[CHAR_BUF_SIZE] = "";
+  char fnameall[CHAR_BUF_SIZE] = "";
+  char fnameall2[CHAR_BUF_SIZE] = "";
+  sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
 
-  /* number desnity */
-  sprintf(fname, "%s/%s/number-density", ROOT_DIR, DATA_OUT_DIR);
-  FILE *file = fopen(fname, "a");
-  if (file == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
+  sprintf(fnameall2, "%s/%s/%s/volume-fraction-%s.cgns", ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR, format);
+  sprintf(fnameall, fnameall2, partFileTime[tt]);
 
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(file, "%lf ", n_ces[cc]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
+  // Set up grid filename
+  char gname[FILE_NAME_SIZE] = "";
+  char gnameall[FILE_NAME_SIZE] = "";
+  sprintf(gname, "grid.cgns");
+  sprintf(gnameall, "%s/output/%s", ROOT_DIR, "grid.cgns");
+  printf("Remember to copy %s to %s/%s/%s!\n", gnameall, ROOT_DIR, DATA_DIR, 
+    DATA_SUBDIR);
 
-  /* volume fraction */
-  sprintf(fname, "%s/%s/volume-fraction", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(fname, "a");
-  if (file == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
+  // Set up cgns file paths
+  char snodename[CHAR_BUF_SIZE] = "";
+  char snodenameall[CHAR_BUF_SIZE] = "";
+  sprintf(snodename, "Solution-");
+  sprintf(snodenameall, "/Base/Zone0/Solution-");
+  sprintf(snodename, "%s%s", snodename, format);
+  sprintf(snodenameall, "%s%s", snodenameall, format);
+  sprintf(snodename, snodename, partFileTime[tt]);
+  sprintf(snodenameall, snodenameall, partFileTime[tt]);
 
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(file, "%lf ", vFrac_ces[cc]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
-
-  /* part-u */
-  sprintf(fname, "%s/%s/part-u", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(fname, "a");
-  if (file == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
-
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(file, "%lf ", nu_ces[cc]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
+  // CGNS vairables
+  int fn; // solution file name
+  int bn; // solution base name
+  int zn; // solution zone name
+  int sn; // solution sol name
+  int fn_frec;
+  cg_open(fnameall, CG_MODE_WRITE, &fn);
+  cg_base_write(fn, "Base", 3, 3, &bn);
+  cgsize_t size[9];
+  size[0] = dom.xn+1; // cells -> vertices
+  size[1] = dom.yn+1;
+  size[2] = dom.zn+1;
+  size[3] = dom.xn;
+  size[4] = dom.yn;
+  size[5] = dom.zn;
+  size[6] = 0;
+  size[7] = 0;
+  size[8] = 0;
+  cg_zone_write(fn, bn, "Zone0", size, Structured, &zn);
+  cg_goto(fn, bn, "Zone_t", zn, "end");
   
-  /* part-v */
-  sprintf(fname, "%s/%s/part-v", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(fname, "a");
-  if (file == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
+  cg_link_write("GridCoordinates", gname, "Base/Zone0/GridCoordinates");
 
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(file, "%lf ", nv_ces[cc]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
+  cg_sol_write(fn, bn, zn, "Solution", CellCenter, &sn);
+  double *vfout = malloc(dom.Gcc.s3 * sizeof(double));
 
-  /* part-w */
-  sprintf(fname, "%s/%s/part-w", ROOT_DIR, DATA_OUT_DIR);
-  file = fopen(fname, "a");
-  if (file == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction", n_rec, &fn_frec);
 
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(file, "%lf ", nw_ces[cc]);
-    }
-    fprintf(file, "\n");
-  }
-  fclose(file);
+  cg_user_data_write("Etc");
+  cg_goto(fn, bn, "Zone_t", zn, "Etc", 0, "end");
+  cgsize_t *N = malloc(sizeof(cgsize_t));
+  N[0] = 1;
+  cg_array_write("Time", RealDouble, 1, N, &partFileTime[tt]);
+  free(N);
+
+  cg_close(fn);
+  free(vfout);
+
 }
 
-// Free parts
+// Free variables
 void free_vars(void)
 {
   for (int i = 0; i < nFiles; i++) {
@@ -791,26 +523,13 @@ void free_vars(void)
   free(partFileTime);
 
   free(parts);
-  free(up);
-  free(vp);
-  free(wp);
+//  free(up);
+//  free(vp);
+//  free(wp);
 
-  free(evalZ);
+  free(n_lmn);
 
-  free(nl_even);
-  free(nl_odd);
-  free(nul_even);
-  free(nul_odd);
-  free(nvl_even);
-  free(nvl_odd);
-  free(nwl_even);
-  free(nwl_odd);
-
-  free(n_ces);
-  free(vFrac_ces);
-  free(nu_ces);
-  free(nv_ces);
-  free(nw_ces);
+  free(n_rec);
 
   free(ones);
 }

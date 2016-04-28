@@ -23,23 +23,23 @@ EXTRA = Makefile	\
 
 # compile normally:
 all: COPT += -O2
-all: f-reconstruct
+all: f-reconstruct-3D
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
-debug: f-reconstruct
+debug: f-reconstruct-3D
 
 # compile with profiler
 profiler: COPT += -pg
-profiler: f-reconstruct
+profiler: f-reconstruct-3D
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 	$(GCC) $(COPT) -c $< $(LDINCS) -o $@
 
-f-reconstruct: $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-reconstruct
+f-reconstruct-3D: $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-reconstruct-3D
 
 clean: 
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-reconstruct
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-reconstruct-3D

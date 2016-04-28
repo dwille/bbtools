@@ -37,16 +37,16 @@ partR = 2.1
 ts = 500
 
 # DEVEL
-root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/"
+root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
 simdir = "sim/"
-datadir = root + simdir + "data-reconstruct/"
+datadir = root + simdir + "data/reconstruct-1D/"
 
 # MARCC
 #root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 #simdir = raw_input("      Simulation directory: ")
 #if not simdir.endswith('/'):
 #  simdir = simdir + '/'
-#datadir = root + simdir + "data-reconstruct/"
+#datadir = root + simdir + "data/reconstruct-1D/"
 
 print "      Sim root directory set to: " + root
 print "      Particle Radius set to: " + str(partR)

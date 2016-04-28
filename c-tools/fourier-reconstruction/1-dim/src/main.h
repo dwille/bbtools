@@ -19,7 +19,8 @@
 #define ROOT_DIR "."
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_OUT_DIR "data-reconstruct"
+#define DATA_DIR "data"
+#define DATA_SUBDIR "reconstruct-1D"
 
 #define PERIODIC 0
 #define DIRICHLET 1

@@ -73,18 +73,15 @@ extern int nparts;
 extern double meanR;
 
 // Particle velocities
-extern double *up;
-extern double *vp;
-extern double *wp;
+//extern double *up;
+//extern double *vp;
+//extern double *wp;
 
 // host and dev part_struct parts;
 extern part_struct *parts;
 
-// host and dev dom_struct doms
+// host dom_struct doms
 extern dom_struct dom;
-
-// host and dev bc struct bcs
-extern BC bc;
 
 /**** FUNCTIONS ****/
 // read input file
@@ -99,6 +96,9 @@ void merge(double *A, int n, int m, int *A2);
 
 // Create directory for output data, init output files
 void create_output(void);
+
+// Get sigfigs
+void get_sigfigs(void);
 
 // Read nparts
 int cgns_read_nparts(void);
@@ -116,8 +116,7 @@ void cgns_fill_parts(void);
 void show_domain(void);
 
 // write
-void write_coeffs(int in);
-void write_reconstruct(void);
+void cgns_write_field(void);
 
 // Free parts
 void free_vars(void);

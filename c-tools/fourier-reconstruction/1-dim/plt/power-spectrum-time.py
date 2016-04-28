@@ -28,16 +28,16 @@ partR = 2.1
 ts = 500
 
 # DEVEL
-root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/"
+root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
 simdir = "sim/"
-datadir = root + simdir + "data-reconstruct/"
+datadir = root + simdir + "data/reconstruct-1D/"
 
 # MARCC
 #root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 #simdir = raw_input("      Simulation directory: ")
 #if not simdir.endswith('/'):
 #  simdir = simdir + '/'
-#datadir = root + simdir + "data-reconstruct/"
+#datadir = root + simdir + "data/reconstruct-1D/"
 
 print "      Sim root directory set to: " + root
 
@@ -81,7 +81,7 @@ vfPowerSpec = np.zeros((nz,nt))
 for zz, zval in enumerate(evalZ):
   # length of result is ceil(length(time)/2)
   vfAutoCorr[zz,:] = AutoCorrelationFFT(vFrac[zz,:])
-  vfPowerSpec[zz,:] = np.abs(scifft.fft(vfAutoCorr[zz,:]))**2
+  vfPowerSpec[zz,:] = np.absolute(scifft.fft(vfAutoCorr[zz,:]))**2
 
 vfPowerSpec /= (nt*nt)
 vfAutoCorrMean = np.mean(vfAutoCorr, 0)
@@ -120,10 +120,10 @@ zval = 480
 freqs = np.fft.fftfreq(nt, dt)
 idx = np.argsort(freqs)
 
-ps = np.abs(np.fft.fft(vfAutoCorr[0,:]))**2/(nt*nt)
+ps = np.absolute(np.fft.fft(vfAutoCorr[0,:]))**2/(nt*nt)
 plt.plot(freqs[idx], ps[idx], "ro:")
 
-ps = np.abs(np.fft.fft(vfAutoCorr[zval,:]))**2/(nt*nt)
+ps = np.absolute(np.fft.fft(vfAutoCorr[zval,:]))**2/(nt*nt)
 plt.plot(freqs[idx], ps[idx], "bo:")
 
 plt.legend(["z = %.2f" % evalZ[0], "z = %2.f" % evalZ[zval]])

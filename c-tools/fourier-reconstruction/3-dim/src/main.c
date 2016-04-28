@@ -3,8 +3,9 @@
 // Define global variables declared in header file
 double tStart;
 double tEnd;
-int order;
-int npoints;
+int orderL;
+int orderM;
+int orderN;
 int tt;
 
 double pref;
@@ -30,60 +31,51 @@ int main(void)
   alloc_arrays();
 
   // Create output directory
+  get_sigfigs();
   create_output();
 
-  // Prefactor
-  pref = 2./(dom.xl*dom.yl*dom.zl);
-
-  // Loop over time, calc coeffs, and reconstruct
-  for (tt = 0; tt < nFiles; tt++) {
-    // Fill parts
+  /* MAIN LOOP */
+  // Loop over time
+//  for (tt = 0; tt < nFiles; tt++) {
+//    // Fill parts with new info
+    tt = 0;
     cgns_fill_parts();
 
-    // Calculate nq0; init cesaro sum to this value
-    const_coeffs(ones, n_ces);
-    const_coeffs(up, nu_ces);
-    const_coeffs(vp, nv_ces);
-    const_coeffs(wp, nw_ces);
-    
-    // write constant coeffs to file
-    write_coeffs(0);
+    // Loop over all coefficients l,m,n (x,y,z)
+    for (int ll = 0; ll <= orderL; ll++) {
+      double kl = 2.*PI*((double) ll)/dom.xl;
 
-    // Calclate nql, add to cesaro sum
-    for (int ll = 1; ll <= order; ll++) {
-      double ell = (double) ll;
+      for (int mm = 0; mm <= orderM; mm++) {
+        double km = 2.*PI*((double) mm)/dom.yl;
 
-      // Calculate wavenumber
-      double k_ell = 2.*PI*ell/dom.zl;
+        for (int nn = 0; nn <= orderN; nn++) {
+          double kn = 2.*PI*((double) nn)/dom.zl;
 
-      // Calculate even and odd coefficients
-      calc_coeffs(&nl_even[ll], &nl_odd[ll], ones, parts, k_ell);
-      calc_coeffs(&nul_even[ll], &nul_odd[ll], up, parts, k_ell);
-      calc_coeffs(&nvl_even[ll], &nvl_odd[ll], vp, parts, k_ell);
-      calc_coeffs(&nwl_even[ll], &nwl_odd[ll], wp, parts, k_ell);
+          int corder = nn + (orderN + 1)*mm + (orderN + 1)*(orderM + 1)*ll;
 
-      // Calculate volume fraction coeffs from number density
-      eval_vfrac(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+          // Calculate coefficients n_lmn
+          // TODO: need diff for vfrac
+          calc_coeffs(n_lmn, ones, parts, kl, km, kn, corder);
+          printf("(ll,mm,nn) = (%d,%d,%d)\n", ll, mm , nn);
+          //printf("n_lmn[%d] = %f + %fi\n", corder, creal(n_lmn[corder]), cimag(n_lmn[corder]));
+          // does it make sense to not even store n_lmn?
 
-      // Evaluate series at z
-      eval_series(n_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
-      eval_series(nu_ces, nul_even[ll], nul_odd[ll], evalZ, ell, k_ell);
-      eval_series(nv_ces, nvl_even[ll], nvl_odd[ll], evalZ, ell, k_ell);
-      eval_series(nw_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
+          // evaluate series for n_lmn at x,y,z
+          // TODO: need diff for vfrac
+          // TODO: parallelize? probably not, is not TOO slow
+          // TODO: is n_rec always real?
+          eval_series(n_rec, n_lmn, kl, km, kn, corder);
+
+        }
+      }
     }
     // Normalize nq by n to find q
-    normalize(nu_ces, n_ces);
-    normalize(nv_ces, n_ces);
-    normalize(nw_ces, n_ces);
+    // make sure to divide by volume...
+    //normalize(nu_ces, n_ces);
 
-    // write the rest of the coefficients
-    // TODO: write once
-    write_coeffs(-1);
-  }
-
-
-  // write to file
-  write_reconstruct();
+//  // write to file -- TODO take specific nq_rec as input
+    cgns_write_field();
+//  }
    
   // Free and exit
   free_vars();
