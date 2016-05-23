@@ -1,5 +1,7 @@
 #!/usr/bin/env python2
 
+from setup import *
+
 import sys, os
 import matplotlib.pyplot as plt
 import numpy as np
@@ -23,53 +25,27 @@ print " ---- Fourier Reconstruction Plotting Utility ---- "
 print "             Power Spectrum -- Space"
 print ""
 
-# SIMULATION PARAMETERS
-partR = 2.1
-ts = 500
+# Setup simulation parameters
+(partR, simdir, tstart) = simParams(sys)
 
-# DEVEL
-root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
-simdir = "sim/"
-datadir = root + simdir + "data/reconstruct-1D/"
+# Setup directory structures
+#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
+(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
 
-# MARCC
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("      Simulation directory: ")
-#if not simdir.endswith('/'):
-#  simdir = simdir + '/'
-#datadir = root + simdir + "data/reconstruct-1D/"
+# Get time and z data
+(time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
 
-print "      Sim root directory set to: " + root
-
-# Check if datadir exists so we don't go creating extra dirs
-if not os.path.exists(datadir):
-  print "      " + datadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-
-# Create imgdir if necessary
-imgdir = root + simdir + "/img/"
-if not os.path.exists(imgdir):
-  os.makedirs(imgdir)
-
-# set up output file paths
-infoFile = datadir + "info"
-vFracFile = datadir + "volume-fraction"
-
-# Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
-time = time[ts:] - time[ts]
-nt = np.size(time)
-
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] # / partR
-nz = np.size(evalZ)
-dz = evalZ - evalZ[0]
+# Print simulation data
+printSimulationData(partR, root, simdir, datadir)
 
 # Find output data -- each column is a different time
+vFracFile = datadir + "volume-fraction"
 vFrac = np.genfromtxt(vFracFile).T[:,ts:]
 
-freq = scifft.fftfreq(nz, np.mean(np.diff(dz)))
 # Autocorrelation of volume fraction
+dz = evalZ - evalZ[0]
+freq = scifft.fftfreq(nz, np.mean(np.diff(dz)))
+
 vfAutoCorr = np.zeros((nz, nt))
 vfPowerSpec = np.zeros((nz,nt))
 for tt, tval in enumerate(time):

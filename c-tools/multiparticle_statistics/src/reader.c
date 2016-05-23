@@ -92,7 +92,7 @@ void init_input_files(void)
   int fret = 0; fret=fret;
   double time;
 
-  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+  sprintf(output_path, "%s/%s", SIM_ROOT_DIR, OUTPUT_DIR);
 
   int isPart;
   int inRange;
@@ -227,7 +227,7 @@ void create_output_dir(void)
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -237,7 +237,7 @@ void create_output_dir(void)
     char format[CHAR_BUF_SIZE] = "";
     char fnameTmp[CHAR_BUF_SIZE] = "";
     sprintf(format, "%%0%d.f", sigFigPre);
-    sprintf(fnameTmp, "%s/%s/ts_%s", ROOT_DIR, DATA_OUT_DIR, format);
+    sprintf(fnameTmp, "%s/%s/ts_%s", ROOT_DIR, DATA_DIR, format);
     sprintf(runDir, fnameTmp, tStart);
     if (stat(runDir, &st) == -1) {
       mkdir(runDir, 0700); 
@@ -260,10 +260,10 @@ void init_stat_output(void)
     sprintf(path2skew, "%s/stat.skew", runDir);
     sprintf(path2kurt, "%s/stat.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_DIR);
   }
 
   // open file for reading -- stat.mean
@@ -310,10 +310,10 @@ void init_stat_output(void)
     sprintf(path2skew, "%s/align.skew", runDir);
     sprintf(path2kurt, "%s/align.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_DIR);
   }
 
   // open file for reading -- mean
@@ -412,7 +412,7 @@ int cgns_read_nparts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
 
@@ -451,7 +451,7 @@ void parts_init(void)
 
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -516,7 +516,7 @@ void domain_init(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", ROOT_DIR);
+  sprintf(fname, "%s/%s/flow.config", SIM_ROOT_DIR, INPUT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -825,7 +825,7 @@ void cgns_fill_part_struct(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[tt]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[fileMap[tt]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -900,7 +900,7 @@ void write_info(void)
   if (multRuns == 1) {
     sprintf(fname, "%s/regularNodes", runDir);
   } else {
-    sprintf(fname, "%s/%s/regularNodes", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(fname, "%s/%s/regularNodes", ROOT_DIR, DATA_DIR);
   }
 
   // open file for reading
@@ -921,7 +921,7 @@ void write_info(void)
   if (multRuns == 1) {
     sprintf(fname, "%s/info.dat", runDir);
   } else {
-    sprintf(fname, "%s/%s/info.dat", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(fname, "%s/%s/info.dat", ROOT_DIR, DATA_DIR);
   }
   FILE *finfo = fopen(fname, "w");
   if (finfo == NULL) {
@@ -967,7 +967,7 @@ void write_timestep(void)
   if (multRuns == 1) {
     sprintf(fnameall2, "%s/raw-data-%s", runDir, format);
   } else {
-    sprintf(fnameall2, "%s/%s/raw-data-%s", ROOT_DIR, DATA_OUT_DIR, format);
+    sprintf(fnameall2, "%s/%s/raw-data-%s", ROOT_DIR, DATA_DIR, format);
   }
   sprintf(fnameall, fnameall2, partFileTime[tt]);
 
@@ -1031,10 +1031,10 @@ void write_timestep(void)
     sprintf(path2skew, "%s/stat.skew", runDir);
     sprintf(path2kurt, "%s/stat.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_DIR);
   }
 
   // mean
@@ -1089,10 +1089,10 @@ void write_timestep(void)
     sprintf(path2skew, "%s/align.skew", runDir);
     sprintf(path2kurt, "%s/align.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_OUT_DIR);
-    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_OUT_DIR);
+    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_DIR);
   }
 
   // Print mean

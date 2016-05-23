@@ -16,6 +16,7 @@
 // #Defines
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
+#define SIM_ROOT_DIR ".."
 #define ROOT_DIR "."
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"

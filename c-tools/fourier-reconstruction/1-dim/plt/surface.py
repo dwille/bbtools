@@ -1,144 +1,125 @@
 #!/usr/bin/env python2
-
-import sys, os
-import matplotlib.pyplot as plt
-import numpy as np
+from setup import *
+os.system('clear')
 
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
+print "                Surface Plotting"
 print ""
 
-# SIMULATION PARAMETERS
-partR = 2.1
-ts = 500
+# Setup simulation parameters
+(partR, simdir, tstart) = simParams(sys)
 
-# DEVEL
-root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
-simdir = "sim/"
-datadir = root + simdir + "data/reconstruct-1D/"
+# Setup directory structures
+#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
+(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
 
-# MARCC
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("      Simulation directory: ")
-#if not simdir.endswith('/'):
-#  simdir = simdir + '/'
-#datadir = root + simdir + "data/reconstruct-1D/"
+# Get time and z data
+(time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
 
-print "      Sim root directory set to: " + root
-print "      Particle Radius set to: " + str(partR)
-print "      Steady state index set to: " + str(ts)
-
-# Check if datadir exists so we don't go creating extra dirs
-if not os.path.exists(datadir):
-  print "      " + datadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-
-# Create imgdir if necessary
-imgdir = root + simdir + "img/"
-if not os.path.exists(imgdir):
-  os.makedirs(imgdir)
-
-# set up output file paths
-infoFile = datadir + "info"
-nDensFile = datadir + "number-density"
-vFracFile = datadir + "volume-fraction"
-upFile = datadir + "part-u"
-vpFile = datadir + "part-v"
-wpFile = datadir + "part-w"
-
-# Find time and evalZ
-time = np.genfromtxt(infoFile, skip_footer=1)[1:]
-print "      Steady state time set to: " + str(time[ts])
-time = time[ts:] - time[ts]
-nt = np.size(time)
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] / partR
-
-# Find output data
-numDens = np.genfromtxt(nDensFile).T
-vFrac = np.genfromtxt(vFracFile).T
-up = np.genfromtxt(upFile).T
-vp = np.genfromtxt(vpFile).T
-wp = np.genfromtxt(wpFile).T
-
-# Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-#plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=4)
-plt.rc('savefig', dpi=250)
-labelx = -0.17
-
-## NUMBER DENSITY ##
-nDensFig = plt.figure()
-plt.imshow(numDens, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
-plt.colorbar(format="%.1e")
-plt.title(r"$n$")
-plt.xlabel(r"$t - t_0$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r'$z/a$')
-
-imgname = imgdir + "number-density"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+# Print simulation data
+printSimulationData(partR, root, simdir, datadir)
 
 ## VOLUME FRACTION ##
+vFracFile = datadir + "volume-fraction"
+vFrac = np.genfromtxt(vFracFile).T
+
+# Plot
 vFracFig = plt.figure()
+
+minVal = np.floor(100*np.amin(vFrac))/100
+maxVal = np.ceil(100*np.amax(vFrac))/100
+
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
-#  vmin=0., vmax=0.5)
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+  vmin=minVal, vmax=maxVal)
+
 cbar = plt.colorbar()
 plt.title(r'$Volume\ Fraction$')
-plt.xlabel(r"$t - t_0$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r'$z/a$')
+plt.xlabel(r"$t\ [s]$")
+plt.ylabel(r'$z\ [mm]$')
+
+xEnd = time[-1]
+plt.xlim([0, xEnd])
+plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
 
 imgname = imgdir + "volume-fraction"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-## U_PART ##
-upFig = plt.figure()
-plt.imshow(up, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
-plt.colorbar()
-plt.title(r"$U_p [mm/ms]$")
-plt.xlabel(r"$t - t_0$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r'$z/a$')
+# ## NUMBER DENSITY ##
+#nDensFile = datadir + "number-density"
+#numDens = np.genfromtxt(nDensFile).T
+# nDensFig = plt.figure()
+# plt.imshow(numDens, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+# plt.colorbar(format="%.1e")
+# plt.title(r"$n$")
+# plt.xlabel(r"$t - t_0$")
+# plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+# plt.ylabel(r'$z/a$')
+# 
+# imgname = imgdir + "number-density"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-imgname = imgdir + "part-u"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-
-## V_PART ##
-vpFig = plt.figure()
-plt.imshow(vp, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
-plt.colorbar()
-plt.title(r"$V_p [mm/ms]$")
-plt.xlabel(r"$t - t_0$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r'$z/a$')
-
-imgname = imgdir + "part-v"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-
-## W_PART ##
+# ## U_PART ##
+#upFile = datadir + "part-u"
+#up = np.genfromtxt(upFile).T
+# upFig = plt.figure()
+# plt.imshow(up, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+# plt.colorbar()
+# plt.title(r"$U_p [mm/ms]$")
+# plt.xlabel(r"$t - t_0$")
+# plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+# plt.ylabel(r'$z/a$')
+# 
+# imgname = imgdir + "part-u"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+# 
+# ## V_PART ##
+#vpFile = datadir + "part-v"
+#vp = np.genfromtxt(vpFile).T
+# vpFig = plt.figure()
+# plt.imshow(vp, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+# plt.colorbar()
+# plt.title(r"$V_p [mm/ms]$")
+# plt.xlabel(r"$t - t_0$")
+# plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
+# plt.ylabel(r'$z/a$')
+# 
+# imgname = imgdir + "part-v"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+# 
+ ## W_PART ##
 wpFig = plt.figure()
+
+wpFile = datadir + "part-w"
+wp = np.genfromtxt(wpFile).T
+
+minVal = np.floor(100*np.amin(wp))/100
+maxVal = np.ceil(100*np.amax(wp))/100
+maxVal = np.max((np.abs(minVal), np.abs(maxVal)))
+
 plt.imshow(wp, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+  vmin=-maxVal, vmax=maxVal)
+
 cbar = plt.colorbar()
-plt.title(r"$W_p [mm/ms]$")
-plt.xlabel(r"$t - t_0$")
-plt.xticks(np.floor(np.arange(time[0], time[-1], 1000)))
-plt.ylabel(r'$z/a$')
+plt.title(r"$W_p\ [mm/ms]$")
+plt.xlabel(r"$t\ [s]$")
+plt.ylabel(r'$z\ [mm]$')
+
+xEnd = time[-1]
+plt.xlim([0, xEnd])
+plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
 
 imgname = imgdir + "part-w"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+print "      Done!"

@@ -15,10 +15,11 @@
 // #Defines
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
+#define SIM_ROOT_DIR ".."
 #define ROOT_DIR "."
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_OUT_DIR "data-tetrads"
+#define DATA_DIR "data-tetrads"
 #define MAX_THREADS_1D 128
 #define MAX_THREADS_DIM 16
 

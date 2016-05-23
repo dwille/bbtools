@@ -48,7 +48,7 @@ void init_input_files(void) {
   int fret = 0; fret=fret;
   double time;
 
-  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+  sprintf(output_path, "%s/%s", SIM_ROOT_DIR, OUTPUT_DIR);
 
   int isFlow;
   int inRange;
@@ -219,7 +219,7 @@ void domain_init(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", ROOT_DIR);
+  sprintf(fname, "%s/%s/flow.config", SIM_ROOT_DIR, INPUT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -388,7 +388,7 @@ void cgns_fill_flow(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, flowFiles[fileMap[tt]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, flowFiles[fileMap[tt]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -461,7 +461,7 @@ void write_averaged(void)
 
   // Set up output file name
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s/phaseAveragedVel", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(fname, "%s/%s/phaseAveragedVel", ROOT_DIR, DATA_DIR);
   FILE *fnode = fopen(fname, "w");
   if (fnode == NULL) {
     printf("Error opening file!\n");
@@ -483,7 +483,7 @@ void create_output_dir (void) {
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }

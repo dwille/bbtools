@@ -1,98 +1,112 @@
 #!/usr/bin/env python2
-
-import sys, os
-import csv
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import signal
+from setup import *
+os.system('clear')
 
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
-print "                 Crosscorrelate"
+print "             Avg Crosscorrelation Plot"
 print ""
 
-# SIMULATION PARAMETERS
-partR = 2.1
-ts = 500
+# Setup simulation parameters
+(partR, simdir, tstart) = simParams(sys)
 
-# DEVEL
-root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
-simdir = "sim/"
-datadir = root + simdir + "data/reconstruct-1D/"
+# Setup directory structures
+#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
+(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
 
-# MARCC
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("      Simulation directory: ")
-#if not simdir.endswith('/'):
-#  simdir = simdir + '/'
-#datadir = root + simdir + "data/reconstruct-1D/"
-
-print "      Sim root directory set to: " + root
-print "      Particle Radius set to: " + str(partR)
-print "      Steady state index set to: " + str(ts)
-
-# Check if datadir exists so we don't go creating extra dirs
-if not os.path.exists(datadir):
-  print "      " + datadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-
-# Create imgdir if necessary
-imgdir = root + simdir + "/img/"
-if not os.path.exists(imgdir):
-  os.makedirs(imgdir)
-
-# set up data file paths
-infoFile = datadir + "info"
-vfSaveFile = datadir + "z-averaged-vfrac-xcorr"
-
-# Find time and evalZ, and size of each
-time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
-time = time[ts:] - time[ts]
-nt = np.size(time)
-
-evalZ = np.genfromtxt(infoFile, skip_header=1)[1:] #/ partR
-nz = np.size(evalZ)
+# Get time and z data
+(time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
 dz = evalZ - evalZ[0]
 
+# Print simulation data
+printSimulationData(partR, root, simdir, datadir)
+
 # Pull output data -- each column is a different time
+vfSaveFile = datadir + "z-averaged-vfrac-xcorr"
 vfCrossCorr = np.genfromtxt(vfSaveFile)
 
 # Find maxima
 vfFirstMaxima = np.zeros((nz,3))
+vfSecondMaxima = np.zeros((nz,3))
+vfThirdMaxima = np.zeros((nz,3))
 for zz in np.arange(0,nz):
+  # Find maxima locations by using where second derivative changes
   maximaLoc = (np.diff(np.sign(np.diff(vfCrossCorr[zz,:]))) < 0).nonzero()[0] + 1
+  # maximum values
   maxima = vfCrossCorr[zz,maximaLoc]
+  # maximum indices
   maxInd = np.argmax(maxima)
+
   if np.size(maximaLoc) == 0:
     vfFirstMaxima[zz,0] = np.nan
     vfFirstMaxima[zz,1] = dz[zz]
     vfFirstMaxima[zz,2] = np.nan
-  else:
+
+    vfSecondMaxima[zz,0] = np.nan
+    vfSecondMaxima[zz,1] = dz[zz]
+    vfSecondMaxima[zz,2] = np.nan
+  elif np.size(maximaLoc) > 0:
     vfFirstMaxima[zz,0] = time[maximaLoc[0]]
     vfFirstMaxima[zz,1] = dz[zz]
     vfFirstMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[0]]
 
+    if np.size(maximaLoc) > 1:
+      vfSecondMaxima[zz,0] = time[maximaLoc[1]]
+      vfSecondMaxima[zz,1] = dz[zz]
+      vfSecondMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[1]]
+
+      if np.size(maximaLoc) > 2:
+        vfThirdMaxima[zz,0] = time[maximaLoc[2]]
+        vfThirdMaxima[zz,1] = dz[zz]
+        vfThirdMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[2]]
+
+  if vfCrossCorr[zz,0] > vfCrossCorr[zz,1]:
+    if np.size(maximaLoc) > 2:
+      vfThirdMaxima[zz,0] = vfSecondMaxima[zz,0]
+      vfThirdMaxima[zz,1] = vfSecondMaxima[zz,1]
+      vfThirdMaxima[zz,2] = vfSecondMaxima[zz,2]
+
+    if np.size(maximaLoc) > 1:
+      vfSecondMaxima[zz,0] = vfFirstMaxima[zz,0]
+      vfSecondMaxima[zz,1] = vfFirstMaxima[zz,1]
+      vfSecondMaxima[zz,2] = vfFirstMaxima[zz,2]
+
+    vfFirstMaxima[zz,0] = time[0]
+    vfFirstMaxima[zz,1] = dz[zz]
+    vfFirstMaxima[zz,2] = vfCrossCorr[zz,0]
+
 # Find slope of maxima -- wavespeed
-for zz in np.arange(1,nz):
-  # if the time changes drastically, cut the array
-  if np.abs(vfFirstMaxima[zz,0] - vfFirstMaxima[zz-1,0]) > .100:
-    firstWave = vfFirstMaxima[0:zz-1,:]
+tau = -np.ones(nz)
+zeta = -np.ones(nz)
+tau[0] = vfFirstMaxima[0,0]
+zeta[0] = vfFirstMaxima[0,1]
+for zz in np.arange(0,nz-1):
+  tauFirstNext = vfFirstMaxima[zz+1,0]
+  tauSecondNext = vfSecondMaxima[zz+1,0]
+  tauThirdNext = vfThirdMaxima[zz+1, 0]
 
-tau = firstWave[:,0]
-tau = tau[:,np.newaxis]
-dzMax = firstWave[:,1]
-dzMax = dzMax[:,np.newaxis]
+  # Use first max if it is close
+  if np.abs(tau[zz] - tauFirstNext) < 0.01:
+    tau[zz+1] = tauFirstNext
+    zeta[zz+1] = vfFirstMaxima[zz+1,1]
+  # if it's too far, try the second max
+  elif np.abs(tau[zz] - tauSecondNext) < 0.01:
+    tau[zz+1] = tauSecondNext
+    zeta[zz+1] = vfSecondMaxima[zz+1,1]
+  # if it's too far, try the third
+  elif np.abs(tau[zz] - tauThirdNext) < 0.01:
+    tau[zz+1] = tauThirdNext
+    zeta[zz+1] = vfThirdMaxima[zz+1,1]
+  # if that is not good, quit
+  else:
+    break;
 
-# Make sure that x,y[0] = 0
-tau[0] = 0
-dzMax[0] = 0
-x = firstWave[:,0]
-
-# Fit curve, assume 0 intercept
-p, _, _, _ = np.linalg.lstsq(tau, dzMax)
-xFit = firstWave[:,0]
-yFit = p[0,0]*xFit
+tau = tau[tau != -1]
+zeta = zeta[zeta != -1]
+  
+# Fit curve, assume 0 intercept -- p is slope
+p, _, _, _ = np.linalg.lstsq(tau[:,np.newaxis], zeta)
+yFit = p*tau
 
 ## PLOTTING ##
 # Volume Fraction
@@ -100,24 +114,28 @@ vfFig = plt.figure()
 plt.imshow(vfCrossCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], dz[0], dz[-1]])
 plt.colorbar()
-plt.plot(firstWave[:,0], firstWave[:,1], 'ko', markevery=25, 
-  markerfacecolor="None")
-plt.plot(xFit, yFit, '--')
-cTxtString = r"$dz = %.4f\tau$" % p[0,0]
-plt.text(xFit[-1], yFit[-1], cTxtString, fontsize=12)
+
+#plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'wo', alpha=0.4)
+#plt.plot(vfSecondMaxima[:,0], vfSecondMaxima[:,1], 'ro', alpha=0.4)
+#plt.plot(vfThirdMaxima[:,0], vfThirdMaxima[:,1], 'go', alpha=0.4)
+plt.plot(tau, zeta, 'k-')
+
+plt.plot(tau, yFit, 'w--')
+cTxtString = r"$dz = %.4f\tau$" % p
+#plt.text(time[len(time)/2], dz[len(dz)/2], cTxtString, fontsize=12)
 
 plt.xlabel(r"$\tau\ [s]$")
 plt.xlim([0, time[-1]])
 plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
-plt.ylabel(r"$dz\ [mm]$", rotation=0)
+plt.ylabel(r"$\Delta z\ [mm]$", rotation=0, labelpad=20)
 plt.ylim([dz[0], dz[-1]])
 
-
-plt.title(r"$\langle \alpha(t,z) \alpha(t + \tau, z + \Delta z) \rangle$")
+plt.title(r"$\langle \phi(t,z) \phi(t + \tau, z + \Delta z) \rangle$")
 
 imgname = imgdir + "avg-crosscorr-spacetime-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 # # Particle vertical velocity
 # wpFig = plt.figure()
@@ -132,3 +150,4 @@ plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 # 
 # imgname = imgdir + "avg-crosscorr-spacetime-wp"
 # plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+print "      Done!"

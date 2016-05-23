@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import os
+import os,sys
 os.system('clear')
 
 
@@ -17,7 +17,7 @@ rho = np.array([2.0, 3.3, 4.0, 5.0])
 phi = np.array([0.087, 0.175, 0.262, 0.349])
 
 # MARCC
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/simdata/"
 phaseFile = root + "phaseAveragedFluidVel"
 termFile = root + "singlePartSedi"
 
@@ -62,7 +62,6 @@ n0500 = flowVel[0:4]
 n1000 = flowVel[4:8]
 n1500 = flowVel[8:12]
 n2000 = flowVel[12:16]
-
 
 # R-Z relations
 Ret = d*termVel/nu
@@ -111,13 +110,13 @@ phimf = 0.6
 fig1 = plt.figure()
 
 nAx = fig1.add_subplot(111)
-nAx.plot(phi,rho2_0, 'bo', alpha=0.7)
-nAx.plot(phi,rho3_3, 'go', alpha=0.7)
-nAx.plot(phi,rho4_0, 'ro', alpha=0.7)
-nAx.plot(phi,rho5_0, 'co', alpha=0.7)
+nAx.plot(phi,rho2_0, 'b*', markersize=7, alpha=0.7)
+nAx.plot(phi,rho3_3, 'gs', markersize=7, alpha=0.7)
+nAx.plot(phi,rho4_0, 'ro', markersize=7, alpha=0.7)
+nAx.plot(phi,rho5_0, 'c^', markersize=7, alpha=0.7)
 
-nAx.set_xlabel(r'$\phi$')
-nAx.set_ylabel(r'$w_f / w_t$')
+nAx.set_xlabel(r'$\phi$', fontsize=14)
+nAx.set_ylabel(r'$w_f / w_t$', fontsize=14)
 
 nAx.set_xlim([0,0.75])
 nAx.set_xticks([0, 0.25, 0.5, 0.75])
@@ -135,19 +134,19 @@ nAx.plot(phiEval,WfWtEval[:,0], 'b--', zorder=1)
 nAx.plot(phiEval,WfWtEval[:,1], 'g--', zorder=1)
 nAx.plot(phiEval,WfWtEval[:,2], 'r--', zorder=1)
 nAx.plot(phiEval,WfWtEval[:,3], 'c--', zorder=1)
-labelText=r"$\frac{w_f}{w_t} = %.2f(1 - \phi)^{n(Re_t) - 1}$" % kMean
+labelText=r"$\frac{w_f}{w_t} = %.2f(1 - \phi)^{n - 1}$" % kMean
 nAx.text(0.25,0.6,labelText)
 
-nAx.plot(phimf, wmf[0], 'bx')
-nAx.plot(phimf, wmf[1], 'gx')
-nAx.plot(phimf, wmf[2], 'rx')
-nAx.plot(phimf, wmf[3], 'cx')
+#nAx.plot(phimf, wmf[0], 'bx')
+#nAx.plot(phimf, wmf[1], 'gx')
+#nAx.plot(phimf, wmf[2], 'rx')
+#nAx.plot(phimf, wmf[3], 'cx')
 
 #nAx.set_yscale("log")
 
 imgname = imgdir + "phaseAverageWf-phi"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 # Constant phi -- rho increasing
 fig2 = plt.figure()
@@ -174,3 +173,4 @@ rhoAx.legend(lText, bbox_to_anchor=(0,1.1,1,1),loc="lower left",mode="expand",
 imgname = imgdir + "phaseAverageWf-rho"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+print "      ...Done!"

@@ -24,7 +24,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/f-rec.config", ROOT_DIR);
+  sprintf(fname, "%s/f-rec-1D.config", ROOT_DIR);
   FILE *infile = fopen(fname, "r");
   
   // read input
@@ -43,7 +43,7 @@ void init_part_files(void) {
   int fret = 0; fret=fret;
   double time;
 
-  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+  sprintf(output_path, "%s/%s", SIM_ROOT_DIR, OUTPUT_DIR);
 
   int isPart;
   int inRange;
@@ -174,17 +174,12 @@ void create_output(void) {
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
-  // Create data sub-directory if it doesn't exist
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
-  if (stat(buf, &st) == -1) {
-    mkdir(buf, 0700);
-  }
 
   // Create output files
   char path2file[FILE_NAME_SIZE] = "";
 
   // number density
-  sprintf(path2file, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR,DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/number-density", ROOT_DIR, DATA_DIR);
   FILE *file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -192,7 +187,7 @@ void create_output(void) {
   fclose(file);
 
   // volume fraction
-  sprintf(path2file, "%s/%s/%s/volume-fraction", ROOT_DIR,DATA_DIR,DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/volume-fraction", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -200,7 +195,7 @@ void create_output(void) {
   fclose(file);
 
   // part-u
-  sprintf(path2file, "%s/%s/%s/part-u", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/part-u", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -208,7 +203,7 @@ void create_output(void) {
   fclose(file);
 
   // part-v
-  sprintf(path2file, "%s/%s/%s/part-v", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/part-v", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -216,7 +211,7 @@ void create_output(void) {
   fclose(file);
 
   // part-w
-  sprintf(path2file, "%s/%s/%s/part-w", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/part-w", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -224,15 +219,13 @@ void create_output(void) {
   fclose(file);
 
   // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR,
-    DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
   }
   fclose(file);
-  sprintf(path2file, "%s/%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR,
-    DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -240,15 +233,13 @@ void create_output(void) {
   fclose(file);
 
   // part-w coefficients even and odd
-  sprintf(path2file, "%s/%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
   }
   fclose(file);
-  sprintf(path2file, "%s/%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -256,7 +247,7 @@ void create_output(void) {
   fclose(file);
 
   /* Create eval/time file */
-  sprintf(path2file, "%s/%s/%s/info", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -283,7 +274,7 @@ int cgns_read_nparts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
 
@@ -321,7 +312,7 @@ void parts_init(void)
 
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -359,7 +350,7 @@ void domain_init(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", ROOT_DIR);
+  sprintf(fname, "%s/input/flow.config", SIM_ROOT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -529,7 +520,7 @@ void cgns_fill_parts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -635,10 +626,8 @@ void write_coeffs(int in)
   char fnameOdd[CHAR_BUF_SIZE] = "";
 
   // number density
-  sprintf(fnameEven, "%s/%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
-  sprintf(fnameOdd, "%s/%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
+  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR);
+  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR);
   FILE *fileEven = fopen(fnameEven, "a");
   FILE *fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -666,10 +655,8 @@ void write_coeffs(int in)
   fclose(fileOdd);
 
   // part-w coeffs
-  sprintf(fnameEven, "%s/%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
-  sprintf(fnameOdd, "%s/%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
+  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR);
+  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR);
   fileEven = fopen(fnameEven, "a");
   fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -703,7 +690,7 @@ void write_reconstruct(void)
   char fname[CHAR_BUF_SIZE] = "";
 
   /* number desnity */
-  sprintf(fname, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(fname, "%s/%s/number-density", ROOT_DIR, DATA_DIR);
   FILE *file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -721,7 +708,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* volume fraction */
-  sprintf(fname, "%s/%s/%s/volume-fraction", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(fname, "%s/%s/volume-fraction", ROOT_DIR, DATA_DIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -739,7 +726,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-u */
-  sprintf(fname, "%s/%s/%s/part-u", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(fname, "%s/%s/part-u", ROOT_DIR, DATA_DIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -757,7 +744,7 @@ void write_reconstruct(void)
   fclose(file);
   
   /* part-v */
-  sprintf(fname, "%s/%s/%s/part-v", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(fname, "%s/%s/part-v", ROOT_DIR, DATA_DIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -775,7 +762,7 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-w */
-  sprintf(fname, "%s/%s/%s/part-w", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
+  sprintf(fname, "%s/%s/part-w", ROOT_DIR, DATA_DIR);
   file = fopen(fname, "a");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
