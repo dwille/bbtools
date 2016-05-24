@@ -53,10 +53,11 @@ for tt,tval in enumerate(time):
     vfFirstMaxima[tt,2] = vfAutoCorr[maximaLoc[0],tt]
 
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], dz[0], dz[-1]])
+  extent=[time[0], time[-1], dz[0], dz[-1]],
+  vmin=-1., vmax=1.)
 plt.colorbar()
-plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
-plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
+#plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
+#plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
 
 plt.xlabel(r"$t - t_0\ [s]$")
 plt.ylabel(r"$\Delta z\ [mm]$",rotation=0)

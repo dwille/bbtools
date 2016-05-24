@@ -26,7 +26,7 @@ print "      Using location: " + phaseFile
 print "      Using location: " + termFile
 print ""
 print "      Using d = %.2f" % d
-print "      Using nu = %.2f" % nu
+print "      Using nu = %.5f" % nu
 
 # Check if datadir exists so we don't go creating extra dirs
 if not os.path.exists(phaseFile):
@@ -94,7 +94,7 @@ for rr,_ in enumerate(rho):
 
 kMean = np.mean(k)
     
-phiEval = np.linspace(0.05,0.6,101)
+phiEval = np.linspace(0.05,0.4,81)
 WfWtEval = np.zeros((np.size(phiEval),4))
 for rr,_ in enumerate(rho):
   for pp,_ in enumerate(phiEval):
@@ -118,8 +118,8 @@ nAx.plot(phi,rho5_0, 'c^', markersize=7, alpha=0.7)
 nAx.set_xlabel(r'$\phi$', fontsize=14)
 nAx.set_ylabel(r'$w_f / w_t$', fontsize=14)
 
-nAx.set_xlim([0,0.75])
-nAx.set_xticks([0, 0.25, 0.5, 0.75])
+nAx.set_xlim([0,0.45])
+nAx.set_xticks([0, 0.15, 0.30, 0.45])
 #nAx.set_ylim([0,0.7])
 #nAx.set_yticks([0, 0.25, 0.5, 0.75])
 
@@ -135,7 +135,7 @@ nAx.plot(phiEval,WfWtEval[:,1], 'g--', zorder=1)
 nAx.plot(phiEval,WfWtEval[:,2], 'r--', zorder=1)
 nAx.plot(phiEval,WfWtEval[:,3], 'c--', zorder=1)
 labelText=r"$\frac{w_f}{w_t} = %.2f(1 - \phi)^{n - 1}$" % kMean
-nAx.text(0.25,0.6,labelText)
+nAx.text(0.23,0.6,labelText)
 
 #nAx.plot(phimf, wmf[0], 'bx')
 #nAx.plot(phimf, wmf[1], 'gx')
@@ -143,6 +143,23 @@ nAx.text(0.25,0.6,labelText)
 #nAx.plot(phimf, wmf[3], 'cx')
 
 #nAx.set_yscale("log")
+
+# Subplot
+a = plt.axes([0.25, 0.3, 0.2, 0.2])
+plt.plot(phi,rho2_0, 'b*', markersize=7, alpha=0.7)
+plt.plot(phi,rho3_3, 'gs', markersize=7, alpha=0.7)
+plt.plot(phi,rho4_0, 'ro', markersize=7, alpha=0.7)
+plt.plot(phi,rho5_0, 'c^', markersize=7, alpha=0.7)
+
+plt.plot(phiEval,WfWtEval[:,0], 'b--', zorder=1)
+plt.plot(phiEval,WfWtEval[:,1], 'g--', zorder=1)
+plt.plot(phiEval,WfWtEval[:,2], 'r--', zorder=1)
+plt.plot(phiEval,WfWtEval[:,3], 'c--', zorder=1)
+
+plt.xlim([0.07, 0.11])
+plt.ylim([0.69, 0.73])
+plt.xticks([0.07, 0.09, 0.11])
+plt.yticks([0.69, 0.71, 0.73])
 
 imgname = imgdir + "phaseAverageWf-phi"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

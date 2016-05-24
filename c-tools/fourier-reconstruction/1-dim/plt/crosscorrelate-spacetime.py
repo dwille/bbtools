@@ -107,13 +107,13 @@ plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
 #cTxtString = r"$dz = %.4f\tau$" % p[0,0]
 #plt.text(xFit[-1], yFit[-1], cTxtString, fontsize=12)
 
-plt.xlabel(r"$\tau\ [s]$")
+plt.xlabel(r"$\Delta t\ [s]$")
 plt.xlim([0, time[-1]])
 plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 plt.ylabel(r"$dz\ [mm]$", rotation=0)
 plt.ylim([0, dz[-1]])
 
-plt.title(r"$\langle \alpha(t,z) \alpha(t + \tau, z + \Delta z) \rangle,\ " +
+plt.title(r"$\langle \alpha(t,z) \alpha(t + \Delta t, z + \Delta z) \rangle,\ " +
   "zs = %.3f\ [mm]$" % evalZ[zsInd])
 
 imgname = imgdir + "crosscorr-spacetime-vf"

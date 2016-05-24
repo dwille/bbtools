@@ -121,17 +121,17 @@ plt.colorbar()
 plt.plot(tau, zeta, 'k-')
 
 plt.plot(tau, yFit, 'w--')
-cTxtString = r"$dz = %.4f\tau$" % p
+cTxtString = r"$dz = %.4f\Delta t$" % p
 #plt.text(time[len(time)/2], dz[len(dz)/2], cTxtString, fontsize=12)
 
-plt.xlabel(r"$\tau\ [s]$")
+plt.xlabel(r"$\Delta t\ [s]$")
 plt.xlim([0, time[-1]])
 plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
 plt.ylabel(r"$\Delta z\ [mm]$", rotation=0, labelpad=20)
 plt.ylim([dz[0], dz[-1]])
 
-plt.title(r"$\langle \phi(t,z) \phi(t + \tau, z + \Delta z) \rangle$")
+plt.title(r"$\langle \phi(t,z) \phi(t + \Delta t, z + \Delta z) \rangle$")
 
 imgname = imgdir + "avg-crosscorr-spacetime-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

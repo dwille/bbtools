@@ -89,7 +89,7 @@ bx1.plot(time, vfAutoCorrSlice, 'k-', linewidth=2)
 
 bx1.set_xlim([0, xEnd])
 bx1.set_ylim([-.5, 1])
-bx1.set_ylabel(r'$\langle \phi(t) \phi(t + \tau) \rangle$', fontsize=14)
+bx1.set_ylabel(r'$\langle \phi(t) \phi(t + \Delta t) \rangle$', fontsize=14)
 bx1.xaxis.set_ticklabels([])
 bx1.set_yticks([-0.5, 0 , 0.5, 1])
 
@@ -108,7 +108,7 @@ bx2.plot([time[0], time[-1]], [evalZ[zz], evalZ[zz]], 'k-', linewidth=2)
 
 bx2.set_xlim([0, xEnd])
 bx2.set_ylim([evalZ[0], evalZ[-1]])
-bx2.set_xlabel(r"$\tau \ [s]$", fontsize=14)
+bx2.set_xlabel(r"$\Delta t \ [s]$", fontsize=14)
 bx2.set_ylabel(r'$z\ [mm]$', fontsize=14)
 
 imgname = imgdir + "autocorrelate-time-slices"
@@ -189,7 +189,7 @@ dx2.plot(time, vfCrossCorrSlice, 'k-', linewidth=2)
 
 dx2.set_xlim([0, xEnd])
 dx2.set_ylim([-0.20, 0.4])
-dx2.set_ylabel(r'$\langle \phi(x, t) \phi(x + \Delta x, t + \tau)\rangle$', fontsize=16)
+dx2.set_ylabel(r'$\langle \phi(x, t) \phi(x + \Delta x, t + \Delta t)\rangle$', fontsize=16)
 dx2.yaxis.set_label_coords(labelx, 0.5)
 dx2.set_yticks([-0.20, 0.0, 0.2, 0.4])
 dx2.xaxis.set_ticklabels([])
@@ -214,7 +214,7 @@ plt.imshow(vfCrossCorr, origin="lower", aspect="auto", interpolation="none",
 dx3.plot([time[0], time[-1]], [dz[zz2] - dz[zz],dz[zz2] - dz[zz]], 'k-', 
   linewidth=2)
 
-dx3.set_xlabel(r'$\tau\  [s]$', fontsize=16)
+dx3.set_xlabel(r'$\Delta t\  [s]$', fontsize=16)
 dx3.set_ylabel(r'$\Delta z\ [mm]$',rotation=0, fontsize=16)
 dx3.yaxis.set_label_coords(labelx, 0.5)
 
