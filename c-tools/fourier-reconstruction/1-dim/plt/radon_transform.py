@@ -29,6 +29,9 @@ vFracFile = datadir + "volume-fraction"
 vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
 vFrac = vFrac.T
 
+# Subtract mean -- TODO: do this intelligently
+vFrac -= 2000.*(4./3.)*np.pi*(2.1**3.)/(42.*42.*126.)
+
 sinogram = radon(vFrac)
 
 ## Save Data to File

@@ -1,7 +1,7 @@
 #!/bin/sh
 
-#SBATCH --partition=parallel
-#SBATCH --time=5:0:0
+#SBATCH --partition=shared
+#SBATCH --time=1:0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1

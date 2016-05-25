@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#SBATCH --partition=parallel
+#SBATCH --partition=shared
 #SBATCH --time=2:0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
