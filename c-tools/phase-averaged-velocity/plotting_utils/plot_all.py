@@ -48,7 +48,7 @@ if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
 # Read data
-flowVel = np.genfromtxt(phaseFile, skip_header=1, usecols=1)
+flowVel = np.genfromtxt(phaseFile, skip_header=1, usecols=2)
 termVel = np.genfromtxt(termFile, skip_header=1, usecols=1)
 
 # Constant rho -- phi increasing

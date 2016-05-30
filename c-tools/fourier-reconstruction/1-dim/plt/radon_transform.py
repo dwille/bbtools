@@ -13,6 +13,7 @@ print ""
 
 # Setup simulation parameters
 (partR, simdir, tstart) = simParams(sys)
+nparts = float(simdir.partition('/')[0])
 
 # Setup directory structures
 #(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
@@ -27,10 +28,9 @@ printSimulationData(partR, root, simdir, datadir)
 # Find output data -- each column is a different time
 vFracFile = datadir + "volume-fraction"
 vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
-vFrac = vFrac.T
 
-# Subtract mean -- TODO: do this intelligently
-vFrac -= 2000.*(4./3.)*np.pi*(2.1**3.)/(42.*42.*126.)
+# Subtract mean
+vFrac -= nparts*(4./3.)*np.pi*(2.1**3.)/(42.*42.*126.)
 
 sinogram = radon(vFrac)
 

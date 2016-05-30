@@ -19,6 +19,7 @@ def simParams(sys):
   else:
     simdir = raw_input("      Simulation directory: ")
     tstart = float(raw_input("      Starting time [ms]: ")) / 1000
+    # TODO if tstart is -1 or empty, choose statsimtime
 
   if not simdir.endswith('/'):
     simdir = simdir + '/'
