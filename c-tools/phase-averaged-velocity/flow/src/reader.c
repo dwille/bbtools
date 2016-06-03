@@ -31,8 +31,12 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/phasevel.config", ROOT_DIR);
+  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
+  if (infile == NULL) {
+    printf("Error opening file %s!\n", fname);
+    exit(EXIT_FAILURE);
+  }
   
   // read input
   fret = fscanf(infile, "tStart %lf\n", &tStart);
@@ -457,11 +461,11 @@ void show_domain(void)
 // Write nodes
 void write_averaged(void)
 {
-  printf("\tWriting to file ""phaseAveragedVel""... ");
+  printf("\tWriting to file ""phaseAveragedFlowVel""... ");
 
   // Set up output file name
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s/phaseAveragedVel", ROOT_DIR, DATA_DIR);
+  sprintf(fname, "%s/%s/phaseAveragedFlowVel", ROOT_DIR, DATA_DIR);
   FILE *fnode = fopen(fname, "w");
   if (fnode == NULL) {
     printf("Error opening file!\n");
@@ -517,5 +521,9 @@ void free_flow(void)
   free(flowFiles);
   free(fileMap);
   free(flowFileTime);
+  #ifdef BATCH
+    free(ROOT_DIR);
+    free(SIM_ROOT_DIR);
+  #endif
 }
 

@@ -15,11 +15,20 @@
 // #Defines
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
-#define SIM_ROOT_DIR ".."
-#define ROOT_DIR "."
+
+// set up input if we need batch job submission
+#ifdef BATCH
+  extern char *ROOT_DIR;
+  extern char *SIM_ROOT_DIR;
+#else
+  #define ROOT_DIR "."        // analysis
+  #define SIM_ROOT_DIR ".."   // simulation
+#endif
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
 #define DATA_DIR "data"
+#define CONFIG_FILE "flowvel.config"
+
 #define MAX_THREADS_1D 128
 #define MAX_THREADS_DIM 16
 

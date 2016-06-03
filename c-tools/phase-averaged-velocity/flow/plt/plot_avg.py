@@ -19,7 +19,7 @@ root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
-datadir = root + simdir + "data/"
+datadir = root + simdir + "phasevel/data/"
 
 print "      Sim root directory set to: " + root
 print "      Using location: " + datadir

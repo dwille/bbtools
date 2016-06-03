@@ -1,8 +1,8 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /opt/hdf5
-CGNS_DIR = /opt/cgns
-CUSP_DIR = /opt/cusplibrary
-CUDA_DIR = /opt/cuda
+HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
+CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+CUSP_DIR = /home-1/dwillen3@jhu.edu/.deps/cusplibrary
+CUDA_DIR = /cm/shared/apps/cuda/7.0
 
 ## COMPILERS
 GCC = gcc
@@ -34,12 +34,17 @@ EXTRA = Makefile	\
 # make -g -O2 to optimize
 all: COPT += -O2
 all: CUDAOPT += -O2
-all: phasevel
+all: flowVel
+
+# compile for batch job submission
+batch: COPT += -O2 -DBATCH
+batch: CUDAOPT += -O2
+batch: flowVel
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
 debug: CUDAOPT += -DDEBUG -g
-debug: phasevel
+debug: flowVel
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 OBJSCUDA = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCCUDA))))
@@ -53,8 +58,8 @@ $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 $(SRC_DIR)/bblib.o:$(OBJSCUDA)
 	$(NVCC) $(CUDAOPT) -dlink $+ $(CUDALIBS) -o $(SRC_DIR)/bblib.o
 
-phasevel: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/phasevel
+flowVel: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/flowVel
 
 clean:
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/phasevel
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/flowVel

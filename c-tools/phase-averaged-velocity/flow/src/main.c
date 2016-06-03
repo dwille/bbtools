@@ -1,13 +1,38 @@
 #include "main.h"
 
 // Define global variables declared in header file
+#ifdef BATCH
+  char *ROOT_DIR;
+  char *SIM_ROOT_DIR;
+#endif
 int dev_start;
 double tStart;
 double tEnd;
 int tt;
 
-int main(void) 
+int main(int argc, char *argv[]) 
 {
+  #ifdef BATCH
+    SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+    ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+    // arg[0] = program name
+    // arg[1] = SIM_ROOT_DIR
+    if (argc == 2) {          // should be 2 for batch execution
+      sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+      sprintf(ROOT_DIR, "%s/flow_vel", SIM_ROOT_DIR);
+    } else if (argc != 2) {   // print batch usage
+      printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+      exit(EXIT_FAILURE);
+    }
+  #else   // To prevent compiler warnings
+    argc = argc;
+    argv = argv;
+  #endif
+
+  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+  printf(" ROOT_DIR = %s\n\n", ROOT_DIR);
+
   // Read main input file
   main_read_input();
 

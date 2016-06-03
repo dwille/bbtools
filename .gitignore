@@ -9,10 +9,26 @@ part.config
 flow.config
 
 # c-tool binaries
-tetrad_init
-phase_vel
 
-# c-tool data files
+# phase averaged velocity files
+flowVel
+flowphaseout
+partVel
+
+# Fourier Reconstruction files
+f-reconstruct
+plot.out
+
+# other
+out
+.keep
+.sh
+sppressions
+
+# Tetrad Files
+tetrad_init
+tetrad.out
+
 raw-data-*
 align.mean
 align.sdev
@@ -26,9 +42,3 @@ stat.kurt
 regularNodes
 ts_*
 
-# other
-out
-tetrad.out
-.keep
-*.sh
-sppressions
