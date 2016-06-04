@@ -22,7 +22,7 @@ CUDALIBS = -L $(CUDA_DIR)/lib64 -lcudart
 SRCC =	main.c 		\
 	reader.c
 
-SRCCUDA = myCuda.cu		\
+SRCCUDA = myCuda.cu	\
 	  cuda_kernel.cu
 
 EXTRA = Makefile	\

@@ -22,7 +22,7 @@ root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
 simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
-fdatadir = root + simdir + "phase_vel/data/"
+fdatadir = root + simdir + "flow_vel/data/"
 pdatadir = root + simdir + "part_vel/data/"
 
 print "      Sim root directory set to: " + root
@@ -46,7 +46,7 @@ if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
 # Set up output file paths
-fdataFile = fdatadir + "phaseAveragedVel"
+fdataFile = fdatadir + "phaseAveragedFlowVel"
 pdataFile = pdatadir + "particleAvgVel"
 
 ftime = np.genfromtxt(fdataFile, skip_header=1, usecols=0)
