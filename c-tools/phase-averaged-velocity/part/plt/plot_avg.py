@@ -27,6 +27,8 @@ else:
 
 if not simdir.endswith('/'):
   simdir = simdir + '/'
+fdatadir = root + simdir + "flow_vel/data/"
+pdatadir = root + simdir + "part_vel/data/"
 
 home = os.path.expanduser("~")
 root = home + "/scratch/triply_per/" + simdir
@@ -60,7 +62,6 @@ elif not os.path.exists(termFile):
   print ""
   sys.exit()
 
-# Pull data
 ftime = np.genfromtxt(fdataFile, skip_header=1, usecols=0)
 uf = np.genfromtxt(fdataFile, skip_header=1, usecols=1)
 vf = np.genfromtxt(fdataFile, skip_header=1, usecols=2)
