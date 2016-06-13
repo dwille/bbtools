@@ -15,10 +15,14 @@ extern double *g_ln_odd;      // odd coeffs
 
 // Reconstructions
 extern double *g_ces;        // particle number density -- cesaro sum
+extern double *g_ces_avg;    // particle number density -- cesaro sum
 
 /**** FUNCTIONS ****/
 // Allocate variables
 void alloc_arrays();
+
+// reset sums
+void reset_sums();
 
 // calculate part-pair geometery
 void part_pair_geometry(int alpha, int beta);
@@ -27,7 +31,7 @@ void part_pair_geometry(int alpha, int beta);
 void eval_legendre(double mu, int ll);
 
 // Calculate constant coefficents
-void const_coeffs();
+void const_coeffs(int ll);
 
 // Calculate even and odd coefficents
 void calc_coeffs(int ll, int nn);

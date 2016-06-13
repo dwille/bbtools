@@ -28,7 +28,7 @@ def simParams(sys):
 
 # Setup up directory paths for lucan
 def directoryStructureDevel(simdir):
-  root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
+  #root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
   simdir = "sim/"
   datadir = root + simdir + "data/reconstruct-1D/"
 
@@ -48,7 +48,9 @@ def directoryStructureDevel(simdir):
 
 # Setup up directory paths for marcc
 def directoryStructureMarcc(simdir):
-  root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+  #root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+  home = os.path.expanduser("~")
+  root = home + "/scratch/triply_per/"
   simdir = simdir + 'f-rec-1D/'
   datadir = root + simdir + "data/"
 

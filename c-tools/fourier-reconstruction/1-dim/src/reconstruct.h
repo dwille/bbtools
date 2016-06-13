@@ -15,6 +15,11 @@ extern double *nvl_even;     // particle v-vel
 extern double *nvl_odd;      // particle v-vel
 extern double *nwl_even;     // particle w-vel
 extern double *nwl_odd;      // particle w-vel
+extern double *nkel_even;     // kinetic energy
+extern double *nkel_odd;      // kinetic energy
+
+extern double *nwl_avg_odd;    // phase averaged w-vel
+extern double *nwl_avg_even;   // phase averaged w-vel
 
 // Reconstructions
 extern double *n_ces;        // particle number density -- cesaro sum
@@ -22,6 +27,9 @@ extern double *vFrac_ces;    // volume fraction -- cesaro sum
 extern double *nu_ces;       // u-vel -- cesaro sum
 extern double *nv_ces;       // v-vel -- cesaro sum
 extern double *nw_ces;       // w-vel -- cesaro sum
+extern double *nke_ces;      // kinetic energy -- cesaro sum
+
+extern double *nw_avg_ces;     // phase averged wvel reconstruct
 
 extern double *ones;         // array of ones to place hold q for number density
 
@@ -41,7 +49,7 @@ void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
   double *evalZ, double ell, double k_ell);
 
 // evaluate volume fraction for current order and add to cesaro sum
-void eval_vfrac(double *vFrac_ces, double nql_even, double nql_odd, 
+void eval_phase_avg(double *phase_avg_ces, double nql_even, double nql_odd, 
   double *evalZ, double ell, double k_ell);
 
 // normalize nq by n

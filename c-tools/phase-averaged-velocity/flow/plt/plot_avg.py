@@ -15,11 +15,12 @@ print ""
 #datadir = root + simdir + "data-reconstruct/"
 
 # MARCC
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
+home = os.path.expanduser("~")
+root = home + "/scratch/triply_per/"
 simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
-datadir = root + simdir + "phasevel/data/"
+datadir = root + simdir + "flow_vel/data/"
 
 print "      Sim root directory set to: " + root
 print "      Using location: " + datadir
@@ -36,7 +37,7 @@ if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
 # Set up output file paths
-dataFile = datadir + "phaseAveragedVel"
+dataFile = datadir + "phaseAveragedFlowVel"
 
 time = np.genfromtxt(dataFile, skip_header=1, usecols=0)
 uf = np.genfromtxt(dataFile, skip_header=1, usecols=1)

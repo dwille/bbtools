@@ -16,10 +16,19 @@
 // #Defines
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
-#define ROOT_DIR "."
+
+// set up batch job submission
+#ifdef BATCH
+  extern char *ROOT_DIR;      // analysis
+  extern char *SIM_ROOT_DIR;  // sim
+#else
+  #define SIM_ROOT_DIR ".."
+  #define ROOT_DIR "."
+#endif
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_OUT_DIR "data-part-pair"
+#define DATA_DIR "data"
+#define CONFIG_FILE "part-pair.config"
 
 #define PERIODIC 0
 #define DIRICHLET 1
@@ -37,6 +46,7 @@ extern double tEnd;         // end time
 extern double R0;           // characteristic length
 extern int legendreOrder;   // order of legendre reconstruction
 extern int fourierOrder;    // order of fourier reconstruction
+extern int printAvgFlag;    // 1 prints avg, 0 prints timesteps
 extern int nPointsR;        // npoints to reconstruct at
 extern int nPointsTh;
 extern int tt;              // time iterator

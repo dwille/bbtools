@@ -115,6 +115,7 @@ void show_domain(void);
 void get_sigfigs(void);
 void write_coeffs(int in);
 void write_reconstruct(void);
+void write_avg_reconstruct(void);
 
 // Free parts
 void free_vars(void);

@@ -29,9 +29,17 @@ all: f-reconstruct
 debug: COPT += -DDEBUG -g
 debug: f-reconstruct
 
+# compile for batch job submission
+batch: COPT += -O2 -DBATCH
+batch: f-reconstruct
+
 # compile with profiler
 profiler: COPT += -pg
 profiler: f-reconstruct
+
+# compile with debug and batch job sumission
+batchdebug: COPT += -DDEBUG -DBATCH -g
+batchdebug: f-reconstruct
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 

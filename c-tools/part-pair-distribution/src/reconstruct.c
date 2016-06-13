@@ -9,6 +9,7 @@ double *g_ln_even;
 double *g_ln_odd;
 
 double *g_ces;
+double *g_ces_avg;
 
 /* FUNCTION DEFINITIONS */
 
@@ -19,9 +20,9 @@ void alloc_arrays()
   evalR = (double*) malloc(nPointsR * sizeof(double));
   evalTh = (double*) malloc(nPointsTh * sizeof(double));
 
-  double dr = (R0 - meanR) / ((double) (nPointsR - 1.));
+  double dr = (R0 - 2.*meanR) / ((double) (nPointsR - 1.));
   for (int i = 0; i < nPointsR; i++) {
-    evalR[i] = ((double) i)*dr + meanR;
+    evalR[i] = ((double) i)*dr + 2.*meanR;
   }
 
   double dth = 0.5*PI / (nPointsTh - 1.);
@@ -40,16 +41,16 @@ void alloc_arrays()
     #endif
   
   /* Init coefficent arrays */
-  // even/odd are size(L*N) + N
+  // even/odd are size N(L + 1) + 1
   // const are size (L+1)
-  int ncoeffsEven = legendreOrder*fourierOrder + fourierOrder + 1;
+  int ncoeffsEvenOdd = fourierOrder*(legendreOrder + 1) + 1;
   int ncoeffsConst = legendreOrder + 1;
 
-  g_ln_even = (double*) malloc(ncoeffsEven * sizeof(double));
-  g_ln_odd = (double*) malloc(ncoeffsEven * sizeof(double));
+  g_ln_even = (double*) malloc(ncoeffsEvenOdd * sizeof(double));
+  g_ln_odd = (double*) malloc(ncoeffsEvenOdd * sizeof(double));
   g_l0 = (double*) malloc(ncoeffsConst * sizeof(double));
 
-  for (int i = 0; i < ncoeffsEven; i++) {
+  for (int i = 0; i < ncoeffsEvenOdd; i++) {
     g_ln_even[i] = 0.;
     g_ln_odd[i] = 0.;
   }
@@ -60,6 +61,30 @@ void alloc_arrays()
   /* Init cesaro sum result arrays */
   // size is npointsR x npointsTh
   g_ces = (double*) malloc(nPointsR * nPointsTh * sizeof(double));
+  g_ces_avg = (double*) malloc(nPointsR * nPointsTh * sizeof(double));
+  for (int rr = 0; rr < nPointsR; rr++) {
+    for (int th = 0; th < nPointsTh; th++) {
+      g_ces[th + rr*nPointsTh] = 0.;
+      g_ces_avg[th + rr*nPointsTh] = 0.;
+    }
+  }
+}
+
+// set sums to zero
+void reset_sums(void)
+{
+  int ncoeffsEvenOdd = fourierOrder*(legendreOrder + 1) + 1;
+  int ncoeffsConst = legendreOrder + 1;
+
+  for (int i = 0; i < ncoeffsEvenOdd; i++) {
+    g_ln_even[i] = 0.;
+    g_ln_odd[i] = 0.;
+  }
+
+  for (int i = 0; i < ncoeffsConst; i++) {
+    g_l0[i] = 0.;
+  }
+
   for (int rr = 0; rr < nPointsR; rr++) {
     for (int th = 0; th < nPointsTh; th++) {
       g_ces[th + rr*nPointsTh] = 0.;
@@ -76,8 +101,12 @@ void part_pair_geometry(int alpha, int beta)
   int flipFlag;
 
   // Pull positions
-  ri[0] = parts[alpha].x; ri[1] = parts[alpha].y; ri[2] = parts[alpha].z;
-  rj[0] = parts[beta].x; rj[1] = parts[beta].y; rj[2] = parts[beta].z;
+  ri[0] = parts[alpha].x; 
+  ri[1] = parts[alpha].y; 
+  ri[2] = parts[alpha].z;
+  rj[0] = parts[beta].x; 
+  rj[1] = parts[beta].y; 
+  rj[2] = parts[beta].z;
 
   #define flip(s1,s2,l,i) \
     {dx = s1[i] - s2[i]; \
@@ -112,30 +141,27 @@ void eval_legendre(double mu, int ll)
   // from numerical recipes, page 184
   double p1 = 1.;
   double p2 = 0.;
-  double p3 = 0.;
-  for (int j = 0; j < ll; j++) {
+  double p3;
+  for (int j = 1; j <= ll; j++) {
     p3 = p2;
     p2 = p1;
-    p1 = ((2.*j + 1.)*mu*p2 - j*p3)/(j + 1.);
+    p1 = ((2.*j - 1.)*mu*p2 - (j - 1.)*p3)/((double) j);
   }
 
   // p1 has answer
   p_ell = p1;
 }
 
-// Calculate constant coefficients
-void const_coeffs()
+// Calculate constant coefficients -- each pair has contribution
+void const_coeffs(int ll)
 {
-  double kernel = p_ell / (r_ab*r_ab);
-  for (int i = 0; i <= legendreOrder; i++) {
-    g_l0[i] += kernel;
-  }
+  g_l0[ll] += p_ell / (r_ab*r_ab);
 }
 
 // Calculate even and odd coefficents
 void calc_coeffs(int ll, int nn)
 {
-  double k_enn = ((double) nn)*PI/R0;
+  double k_enn = 2.*PI*((double) nn)/R0;
   double kernel = p_ell/(r_ab * r_ab);
   int stride = ll*fourierOrder + nn;
 
@@ -147,17 +173,16 @@ void calc_coeffs(int ll, int nn)
 // evaluate series at constant term, nn = 0
 void eval_l0(int ll)
 {
-  double temp = 2.*((double) ll + 1.);
+  double ell_const = 2.*((double) ll + 1.);
 
   for (int rr = 0; rr < nPointsR; rr++) {
-
     for (int th = 0; th < nPointsTh; th++) {
       int cc = th + rr*nPointsTh;
 
       double mu = cos(evalTh[th]);
       eval_legendre(mu, ll);
 
-      g_ces[cc] += temp*p_ell*g_l0[ll];
+      g_ces[cc] += ell_const*p_ell*g_l0[ll];
     }
   }
 }
@@ -165,9 +190,9 @@ void eval_l0(int ll)
 // evaluate series for current order and add to cesaro sum
 void eval_ln(int ll, int nn)
 {
-  double weight = (1. - (double) nn / (fourierOrder+ 1.));
-  double k_enn = ((double) nn)*PI/R0;
-  double temp = 2.*((double) ll + 1.);
+  double weight = (1. - (double) nn / ((double)fourierOrder + 1.));
+  double k_enn = 2.*PI*((double) nn)/R0;
+  double ell_const = 2.*((double) ll + 1.);
   
   for (int rr = 0; rr < nPointsR; rr++) {
     double rEval = evalR[rr];
@@ -180,10 +205,10 @@ void eval_ln(int ll, int nn)
       int stride = nn +  ll*fourierOrder;
 
       // Add even
-      g_ces[cc] += temp*p_ell*weight*g_ln_even[stride]*cos(k_enn*rEval);
+      g_ces[cc] += ell_const*p_ell*weight*g_ln_even[stride]*cos(k_enn*rEval);
 
       // Add odd
-      g_ces[cc] += temp*p_ell*weight*g_ln_odd[stride]*sin(k_enn*rEval);
+      g_ces[cc] += ell_const*p_ell*weight*g_ln_odd[stride]*sin(k_enn*rEval);
     }
   }
 }

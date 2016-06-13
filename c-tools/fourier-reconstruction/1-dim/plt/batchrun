@@ -1,0 +1,21 @@
+#!/bin/sh
+
+./histogram_vfrac_vel.py 500/rho2.0 400 > out
+./histogram_vfrac_vel.py 500/rho3.3 400 >> out
+./histogram_vfrac_vel.py 500/rho4.0 400 >> out
+./histogram_vfrac_vel.py 500/rho5.0 400 >> out
+
+./histogram_vfrac_vel.py 1000/rho2.0 650 >> out
+./histogram_vfrac_vel.py 1000/rho3.3 450 >> out
+./histogram_vfrac_vel.py 1000/rho4.0 400 >> out
+./histogram_vfrac_vel.py 1000/rho5.0 670 >> out
+
+./histogram_vfrac_vel.py 1500/rho2.0 800 >> out
+./histogram_vfrac_vel.py 1500/rho3.3 400 >> out
+./histogram_vfrac_vel.py 1500/rho4.0 450 >> out
+./histogram_vfrac_vel.py 1500/rho5.0 600 >> out
+
+./histogram_vfrac_vel.py 2000/rho2.0 600 >> out
+./histogram_vfrac_vel.py 2000/rho3.3 550 >> out
+./histogram_vfrac_vel.py 2000/rho4.0 600 >> out
+./histogram_vfrac_vel.py 2000/rho5.0 500 >> out

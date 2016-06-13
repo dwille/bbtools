@@ -11,12 +11,20 @@ double *nvl_even;     // particle v-vel
 double *nvl_odd;      // particle v-vel
 double *nwl_even;     // particle w-vel
 double *nwl_odd;      // particle w-vel
+double *nkel_even;     // kinetic energy
+double *nkel_odd;      // kinetic energy
+
+double *nwl_avg_odd;    // phase averaged w-vel
+double *nwl_avg_even;   // phase averaged w-vel
 
 double *n_ces;
 double *vFrac_ces;
 double *nu_ces;       // u-vel -- cesaro sum
 double *nv_ces;       // v-vel -- cesaro sum
 double *nw_ces;       // w-vel -- cesaro sum
+double *nke_ces;      // kinetic energy -- cesaro sum
+
+double *nw_avg_ces;     // phase averged wvel reconstruct
 
 double *ones;
 
@@ -50,6 +58,11 @@ void alloc_arrays()
   nvl_odd = (double*) malloc((order + 1) * sizeof(double));
   nwl_even = (double*) malloc((order + 1) * sizeof(double));
   nwl_odd = (double*) malloc((order + 1) * sizeof(double));
+  nkel_even = (double*) malloc((order + 1) * sizeof(double));
+  nkel_odd = (double*) malloc((order + 1) * sizeof(double));
+
+  nwl_avg_even = (double*) malloc((order + 1) * sizeof(double));
+  nwl_avg_odd = (double*) malloc((order + 1) * sizeof(double));
 
   for (int i = 0; i < order; i++) {
     nl_even[i] = 0.;
@@ -60,6 +73,11 @@ void alloc_arrays()
     nvl_odd[i] = 0.;
     nwl_even[i] = 0.;
     nwl_odd[i] = 0.;
+    nkel_even[i] = 0.;
+    nkel_odd[i] = 0.;
+
+    nwl_avg_even[i] = 0.;
+    nwl_avg_odd[i] = 0.;
   }
 
   /* Init cesaro sum result arrays */
@@ -69,6 +87,9 @@ void alloc_arrays()
   nu_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nv_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nw_ces = (double*) malloc(npoints * nFiles * sizeof(double));
+  nke_ces = (double*) malloc(npoints * nFiles * sizeof(double));
+
+  nw_avg_ces = (double*) malloc(npoints * nFiles * sizeof(double));
 
   // initialize volume fraction
   double vFrac0 = 4./3.*PI*meanR*meanR*meanR * nparts / (dom.xl*dom.yl*dom.zl);
@@ -138,7 +159,7 @@ void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
 }
 
 // evaluate volume fraction for current order and add to cesaro sum
-void eval_vfrac(double *vFrac_ces, double nql_even, double nql_odd, 
+void eval_phase_avg(double *phase_avg_ces, double nql_even, double nql_odd, 
   double *evalZ, double ell, double k_ell)
 {
   double weight = (1. - ell / (order + 1.));
@@ -148,10 +169,10 @@ void eval_vfrac(double *vFrac_ces, double nql_even, double nql_odd,
     int cc = zz + npoints*tt;
 
     // Add even
-    vFrac_ces[cc] += weight*correction*nql_even*cos(k_ell * evalZ[zz]);
+    phase_avg_ces[cc] += weight*correction*nql_even*cos(k_ell * evalZ[zz]);
 
     // Add odd
-    vFrac_ces[cc] += weight*correction*nql_odd*sin(k_ell * evalZ[zz]);
+    phase_avg_ces[cc] += weight*correction*nql_odd*sin(k_ell * evalZ[zz]);
   }
 }
 

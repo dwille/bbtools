@@ -1,54 +1,66 @@
 #!/usr/bin/env python2
-
+import sys, os, csv
 import matplotlib
-import matplotlib.rcsetup as rcsetup
-matplotlib.use(u'Qt4Agg')
+matplotlib.use('Agg')      ## marcc savefig
+#matplotlib.use(u'Qt4Agg')  ## marcc plt.show
+#matplotlib.use(u'GTKAgg')  ## lucan plt.show
 import matplotlib.pyplot as plt
 import numpy as np
-import sys, os
+from scipy import signal
+import scipy.fftpack as scifft
+
 os.system('clear')
 
-## GET INFO
+
+print ""
 print " ---- Phase-Averaged Particle Velocity Plotting Utility ---- "
 print ""
 
-# DEVEL
-#root = "/home/dwille/bbtools/c-tools/phase-averaged-velocity/"
-#simdir = "sim/"
-#datadir = root + simdir + "data-reconstruct/"
+# Parse command line args and set up directory structure
+if len(sys.argv) > 2:
+  simdir = sys.argv[1]
+  tstart = float(sys.argv[2])
+else:
+  simdir = raw_input("      Simulation directory: ")
+  tstart = float(raw_input("      Starting time [ms]: "))
+  # TODO if tstart is -1 or empty, choose statsimtime
 
-# MARCC
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-simdir = raw_input("      Simulation directory: ")
 if not simdir.endswith('/'):
   simdir = simdir + '/'
-fdatadir = root + simdir + "phase_vel/data/"
-pdatadir = root + simdir + "part_vel/data/"
 
+home = os.path.expanduser("~")
+root = home + "/scratch/triply_per/" + simdir
+
+# Find nparts and rho
+nparts = int(simdir.partition('/')[0])
+rho = float(simdir.partition('/')[2][-4:-1])
+
+# Print simulation data
 print "      Sim root directory set to: " + root
-print "      Using location: " + fdatadir
-print "      Using location: " + pdatadir
+print "      Sim directory set to: " + simdir
+
+# Set up output file paths
+fdatadir = root + "flow_vel/data/"
+fdataFile = fdatadir + "phaseAveragedFlowVel"
+pdatadir = root + "part_vel/data/"
+pdataFile = pdatadir + "particleAvgVel"
+termFile = home + "/scratch/triply_per/simdata/singlePartSedi"
 
 # Check if datadir exists so we don't go creating extra dirs
 if not os.path.exists(fdatadir):
   print "      " + fdatadir + " does not exist. Exiting..."
   print ""
   sys.exit()
-  
-if not os.path.exists(pdatadir):
+elif not os.path.exists(pdatadir):
   print "      " + pdatadir + " does not exist. Exiting..."
   print ""
   sys.exit()
+elif not os.path.exists(termFile):
+  print "      " + termFile + " does not exist. Exiting..."
+  print ""
+  sys.exit()
 
-# Create imgdir if necessary
-imgdir = root + simdir + "img/"
-if not os.path.exists(imgdir):
-  os.makedirs(imgdir)
-
-# Set up output file paths
-fdataFile = fdatadir + "phaseAveragedVel"
-pdataFile = pdatadir + "particleAvgVel"
-
+# Pull data
 ftime = np.genfromtxt(fdataFile, skip_header=1, usecols=0)
 uf = np.genfromtxt(fdataFile, skip_header=1, usecols=1)
 vf = np.genfromtxt(fdataFile, skip_header=1, usecols=2)
@@ -61,6 +73,16 @@ wp = np.genfromtxt(pdataFile, skip_header=1, usecols=3)
 upSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=4)
 vpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=5)
 wpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=6)
+
+termVel = np.genfromtxt(termFile, skip_header=1, usecols=1)
+if rho == 2.0:
+  termVel = termVel[0]
+elif rho == 3.3:
+  termVel = termVel[1]
+elif rho == 4.0:
+  termVel = termVel[2]
+elif rho == 5.0:
+  termVel = termVel[3]
 
 # Interpolate fluid/particle times together
 commonMaxTime = np.min([ptime[-1], ftime[-1]])
@@ -84,9 +106,14 @@ vrel = vf - vp
 wrel = wf - wp
 
 # Magnitude of fluctuations
-#ufluct = upSdev / urel
-#vfluct = vpSdev / vrel
-wfluct = wpSdev / wrel
+ufluct_rel = upSdev / wrel
+vfluct_rel = vpSdev / wrel
+wfluct_rel = wpSdev / wrel
+
+ufluct_term = upSdev / termVel
+vfluct_term = vpSdev / termVel
+wfluct_term = wpSdev / termVel
+
 
 # Plot up,uf separately
 phaseVel = plt.figure(figsize=(12,8))
@@ -121,25 +148,24 @@ wAx.plot(time, wrel, 'k-', linewidth=2)
 wAx.set_ylabel('w [m/s]')
 wAx.set_xlabel('Time [s]')
 
-plt.show()
+#plt.show()
 
 # Plot sdev/urel
-fig2 = plt.figure()
+fig2 = plt.figure(figsize=(12,8))
 ax1 = fig2.add_subplot(111)
-#ax1.plot(time, ufluct, 'k')
-#ax1.plot(time, vfluct, 'b')
-ax1.plot(time, wfluct, 'g')
+ax1.plot(time, ufluct_rel, 'k')
+ax1.plot(time, vfluct_rel, 'b')
+ax1.plot(time, wfluct_rel, 'g')
 
-plt.show()
+#plt.show()
 
-tIn = float(raw_input('Choose a time where you want to take a mean from: '))
+#tIn = float(raw_input('Choose a time where you want to take a mean from: '))
+tIn = tstart
 ind = np.argwhere(time >= tIn)
-print "Steady state value of ufluct = %.5f" % np.mean(ufluct[ind])
-print "Steady state value of vfluct = %.5f" % np.mean(vfluct[ind])
-print "Steady state value of wfluct = %.5f" % np.mean(wfluct[ind])
-#print "Steady state value of up = %.5f" % np.mean(up[ind])
-#print "Steady state value of vp = %.5f" % np.mean(vp[ind])
-#print "Steady state value of wp = %.5f" % np.mean(wp[ind])
-#print "Steady state sdev of up = %.5f" % np.mean(upSdev[ind])
-#print "Steady state sdev of vp = %.5f" % np.mean(vpSdev[ind])
-#print "Steady state sdev of wp = %.5f" % np.mean(wpSdev[ind])
+print "Time averaged over %f to %f" % (time[ind[0]], time[-1])
+#print "Steady state value of u,v,wfluct = %.5f %.5f %.5f" % (np.mean(ufluct_rel[ind]), np.mean(vfluct_rel[ind]), np.mean(wfluct_rel[ind]))
+#print "Steady state value of u,v,wfluct_term = %.5f %.5f %.5f" % (np.mean(ufluct_term[ind]), np.mean(vfluct_term[ind]), np.mean(wfluct_term[ind]))
+
+## steady state u'v'w'
+## steady state urel,vrel,rel
+print "%.5f %.5f %.5f %.5f %.5f %.5f" % (np.mean(upSdev[ind]), np.mean(vpSdev[ind]), np.mean(wpSdev[ind]), np.mean(urel[ind]), np.mean(vrel[ind]), np.mean(wrel[ind]))

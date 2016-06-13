@@ -33,6 +33,14 @@ debug: part-pair
 profiler: COPT += -O2 -pg
 profiler: part-pair
 
+# compile for batch job submission
+batch: COPT += -O2 -DBATCH
+batch: part-pair
+
+# compile with debug and batch job sumission
+batchdebug: COPT += -DDEBUG -DBATCH -g
+batchdebug: part-pair
+
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c

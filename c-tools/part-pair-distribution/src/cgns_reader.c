@@ -21,8 +21,12 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/part-pair.config", ROOT_DIR);
+  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
+  if (infile == NULL) {
+    printf("Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  }
   
   // read input
   fret = fscanf(infile, "tStart %lf\n", &tStart);
@@ -32,6 +36,8 @@ void main_read_input(void)
   fret = fscanf(infile, "\n");
   fret = fscanf(infile, "Legendre Order %d\n", &legendreOrder);
   fret = fscanf(infile, "Fourier Order %d\n", &fourierOrder);
+  fret = fscanf(infile, "\n");
+  fret = fscanf(infile, "Print Only Average %d\n", &printAvgFlag);
   fclose(infile);
 }
 
@@ -43,7 +49,7 @@ void init_part_files(void) {
   int fret = 0; fret=fret;
   double time;
 
-  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+  sprintf(output_path, "%s/%s", SIM_ROOT_DIR, OUTPUT_DIR);
 
   int isPart;
   int inRange;
@@ -66,7 +72,7 @@ void init_part_files(void) {
     }
     closedir (dir);
   } else {
-    printf("Output directory does not exist!\n");
+    printf("Output directory %s does not exist!\n", output_path);
     exit(EXIT_FAILURE);
   }
 
@@ -176,7 +182,7 @@ void create_output(void) {
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -185,7 +191,7 @@ void create_output(void) {
   char path2file[FILE_NAME_SIZE] = "";
 
   /* Create eval/time file */
-  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_OUT_DIR);
+  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_DIR);
   FILE *file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -220,7 +226,7 @@ int cgns_read_nparts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
 
@@ -254,7 +260,7 @@ void parts_init(void)
 
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -292,7 +298,7 @@ void domain_init(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", ROOT_DIR);
+  sprintf(fname, "%s/input/flow.config", SIM_ROOT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -446,7 +452,7 @@ void domain_init(void)
     double tmp = (dom.xl <= dom.yl) ? dom.xl : dom.yl;
     R0 = (tmp <= dom.zl) ? tmp : dom.zl;
     R0 *= 0.5;
-  } else {
+  } else { // convert to actual distance
     R0 *= meanR;
   }
 
@@ -460,11 +466,14 @@ void domain_init(void)
 
   // TODO: how does this affect?
   // Number of points to reconstruct at -- assume dx=dy=dz for now
-  nPointsR = floor(2.*((R0 - meanR) / dom.dx) + 1.);
+  nPointsR = floor(2.*((R0 - 2.*meanR) / (0.1*dom.dx)) + 1.);
 
   // theta
   double dth = 0.5*PI/90.;
   nPointsTh = 0.5*PI / dth + 1.;
+
+  printf(" nPointsR = %d\n", nPointsR);
+  printf(" nPointsTh = %d\n", nPointsTh);
 
   #ifdef DEBUG
     show_domain();
@@ -477,7 +486,7 @@ void cgns_fill_parts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -548,6 +557,7 @@ void show_domain(void)
   printf("\n");
 
   printf("Parameters\n");
+  printf("  nparts %d\n", nparts);
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
   printf("  R0 %lf\n", R0);
@@ -565,8 +575,8 @@ void write_coeffs(int in)
   //char fnameOdd[CHAR_BUF_SIZE] = "";
 
 //  // number density
-//  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_OUT_DIR);
-//  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_OUT_DIR);
+//  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR);
+//  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR);
 //  FILE *fileEven = fopen(fnameEven, "a");
 //  FILE *fileOdd = fopen(fnameOdd, "a");
 //  if (fileEven == NULL) {
@@ -623,7 +633,7 @@ void write_reconstruct(void)
   char fnameall[CHAR_BUF_SIZE] = "";
   char fnameall2[CHAR_BUF_SIZE] = "";
   sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
-  sprintf(fnameall2, "%s/%s/part-pair-%s", ROOT_DIR, DATA_OUT_DIR, format);
+  sprintf(fnameall2, "%s/%s/part-pair-%s", ROOT_DIR, DATA_DIR, format);
   sprintf(fnameall, fnameall2, partFileTime[tt]);
 
   FILE *fdat = fopen(fnameall, "w");
@@ -637,6 +647,31 @@ void write_reconstruct(void)
     for (int th = 0; th < nPointsTh; th++) {
       int cc = th + rr*nPointsTh;
       fprintf(fdat, "%lf ", g_ces[cc]);
+    }
+    fprintf(fdat, "\n");
+  }
+  fclose(fdat);
+
+}
+
+// Write averaged data
+void write_avg_reconstruct(void)
+{
+  // Set up the filename
+  char fname[CHAR_BUF_SIZE] = "";
+  sprintf(fname, "%s/%s/part-pair-avg", ROOT_DIR, DATA_DIR);
+
+  FILE *fdat = fopen(fname, "w");
+  if (fdat == NULL) {
+    printf("Error opening file %s!\n", fname);
+    exit(EXIT_FAILURE);
+  }
+
+  // print reconstructed data -- each r is a row
+  for (int rr = 0; rr < nPointsR; rr++) {
+    for (int th = 0; th < nPointsTh; th++) {
+      int cc = th + rr*nPointsTh;
+      fprintf(fdat, "%lf ", g_ces_avg[cc]);
     }
     fprintf(fdat, "\n");
   }
@@ -664,6 +699,7 @@ void free_vars(void)
   free(g_ln_odd);
 
   free(g_ces);
+  free(g_ces_avg);
 
 }
 

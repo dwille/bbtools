@@ -1,16 +1,44 @@
 #include "main.h"
 
+// take care of batch job submission
+#ifdef BATCH
+  char *ROOT_DIR;
+  char *SIM_ROOT_DIR;
+#endif
+
 // Define global variables declared in header file
 double tStart;
 double tEnd;
 int order;
+int coeffsOut;
 int npoints;
 int tt;
 
 double pref;
 
-int main(void) 
+int main(int argc, char *argv[]) 
 {
+  // Set up batch submission
+  #ifdef BATCH
+    SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+    ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+    // arg[0] = program name
+    // arg[1] = SIM_ROOT_DIR
+    if (argc == 2) {
+      sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+      sprintf(ROOT_DIR, "%s/f-rec-1D", SIM_ROOT_DIR);
+    } else if (argc != 2) {
+      printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+      exit(EXIT_FAILURE);
+    }
+    printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+    printf(" ROOT_DIR = %s\n\n", ROOT_DIR);
+  #else           // prevent compiler warning
+    argc = argc;
+    argv = argv;
+  #endif
+
   // Read input file
   main_read_input();
 
@@ -45,9 +73,10 @@ int main(void)
     const_coeffs(up, nu_ces);
     const_coeffs(vp, nv_ces);
     const_coeffs(wp, nw_ces);
+    const_coeffs(ke, nke_ces);
     
     // write constant coeffs to file
-    write_coeffs(0);
+    if (coeffsOut == 1) write_coeffs(0);
 
     // Calclate nql, add to cesaro sum
     for (int ll = 1; ll <= order; ll++) {
@@ -61,24 +90,26 @@ int main(void)
       calc_coeffs(&nul_even[ll], &nul_odd[ll], up, parts, k_ell);
       calc_coeffs(&nvl_even[ll], &nvl_odd[ll], vp, parts, k_ell);
       calc_coeffs(&nwl_even[ll], &nwl_odd[ll], wp, parts, k_ell);
+      calc_coeffs(&nkel_even[ll], &nkel_odd[ll], ke, parts, k_ell);
 
       // Calculate volume fraction coeffs from number density
-      eval_vfrac(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+      eval_phase_avg(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
 
       // Evaluate series at z
       eval_series(n_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
       eval_series(nu_ces, nul_even[ll], nul_odd[ll], evalZ, ell, k_ell);
       eval_series(nv_ces, nvl_even[ll], nvl_odd[ll], evalZ, ell, k_ell);
       eval_series(nw_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
+      eval_series(nke_ces, nkel_even[ll], nkel_odd[ll], evalZ, ell, k_ell);
     }
     // Normalize nq by n to find q
     normalize(nu_ces, n_ces);
     normalize(nv_ces, n_ces);
     normalize(nw_ces, n_ces);
+    normalize(nke_ces, n_ces);
 
     // write the rest of the coefficients
-    // TODO: write once
-    write_coeffs(-1);
+    if (coeffsOut == 1) write_coeffs(-1);
   }
 
 

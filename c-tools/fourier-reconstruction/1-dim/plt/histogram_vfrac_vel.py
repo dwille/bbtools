@@ -58,14 +58,15 @@ recPhaseAvgWP = np.mean(vFrac * wp)
 vfSDEV = np.std(vFrac)
 wpSDEV = np.std(wp)
 
-print "\n      Mean (reconstructed) volume fraction = %.4f" % recMeanVF
-print "      Mean (reconstructed) velocity flucts = %.4f" % recMeanWP
-print "      Mean (reconstructed) phase averaged velocity flucts = %.4f" % recPhaseAvgWP
-print "      Max/min volume fraction flucts = %.4f, %.4f" % (vfMax, vfMin)
-print "      Max/min velocity flucts = %.4f, %.4f" % (wpMax, wpMin)
-print "      Standard deviation of volume fraction flucts = %.4f" % vfSDEV
-print "      Standard deviation of velocity flucts = %.4f" % wpSDEV
-
+# print "\n      Mean (reconstructed) volume fraction = %.4f" % recMeanVF
+# print "      Max/min volume fraction flucts = %.4f, %.4f" % (vfMax, vfMin)
+# print "      Standard deviation of volume fraction flucts = %.4f\n" % vfSDEV
+# 
+# print "      Mean (reconstructed) velocity flucts = %.4f" % recMeanWP
+# print "      Mean (reconstructed) phase averaged velocity flucts = %.4f" % recPhaseAvgWP
+# print "      Max/min velocity flucts = %.4f, %.4f" % (wpMax, wpMin)
+# print "      Standard deviation of velocity flucts = %.4f" % wpSDEV
+# 
 # Histogram
 nBins = 30
 vfEdges = np.linspace(vfMin, vfMax, nBins)
@@ -76,14 +77,24 @@ wpCenters = 0.5*(wpEdges[1:] + wpEdges[:-1])
 
 Hvf,_ = np.histogram(vfTemp, bins=vfEdges)
 Hwp,_ = np.histogram(wpTemp, bins=wpEdges)
+# H2:   phi increasing left to right
+# H2:   wp  increasing top to bottom
 H2,_,_ = np.histogram2d(vfTemp,wpTemp, bins=(vfEdges, wpEdges))
 
-# Fit a curve -- from numpy.linalg.lstsq docs
-wpMaxLoc = wpCenters[np.argmax(H2, 0)]
-A = np.vstack([vfCenters, np.ones(len(vfCenters))]).T
-m, c = np.linalg.lstsq(A, wpMaxLoc)[0]
+# Weighted least squares fit
 phiEval = np.linspace(vfMin, vfMax, 50)
+
+vfX,wpY = np.meshgrid(vfCenters, wpCenters)   # use centers as x,y coords
+vfX = np.squeeze(np.reshape(vfX,(-1,1)))
+wpY = np.squeeze(np.reshape(wpY,(-1,1)))
+H2temp = np.squeeze(np.reshape(H2,(-1,1)))    # use hist counts as weight
+
+coeffs = np.polynomial.polynomial.polyfit(vfX,wpY,1,w=H2temp)
+c = coeffs[0]
+m = coeffs[1]
+
 wpEval = m*phiEval + c
+
 print "\n      wp' = %.3f phi + %.3f" % (m, c)
 
 # normalize to probablilities
@@ -125,7 +136,7 @@ im = ax3.imshow(H2, origin="lower", aspect="auto", interpolation="none",
   extent=[vfMin, vfMax, wpMin, wpMax])
 ax3.plot([vFracMean, vFracMean], [wpMin, wpMax], 'k--')
 ax3.plot([vfMin, vfMax], [recMeanWP, recMeanWP], 'k--')
-ax3.plot(vfCenters, wpMaxLoc, 'k-', alpha=0.6)
+ax3.plot(vfCenters, wpCenters[np.argmax(H2, 0)], 'k-', alpha=0.6)
 ax3.plot(phiEval, wpEval, 'w--')
 
 plt.setp( ax3.get_xticklabels(), visible=False)

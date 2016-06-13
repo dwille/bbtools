@@ -77,6 +77,9 @@ extern double *up;
 extern double *vp;
 extern double *wp;
 
+// Particle kinetic energy
+extern double *ke;
+
 // host and dev part_struct parts;
 extern part_struct *parts;
 
