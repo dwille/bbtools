@@ -11,8 +11,12 @@ print ""
 
 d = 4.2
 nu = .01715
+g = 0.00981
+rho_f = 8.75e-4
+rho_p = np.array([0.001750, 0.00289, 0.0035, 0.004375])
 
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/simdata/"
+home = os.path.expanduser("~")
+root = home + "/scratch/triply_per/simdata/"
 phaseFile = root + "phaseAveragedFluidVel"
 waveFile = root + "waveData"
 termFile = root + "singlePartSedi"
@@ -85,9 +89,20 @@ nGAD = (5.1 + 2.7*tmp)/(1 + tmp)
 # Wallis relations
 phiEval = np.linspace(0.05,0.6,101)
 wallis_speed = np.zeros((np.size(phiEval),4))
+gibi_speed = np.zeros((np.size(phiEval),4))
 for rr,_ in enumerate(rho):
   for pp,_ in enumerate(phiEval):
-    wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000
+    vinf = termVel[rr]
+    n = nGAD[rr]
+    eps = 1.-phiEval[pp]
+    # 8.56, no kappa
+    # wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000.
+    # 8.56, with kappa
+    k = 0.87
+    wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000. * k
+
+    gibi_speed[pp,rr] = 1000.*(3.2*g*d*(1-eps)*(rho_p[rr] - rho_f)/rho_p[rr])**0.5
+
 
 ##
  # Wave Speed Plots
@@ -117,6 +132,11 @@ ax1.plot(phiEval, wallis_speed[:,0], 'b--',zorder=1)
 ax1.plot(phiEval, wallis_speed[:,1], 'g--',zorder=1)
 ax1.plot(phiEval, wallis_speed[:,2], 'r--',zorder=1)
 ax1.plot(phiEval, wallis_speed[:,3], 'c--',zorder=1)
+
+ax1.plot(phiEval, gibi_speed[:,0], 'b-.',zorder=1)
+ax1.plot(phiEval, gibi_speed[:,1], 'g-.',zorder=1)
+ax1.plot(phiEval, gibi_speed[:,2], 'r-.',zorder=1)
+ax1.plot(phiEval, gibi_speed[:,3], 'c-.',zorder=1)
 
 imgname = imgdir + "wavespeed"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
