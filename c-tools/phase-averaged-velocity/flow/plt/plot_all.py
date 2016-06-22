@@ -17,7 +17,8 @@ rho = np.array([2.0, 3.3, 4.0, 5.0])
 phi = np.array([0.087, 0.175, 0.262, 0.349])
 
 # MARCC
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/simdata/"
+home = os.path.expanduser("~")
+root = home + "/scratch/triply_per/simdata/"
 phaseFile = root + "phaseAveragedFluidVel"
 termFile = root + "singlePartSedi"
 
