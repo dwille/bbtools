@@ -63,7 +63,7 @@ int main(int argc, char *argv[])
     -- n0, n1, n2   -- n2 varies the fastest
     -- uf, uf       -- in, out arrays -- overwrites!!
     -- FFTW_MEASURE -- find optimal plan
-    -- these are UNNORMALIZED so need to divide by 1/sqrt(nx*ny*nz)
+    -- these are UNNORMALIZED
    */
   pU = fftw_plan_dft_r2c_3d(dom.zn, dom.yn, dom.xn, uf, uf_k, FFTW_MEASURE);
   pV = fftw_plan_dft_r2c_3d(dom.zn, dom.yn, dom.xn, vf, vf_k, FFTW_MEASURE);
@@ -74,7 +74,7 @@ int main(int argc, char *argv[])
   fflush(stdout);
 
   // Prefactor
-  double iV = 1./(dom.xl*dom.yl*dom.zl);
+  double iN3 = 1./dom.Gcc.s3;
   double k_enn, wf_Re, wf_Im;
   int kx = 0; kx = kx;
   int ky = 0; ky = ky;
@@ -101,6 +101,7 @@ int main(int argc, char *argv[])
       -- Can loop from 0 <= nn <= (desired order) for all nn,mm,ll
       -- for 1-D reconstuction, take kx=ky=0
      */
+    // Need 0 <= k <= kz
     for (int nn = 0; nn <= order; nn++) {
       cc = halfIn*dom.Gcc.jn*nn;
       k_enn = 2.*PI*nn/dom.zl;
@@ -109,16 +110,35 @@ int main(int argc, char *argv[])
       wf_Im = wf_k[cc][1];
       
       for (int zz = 0; zz < npoints; zz++) {
-        wf_rec_Re[zz + tt*npoints] += iV*(wf_Re*cos(k_enn*evalZ[zz]) 
+        wf_rec_Re[zz + tt*npoints] += iN3*(wf_Re*cos(k_enn*evalZ[zz]) 
                                             - wf_Im*sin(k_enn*evalZ[zz]));
-        wf_rec_Im[zz + tt*npoints] += iV*(wf_Re*sin(k_enn*evalZ[zz]) 
+        wf_rec_Im[zz + tt*npoints] += iN3*(wf_Re*sin(k_enn*evalZ[zz]) 
+                                            + wf_Im*cos(k_enn*evalZ[zz]));
+      }
+    }
+    // Need zn - kz <= k < zn because of wrap around
+    for (int nn = dom.zn - order; nn < dom.zn; nn++) {
+      cc = halfIn*dom.Gcc.jn*nn;
+      k_enn = -2.*PI*(dom.zn - nn)/dom.zl;
+
+      wf_Re = wf_k[cc][0];
+      wf_Im = wf_k[cc][1];
+      
+      for (int zz = 0; zz < npoints; zz++) {
+        wf_rec_Re[zz + tt*npoints] += iN3*(wf_Re*cos(k_enn*evalZ[zz]) 
+                                            - wf_Im*sin(k_enn*evalZ[zz]));
+        wf_rec_Im[zz + tt*npoints] += iN3*(wf_Re*sin(k_enn*evalZ[zz]) 
                                             + wf_Im*cos(k_enn*evalZ[zz]));
       }
     }
   }
 
   // write to file
-  write_reconstruct();
+  for (int zz = 0; zz < npoints; zz++) {
+    printf("zz = %lf: wf = %lf + %lf i\n", dom.zs+zz*dom.dz, 
+      wf_rec_Re[zz], wf_rec_Im[zz]);
+  }
+  //write_reconstruct();
    
   // Free and exit
   fftw_destroy_plan(pU);

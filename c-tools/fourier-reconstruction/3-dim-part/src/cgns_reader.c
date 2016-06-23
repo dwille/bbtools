@@ -20,7 +20,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/f-rec.config", ROOT_DIR);
+  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
   
   // read input
@@ -40,7 +40,7 @@ void init_part_files(void) {
   int fret = 0; fret=fret;
   double time;
 
-  sprintf(output_path, "%s/%s", ROOT_DIR, OUTPUT_DIR);
+  sprintf(output_path, "%s/%s", SIM_ROOT_DIR, OUTPUT_DIR);
 
   int isPart;
   int inRange;
@@ -63,7 +63,7 @@ void init_part_files(void) {
     }
     closedir (dir);
   } else {
-    printf("Output directory does not exist!\n");
+    printf("Output %s directory does not exist!\n", output_path);
     exit(EXIT_FAILURE);
   }
 
@@ -171,18 +171,12 @@ void create_output(void) {
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
-  // Create DATA_SUBDIR if it doesn't exist
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, DATA_DIR, DATA_SUBDIR);
-  if (stat(buf, &st) == -1) {
-    mkdir(buf, 0700);
-  }
 
 //  // Create output files
 //  char path2file[FILE_NAME_SIZE] = "";
 //
 //  // number density
-//  sprintf(path2file, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR, 
-//    DATA_SUBDIR);
+//  sprintf(path2file, "%s/%s/%s/number-density", ROOT_DIR, DATA_DIR);
 //  FILE *file = fopen(path2file, "w");
 //  if (file == NULL) {
 //    printf("Could not open file %s\n", path2file);
@@ -196,7 +190,7 @@ int cgns_read_nparts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
 
@@ -234,7 +228,7 @@ void parts_init(void)
 
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -272,7 +266,7 @@ void domain_init(void)
 
   // open config file for reading
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", ROOT_DIR);
+  sprintf(fname, "%s/input/flow.config", SIM_ROOT_DIR);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -352,7 +346,7 @@ void cgns_fill_parts(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
-  sprintf(buf, "%s/%s/%s", ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
+  sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
   int fn;
   cg_open(buf, CG_MODE_READ, &fn);
   
@@ -450,17 +444,16 @@ void cgns_write_field(void)
   char fnameall2[CHAR_BUF_SIZE] = "";
   sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
 
-  sprintf(fnameall2, "%s/%s/%s/volume-fraction-%s.cgns", ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR, format);
+  sprintf(fnameall2, "%s/%s/number-density-%s.cgns", ROOT_DIR, DATA_DIR, 
+    format);
   sprintf(fnameall, fnameall2, partFileTime[tt]);
 
   // Set up grid filename
   char gname[FILE_NAME_SIZE] = "";
   char gnameall[FILE_NAME_SIZE] = "";
   sprintf(gname, "grid.cgns");
-  sprintf(gnameall, "%s/output/%s", ROOT_DIR, "grid.cgns");
-  printf("Remember to copy %s to %s/%s/%s!\n", gnameall, ROOT_DIR, DATA_DIR, 
-    DATA_SUBDIR);
+  sprintf(gnameall, "%s/output/%s", SIM_ROOT_DIR, "grid.cgns");
+  printf("Remember to copy %s to %s/%s!\n", gnameall, SIM_ROOT_DIR, DATA_DIR);
 
   // Set up cgns file paths
   char snodename[CHAR_BUF_SIZE] = "";
@@ -496,9 +489,14 @@ void cgns_write_field(void)
   cg_link_write("GridCoordinates", gname, "Base/Zone0/GridCoordinates");
 
   cg_sol_write(fn, bn, zn, "Solution", CellCenter, &sn);
-  double *vfout = malloc(dom.Gcc.s3 * sizeof(double));
 
-  cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction", n_rec, &fn_frec);
+  double *nout = malloc(dom.Gcc.s3 * sizeof(double));
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    nout[i] = creal(n_rec[i]);
+  }
+
+  cg_field_write(fn, bn, zn, sn, RealDouble, "number density real", nout, &fn_frec);
+  //cg_field_write(fn, bn, zn, sn, RealDouble, "number density imag", nout, &fn_frec);
 
   cg_user_data_write("Etc");
   cg_goto(fn, bn, "Zone_t", zn, "Etc", 0, "end");
@@ -508,7 +506,7 @@ void cgns_write_field(void)
   free(N);
 
   cg_close(fn);
-  free(vfout);
+  free(nout);
 
 }
 
@@ -532,5 +530,10 @@ void free_vars(void)
   free(n_rec);
 
   free(ones);
+
+  #ifdef BATCH
+    free(SIM_ROOT_DIR);
+    free(ROOT_DIR);
+  #endif
 }
 

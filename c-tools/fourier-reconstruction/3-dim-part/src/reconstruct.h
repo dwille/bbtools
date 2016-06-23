@@ -5,10 +5,10 @@
 
 /**** variables ****/
 // Coefficients
-extern _Complex double *n_lmn;        // particle number density coeffs
+extern complex double *n_lmn;        // particle number density coeffs
 
 // Reconstructions
-extern _Complex double *n_rec;        // particle number density
+extern complex double *n_rec;        // particle number density
 
 // Other
 extern double *ones;         // array of ones to place hold q for number density
@@ -18,11 +18,11 @@ extern double *ones;         // array of ones to place hold q for number density
 void alloc_arrays();
 
 // Calculate even and odd coefficents
-void calc_coeffs(_Complex double *nq_lmn, double *q, part_struct *parts, 
+void calc_coeffs(complex double *nq_lmn, double *q, part_struct *parts, 
   double kl, double km, double kn, int corder);
 
 // Evaluate series at desired points
-void eval_series(_Complex double *nq_sum, _Complex double *nq_lmn, 
+void eval_series(complex double *nq_sum, complex double *nq_lmn, 
   double kl, double km, double kn, int corder);
 
 // evaluate volume fraction for current order and add to cesaro sum

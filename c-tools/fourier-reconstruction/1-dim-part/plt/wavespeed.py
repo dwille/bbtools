@@ -96,11 +96,11 @@ for rr,_ in enumerate(rho):
     n = nGAD[rr]
     eps = 1.-phiEval[pp]
     # 8.56, no kappa
-    # wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000.
+    wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000.
     # 8.56, with kappa
-    k = 0.87
-    wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000. * k
-
+#    k = 0.87
+#    wallis_speed[pp,rr] = nGAD[rr]*(1-phiEval[pp])**(nGAD[rr] - 1)*phiEval[pp]*termVel[rr] * 1000. * k
+#
     gibi_speed[pp,rr] = 1000.*(3.2*g*d*(1-eps)*(rho_p[rr] - rho_f)/rho_p[rr])**0.5
 
 
@@ -133,10 +133,10 @@ ax1.plot(phiEval, wallis_speed[:,1], 'g--',zorder=1)
 ax1.plot(phiEval, wallis_speed[:,2], 'r--',zorder=1)
 ax1.plot(phiEval, wallis_speed[:,3], 'c--',zorder=1)
 
-ax1.plot(phiEval, gibi_speed[:,0], 'b-.',zorder=1)
-ax1.plot(phiEval, gibi_speed[:,1], 'g-.',zorder=1)
-ax1.plot(phiEval, gibi_speed[:,2], 'r-.',zorder=1)
-ax1.plot(phiEval, gibi_speed[:,3], 'c-.',zorder=1)
+# ax1.plot(phiEval, gibi_speed[:,0], 'b-.',zorder=1)
+# ax1.plot(phiEval, gibi_speed[:,1], 'g-.',zorder=1)
+# ax1.plot(phiEval, gibi_speed[:,2], 'r-.',zorder=1)
+# ax1.plot(phiEval, gibi_speed[:,3], 'c-.',zorder=1)
 
 imgname = imgdir + "wavespeed"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

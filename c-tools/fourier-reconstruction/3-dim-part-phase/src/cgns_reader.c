@@ -10,19 +10,11 @@ int sigFigPost;
 dom_struct dom;
 BC bc;
 
-// fftw variables
-double *uf;
-double *vf;
-double *wf;
 int *phase;
-
-fftw_complex *uf_k;
-fftw_complex *vf_k;
-fftw_complex *wf_k;
-
-double *evalZ;
-double *wf_rec_Re;
-double *wf_rec_Im;
+// fftw variables
+fftw_complex *chi;    //indicator function
+fftw_complex *phi;
+fftw_complex *phi_k;
 
 // Read main.config input file
 void main_read_input(void)
@@ -45,9 +37,8 @@ void main_read_input(void)
   fret = fscanf(infile, "Starting Time %lf\n", &tStart);
   fret = fscanf(infile, "Ending Time %lf\n", &tEnd);
   fret = fscanf(infile, "\n");
-  fret = fscanf(infile, "Fourier Order %d\n", &order);
-  fret = fscanf(infile, "\n");
-  fret = fscanf(infile, "Output Coefficients %d\n", &coeffsOut);
+  fret = fscanf(infile, "Fourier Order in (X,Y,Z) (%d,%d,%d)\n", &orderX, 
+    &orderY, &orderZ);
   fclose(infile);
 }
 
@@ -196,61 +187,6 @@ void create_output(void)
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
-
-  // Create output files
-  char path2file[FILE_NAME_SIZE] = "";
-
-  /* Create eval/time file */
-  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_DIR);
-  FILE *file = fopen(path2file, "w");
-  if (file == NULL) {
-    printf("Could not open file %s\n", path2file);
-    exit(EXIT_FAILURE);
-  }
-
-  // Print time on first row
-  fprintf(file, "time ");
-  for (int t = 0; t < nFiles; t++) {
-    fprintf(file, "%lf ", flowFileTime[t]);
-  }
-  fprintf(file, "\n");
-
-  // Print evalZ on second row
-  fprintf(file, "evalZ ");
-  for (int i = 0; i < npoints; i++) {
-    fprintf(file, "%lf ", evalZ[i]);
-  }
-
-  fclose(file);
-
-//  /* volume fraction */
-//  sprintf(path2file, "%s/%s/volume-fraction", ROOT_DIR, DATA_DIR);
-//  file = fopen(path2file, "w");
-//  if (file == NULL) {
-//    printf("Could not open file %s\n", path2file);
-//    exit(EXIT_FAILURE);
-//  }
-
-//  /* only output coefficients if desired */
-//  if (coeffsOut == 1) {
-//
-//    // flow-w coefficients even and odd
-//    sprintf(path2file, "%s/%s/flow-w-coeffs-even", ROOT_DIR, DATA_DIR);
-//    file = fopen(path2file, "w");
-//    if (file == NULL) {
-//      printf("Could not open file %s\n", path2file);
-//      exit(EXIT_FAILURE);
-//    }
-//    fclose(file);
-//    sprintf(path2file, "%s/%s/flow-w-coeffs-odd", ROOT_DIR, DATA_DIR);
-//    file = fopen(path2file, "w");
-//    if (file == NULL) {
-//      printf("Could not open file %s\n", path2file);
-//      exit(EXIT_FAILURE);
-//    }
-//    fclose(file);
-//  }
-
 }
 
 // Read domain
@@ -410,59 +346,19 @@ void domain_init(void)
   dom.Gcc.s3 = dom.Gcc.kn * dom.Gcc.s2;
 
   // Set up flow
-  uf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
-  vf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
-  wf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
   phase = (int*) malloc(dom.Gcc.s3 * sizeof(int));
+  chi = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  phi = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  phi_k = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
 
   for (int ii = 0; ii < dom.Gcc.s3; ii++) {
-    uf[ii] = 0.;
-    vf[ii] = 0.;
-    wf[ii] = 0.;
-    phase[ii] = 0;
-  }
-
-  //int outN = dom.Gcc.in*dom.Gcc.jn*(0.5*dom.Gcc.kn + 1);
-  int outN = (0.5*dom.Gcc.in + 1)*dom.Gcc.jn*dom.Gcc.kn;
-  uf_k = (fftw_complex*) fftw_malloc(outN * sizeof(fftw_complex));
-  vf_k = (fftw_complex*) fftw_malloc(outN * sizeof(fftw_complex));
-  wf_k = (fftw_complex*) fftw_malloc(outN * sizeof(fftw_complex));
-
-  for (int ii = 0; ii < outN; ii++) {
-    uf_k[ii][0] = 0.;
-    uf_k[ii][1] = 0.;
-    vf_k[ii][0] = 0.;
-    vf_k[ii][1] = 0.;
-    wf_k[ii][0] = 0.;
-    wf_k[ii][1] = 0.;
-  }
-
-  // Calculate order using sampling theorem -- 2 points / wave
-  if (order == -1) {
-    order = (int) floor(0.5*dom.zn);
-  } // else if order > ...
-  printf("Order = %d\n", order);
-
-  // Number of points to reconstruct at
-  // Just because we can only resolve xn/2 doesnt mean we should underresolve 
-  //  the reconstruction...
-  // npoints = 4*dom.zn;
-  npoints = dom.zn;
-  double dz = dom.zl/npoints;
-
-  evalZ = (double*) malloc(npoints * sizeof(double));
-  for (int zz = 0; zz < npoints; zz++) {
-    evalZ[zz] = dom.zs + dz*zz;
-  }
-
-  // Reconstruct variables
-  wf_rec_Re = (double*) malloc(npoints*nFiles * sizeof(double));
-  wf_rec_Im = (double*) malloc(npoints*nFiles * sizeof(double));
-  for (int tt = 0; tt < nFiles; tt++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      wf_rec_Re[zz + tt*npoints] = 0.;
-      wf_rec_Im[zz + tt*npoints] = 0.;
-    }
+    phase[ii] = 0.;
+    chi[ii][0] = 0.;
+    chi[ii][1] = 0.;
+    phi[ii][0] = 0.;
+    phi[ii][1] = 0.;
+    phi_k[ii][0] = 0.;
+    phi_k[ii][1] = 0.;
   }
 
   #ifdef DEBUG
@@ -471,14 +367,12 @@ void domain_init(void)
   fclose(infile);
 }
 
-// Read part_struct data
+// Read flow_struct data
 void cgns_fill_flow(void)
 {
   // Open cgns file and get cgns file index number fn
   char buf[FILE_NAME_SIZE];
   sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, flowFiles[flowFileMap[tt]]);
-  printf("file = %s\n", buf);
-  fflush(stdout);
   int fn;
   int ier = cg_open(buf, CG_MODE_READ, &fn);
   if (ier != 0 ) {
@@ -503,20 +397,15 @@ void cgns_fill_flow(void)
   range_max[2] = dom.zn;
 
   // Read and fill
-  //cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, range_min, range_max, uf);
-  //cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, range_min, range_max, vf);
-  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, range_min, range_max, wf);
   cg_field_read(fn,bn,zn,sn, "Phase", Integer, range_min, range_max, phase);
 
-  // Apply phase mask
+  // Apply phase mask -- 1 iff particle
   for (int kk = 0; kk < dom.zn; kk++) {
     for (int jj = 0; jj < dom.yn; jj++) {
       for (int ii = 0; ii < dom.xn; ii++) {
         int stride = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
-        //uf[stride] *= phase[stride];
-        //vf[stride] *= phase[stride];
-        // wf[stride] *= (phase[stride] == -1);
-        wf[stride] = (double) (phase[stride] == -1);
+        chi[stride][0] = (double) (phase[stride] > -1);
+        chi[stride][1] = 0.;
       }
     }
   }
@@ -551,28 +440,38 @@ void test_fill(void)
 
         //wf[cc] = sin(3.*zstar) + sin(2.*zstar);
         //wf[cc] = sin(3.*x) + sin(2.*x);
-        wf[cc] = sin(1.*xstar) + sin(2.*xstar) + sin(3.*xstar) +
-          sin(1.*ystar) + sin(2.*ystar) + sin(3.*ystar) +
-          sin(1.*zstar) + sin(2.*zstar) + sin(3.*zstar) + 2.;
+        chi[cc][0] = sin(1.*xstar) + sin(2.*xstar) /*+ sin(3.*xstar)*/ +
+          2.*(sin(1.*ystar) + sin(2.*ystar) /*+ sin(3.*ystar)*/) +
+          3.*(sin(1.*zstar) + sin(2.*zstar) /*+ sin(3.*zstar)*/) +
+          1.;
       }
     }
-    printf("z = %lf, sin(kzz) = %lf\n", z, wf[cc]);
   }
-  fftw_execute(pW);
+  fftw_execute(chi2phi_k);
+
+  double iV = 1./(dom.xl*dom.yl*dom.zl);
+  for (int kk = 0; kk < dom.zn; kk++) {
+    for (int jj = 0; jj < dom.yn; jj++) {
+      for (int ii = 0; ii < dom.xn; ii++) {
+        cc = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
+        phi_k[cc][0] *= iV;
+        phi_k[cc][1] *= iV;
+      }
+    }
+  }
 }
 
 void test_out(void)
 {
-  int halfIN = 0.5*dom.Gcc.in + 1;
   printf("All Wavenumbers\n");
   for (int nn = 0; nn < dom.Gcc.kn; nn++) {   // z
     for (int mm = 0; mm < dom.Gcc.jn; mm++) { // y
-      for (int ll = 0; ll < halfIN; ll++) {   // x
-        int cc = ll + halfIN*mm + halfIN*dom.Gcc.jn*nn;
+      for (int ll = 0; ll < dom.Gcc.in; ll++) {   // x
+        int cc = ll + dom.Gcc.s1*mm + dom.Gcc.s2*nn;
 
-        if ((fabs(wf_k[cc][0]) > 1e-8) || (fabs(wf_k[cc][1]) > 1e-8)) {
-          printf("wf_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
-            ll, halfIN, mm, halfIN*dom.Gcc.jn, nn, wf_k[cc][0], wf_k[cc][1]);
+        if ((fabs(phi_k[cc][0]) > 1e-8) || (fabs(phi_k[cc][1]) > 1e-8)) {
+          printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+            ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, phi_k[cc][0], phi_k[cc][1]);
           fflush(stdout);
         }
 
@@ -582,21 +481,38 @@ void test_out(void)
 
   printf("\n\n");
 
-  int kx = 1;
-  int ky = 1;
-  int kz = 3;
+  int kx = 2;
+  int ky = 2;
+  int kz = 2;
   printf("Choose (kx,ky,kz) = (%d,%d,%d)\n", kx, ky, kz);
   for (int nn = 0; nn <= kz; nn++) {
-    for (int mm = 0; mm <= ky; mm++) {
-      for (int ll = 0; ll <= kx; ll++) {
-        int cc = ll + halfIN*mm + halfIN*dom.Gcc.jn*nn;
-
-        printf("wf_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
-          ll, halfIN, mm, halfIN*dom.Gcc.jn, nn, wf_k[cc][0], wf_k[cc][1]);
+    for (int mm = 0; mm <= kx; mm++) {
+      for (int ll = 0; ll <= ky; ll++) {
+        int cc = ll + dom.Gcc.s1*mm + dom.Gcc.s2*nn;
+        printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+          ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, phi_k[cc][0], phi_k[cc][1]);
         fflush(stdout);
       }
     }
   }
+  for (int nn = 0; nn <= kz; nn++) {
+    for (int mm = 0; mm <= ky; mm++) {
+      for (int ll = 0; ll <= kx; ll++) {
+      int xFlip = (dom.xn - ll)*(ll > 0);
+      int yFlip = (dom.yn - mm)*(mm > 0);
+      int zFlip = (dom.zn - nn)*(nn > 0);
+        int cc = xFlip
+                +yFlip*dom.Gcc.s1
+                +zFlip*dom.Gcc.s2;
+        printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+          xFlip, dom.Gcc.s1, 
+          yFlip, dom.Gcc.s2, 
+          zFlip, phi_k[cc][0], phi_k[cc][1]);
+        fflush(stdout);
+      }
+    }
+  }
+
 }
 
 // Show domain
@@ -634,47 +550,116 @@ void show_domain(void)
   printf("Input Parameters\n");
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
-  printf("  order %d\n", order);
-  printf("  coeffsOut %d\n", coeffsOut);
-  printf("  nPoints %d\n", npoints);
+  printf("  orderX %d\n", orderX);
+  printf("  orderY %d\n", orderY);
+  printf("  orderZ %d\n", orderZ);
+}
+
+// Get sigfigs
+void get_sigfigs(void) 
+{
+  // print the last file name (longest time) to temp variable
+  char tempLastFile[CHAR_BUF_SIZE] = "";
+  sprintf(tempLastFile, flowFiles[flowFileMap[nFiles - 1]]);
+
+  // We expect flow-*.*.cgns, so split along "-"
+  char *tempDash;
+  tempDash = strtok(tempLastFile, "-");
+  tempDash = strtok(NULL, "-");
+
+  // Now expect *.*.cgns, split along "."
+  char *tempDot;
+  tempDot = strtok(tempDash, ".");
+  sigFigPre = strlen(tempDot);
+  tempDot = strtok(NULL, ".");
+  sigFigPost = strlen(tempDot);
 }
 
 // Write reconstructed data
-void write_reconstruct(void)
+void cgns_write_field(void)
 {
-  char fname[CHAR_BUF_SIZE] = "";
+  // Set up the cgns filename
+  char format[CHAR_BUF_SIZE] = "";
+  char fnameall[CHAR_BUF_SIZE] = "";
+  char fnameall2[CHAR_BUF_SIZE] = "";
+  sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
 
-  /* number desnity */
-  sprintf(fname, "%s/%s/rec-wf-re", ROOT_DIR, DATA_DIR);
-  FILE *fileRe = fopen(fname, "w");
-  if (fileRe == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
+  sprintf(fnameall2, "%s/%s/f-rec-part-phase-3D-%s.cgns", ROOT_DIR, DATA_DIR, 
+    format);
+  sprintf(fnameall, fnameall2, flowFileTime[tt]);
+
+  // Set up grid filename
+  char gname[FILE_NAME_SIZE] = "";
+  char gnameall[FILE_NAME_SIZE] = "";
+  sprintf(gname, "grid.cgns");
+  sprintf(gnameall, "%s/output/%s", SIM_ROOT_DIR, "grid.cgns");
+
+  // Set up cgns file paths
+  char snodename[CHAR_BUF_SIZE] = "";
+  char snodenameall[CHAR_BUF_SIZE] = "";
+  sprintf(snodename, "Solution-");
+  sprintf(snodenameall, "/Base/Zone0/Solution-");
+  sprintf(snodename, "%s%s", snodename, format);
+  sprintf(snodenameall, "%s%s", snodenameall, format);
+  sprintf(snodename, snodename, flowFileTime[tt]);
+  sprintf(snodenameall, snodenameall, flowFileTime[tt]);
+
+  // CGNS vairables
+  int fn; // solution file name
+  int bn; // solution base name
+  int zn; // solution zone name
+  int sn; // solution sol name
+  cg_open(fnameall, CG_MODE_WRITE, &fn);
+  cg_base_write(fn, "Base", 3, 3, &bn);
+  cgsize_t size[9];
+  size[0] = dom.xn+1; // cells -> vertices
+  size[1] = dom.yn+1;
+  size[2] = dom.zn+1;
+  size[3] = dom.xn;
+  size[4] = dom.yn;
+  size[5] = dom.zn;
+  size[6] = 0;
+  size[7] = 0;
+  size[8] = 0;
+  cg_zone_write(fn, bn, "Zone0", size, Structured, &zn);
+  cg_goto(fn, bn, "Zone_t", zn, "end");
+  
+  cg_link_write("GridCoordinates", gname, "Base/Zone0/GridCoordinates");
+
+  cg_sol_write(fn, bn, zn, "Solution", CellCenter, &sn);
+
+  // Write real data
+  int fn_real;
+  double *real_out = malloc(dom.Gcc.s3 * sizeof(double));
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    real_out[i] = phi[i][0];
   }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction Real", real_out, &fn_real);
+  free(real_out);
 
-  sprintf(fname, "%s/%s/rec-wf-im", ROOT_DIR, DATA_DIR);
-  FILE *fileIm = fopen(fname, "w");
-  if (fileIm == NULL) {
-    printf("Error opening file %s!\n", fname);
-    exit(EXIT_FAILURE);
-  }
-
-  // each reconstructed timestep is a row
-  for (int t = 0; t < nFiles; t++) {
-    for (int zz = 0; zz < npoints; zz++) {
-      int cc = zz + t*npoints;
-      fprintf(fileRe, "%lf ", wf_rec_Re[cc]);
-      fprintf(fileIm, "%lf ", wf_rec_Im[cc]);
+  // Write imaginary
+  #ifdef DEBUG
+    int fn_imag;  //
+    double *imag_out = malloc(dom.Gcc.s3 * sizeof(double));
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      imag_out[i] = phi[i][1];
     }
-    fprintf(fileRe, "\n");
-    fprintf(fileIm, "\n");
-  }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction Imag", imag_out, &fn_imag);
+    free(imag_out);
+  #endif
 
-  fclose(fileRe);
-  fclose(fileIm);
+  cg_user_data_write("Etc");
+  cg_goto(fn, bn, "Zone_t", zn, "Etc", 0, "end");
+  cgsize_t *N = malloc(sizeof(cgsize_t));
+  N[0] = 1;
+  cg_array_write("Time", RealDouble, 1, N, &flowFileTime[tt]);
+  free(N);
+
+  cg_close(fn);
+
 }
 
-// Free parts
+// Free vars
 void free_vars(void)
 {
   for (int i = 0; i < nFiles; i++) {
@@ -684,18 +669,11 @@ void free_vars(void)
   free(flowFileMap);
   free(flowFileTime);
 
-  free(uf);
-  free(vf);
-  free(wf);
   free(phase);
 
-  fftw_free(uf_k);
-  fftw_free(vf_k);
-  fftw_free(wf_k);
-
-  free(evalZ);
-  free(wf_rec_Re);
-  free(wf_rec_Im);
+  fftw_free(chi);
+  fftw_free(phi);
+  fftw_free(phi_k);
 
   #ifdef BATCH
     free(ROOT_DIR);

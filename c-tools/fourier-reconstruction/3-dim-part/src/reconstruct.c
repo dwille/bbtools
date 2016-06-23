@@ -1,8 +1,8 @@
 #include "main.h"
 
 /* Variables */
-_Complex double *n_lmn;
-_Complex double *n_rec;
+complex double *n_lmn;
+complex double *n_rec;
 
 double *ones;
 
@@ -15,14 +15,14 @@ void alloc_arrays()
   /* Init coefficent arrays */
   // arrays are size (order+1) because includes 0 and order
   int nOrders = (orderL + 1)*(orderM + 1)*(orderN + 1);
-  n_lmn = (_Complex double*) malloc(nOrders * sizeof(_Complex double));
+  n_lmn = (complex double*) malloc(nOrders * sizeof(complex double));
 
   for (int i = 0; i < nOrders; i++) {
     n_lmn[i] = 0.;
   }
 
   /* Init resulting arrays */
-  n_rec = (_Complex double*) malloc(dom.Gcc.s3 * sizeof(_Complex double));
+  n_rec = (complex double*) malloc(dom.Gcc.s3 * sizeof(complex double));
 
   for (int i = 0; i < dom.Gcc.s3; i++) {
     n_rec[i] = 0.;
@@ -46,7 +46,7 @@ void alloc_arrays()
 }
 
 // Calculate even and odd coefficents
-void calc_coeffs(_Complex double *nq_lmn, double *q, part_struct *parts, 
+void calc_coeffs(complex double *nq_lmn, double *q, part_struct *parts, 
   double kl, double km, double kn, int corder)
 {
   // Calculate nq_lmn even and odd
@@ -60,18 +60,18 @@ void calc_coeffs(_Complex double *nq_lmn, double *q, part_struct *parts,
 }
 
 // evaluate series for current order and add to cesaro sum
-void eval_series(_Complex double *nq_sum, _Complex double *nq_lmn,
+void eval_series(complex double *nq_sum, complex double *nq_lmn,
   double kl, double km, double kn, int corder)
 {
+  double x, y, z;
+  int cc;
   for (int zz = 0; zz < dom.zn; zz++) {
-    double z = dom.zs + dom.dz*zz;
-
+    z = dom.zs + dom.dz*zz;
     for (int yy = 0; yy < dom.yn; yy++) {
-      double y = dom.ys + dom.dy*yy;
-
+      y = dom.ys + dom.dy*yy;
       for (int xx = 0; xx < dom.xn; xx++) {
-        double x = dom.xs + dom.dx*xx;
-        int cc = xx + yy*dom.Gcc.s1 + zz*dom.Gcc.s2;
+        x = dom.xs + dom.dx*xx;
+        cc = xx + yy*dom.Gcc.s1 + zz*dom.Gcc.s2;
 
         // Add to sum
         nq_sum[cc] += nq_lmn[corder] * cexp(-J * (kl*x + km*y + kn*z));
