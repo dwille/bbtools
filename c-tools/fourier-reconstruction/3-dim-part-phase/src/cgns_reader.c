@@ -40,6 +40,8 @@ void main_read_input(void)
   fret = fscanf(infile, "Fourier Order in (X,Y,Z) (%d,%d,%d)\n", &orderX, 
     &orderY, &orderZ);
   fclose(infile);
+  // TODO: add check for order > dom.n/2
+  printf("Fourier Order (%d,%d,%d)\n", orderX, orderY, orderZ);
 }
 
 // read and sort flow files directory
@@ -406,6 +408,10 @@ void cgns_fill_flow(void)
         int stride = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
         chi[stride][0] = (double) (phase[stride] > -1);
         chi[stride][1] = 0.;
+
+        //double z = dom.zs + kk*dom.dz;
+        //chi[stride][0] = sin(2.*PI*z/dom.zl);
+        //chi[stride][0] = (double) (kk > dom.zn*0.5);
       }
     }
   }

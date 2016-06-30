@@ -120,6 +120,22 @@ int main(int argc, char *argv[])
     // Back transform
     fftw_execute(phi_k2phi);
 
+    // find max and print 
+   /*double max = -DBL_MAX;
+    double min = DBL_MAX;
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      if (phi[i][0] > max) {    // Max
+        max = phi[i][0];
+      }
+      if (phi[i][0] < min) {    // Min
+        min = phi[i][0];
+      }
+      if (fabs(phi[i][0] - chi[i][0]) >= 1e-16) { // check reconstruction
+        printf("phi[%d] = %lf, chi[%d] = %lf\n", i, phi[i][0], i, chi[i][0]);
+      }
+    }
+    printf("range = [%lf, %lf]\n", min, max); */
+
     // write to file
     cgns_write_field();
   }
