@@ -122,7 +122,7 @@ plt.plot(tau, zeta, 'k-')
 
 plt.plot(tau, yFit, 'w--')
 cTxtString = r"$dz = %.4f\Delta t$" % p
-#plt.text(time[len(time)/2], dz[len(dz)/2], cTxtString, fontsize=12)
+plt.text(time[len(time)/2], dz[len(dz)/2], cTxtString, fontsize=12)
 
 plt.xlabel(r"$\Delta t\ [s]$")
 plt.xlim([0, time[-1]])

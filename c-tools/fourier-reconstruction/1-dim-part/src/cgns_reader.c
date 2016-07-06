@@ -541,7 +541,8 @@ void domain_init(void)
   // Just because we can only resolve xn/2 doesnt mean we should underresolve 
   //  the reconstruction...
   // TODO: how does this affect?
-  npoints = 2*dom.zn + 1;
+  npoints = dom.zn;
+  printf("npoints = %d\n", npoints);
 
   #ifdef DEBUG
     show_domain();

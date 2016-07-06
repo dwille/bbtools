@@ -9,8 +9,8 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <fftw3.h>
 
+#include "fftw3.h"        // if marcc? may be <> if lucan
 #include "cgns_reader.h"
 
 // #Defines

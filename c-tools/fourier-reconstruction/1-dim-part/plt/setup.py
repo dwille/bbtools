@@ -26,29 +26,8 @@ def simParams(sys):
 
   return (partR, simdir, tstart)
 
-# Setup up directory paths for lucan
-def directoryStructureDevel(simdir):
-  #root = "/home/dwille/bbtools/c-tools/fourier-reconstruction/1-dim/"
-  simdir = "sim/"
-  datadir = root + simdir + "data/reconstruct-1D/"
-
-  # Check if datadir exists so we don't go creating extra dirs
-  if not os.path.exists(datadir):
-    print "      " + datadir + " does not exist. Exiting..."
-    print ""
-    sys.exit()
-
-  # Create imgdir if necessary
-  imgdir = root + simdir + "/img/"
-  if not os.path.exists(imgdir):
-    os.makedirs(imgdir)
-
-  return (root, simdir, datadir, imgdir)
-
-
 # Setup up directory paths for marcc
 def directoryStructureMarcc(simdir):
-  #root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
   home = os.path.expanduser("~")
   root = home + "/scratch/triply_per/"
   simdir = simdir + 'f-rec-1D/'
@@ -72,7 +51,7 @@ def initData(datadir, tstart):
   infoFile = datadir + "info"
   # Time -- convert to secs
   time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
-  tsInd = np.argwhere(time >= tstart)[0]
+  tsInd = np.squeeze(np.argwhere(time >= tstart)[0])
   print "      Starting time set to: %.3f [s]" % time[tsInd]
   time = time[tsInd:] - time[tsInd]
   nt = np.size(time)

@@ -13,10 +13,11 @@ print ""
 domX = 42
 domY = 42
 domZ = 126
-nparts = 2000
 
 # Setup simulation parameters
 (partR, simdir, tstart) = simParams(sys)
+
+nparts = float(simdir.partition('/')[0])
 
 # Setup directory structures
 (root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
@@ -59,32 +60,50 @@ for oo in order:
 # Find magnitude of coeffs
 vfMag = np.absolute(vfTotal)
 
-fig = plt.figure()
+fig = plt.figure(figsize=(3,5.5))
 ## vfrac coeffs ##
 ax1 = fig.add_subplot(211)
 plt.imshow(vfMag, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], order[0]-0.5, order[-1]+0.5],
   vmin=0, vmax=0.025)
 plt.colorbar()
-plt.xlabel('time')
-plt.ylabel('order')
-plt.title(r'$|\phi_\ell|$')
+plt.xlabel(r"$t\ [s]$")
+plt.ylabel(r"$order\ \ell$")
+plt.title(r'$|\phi_\ell(t)|$')
 
+# cesaro mean
+for oo in order:
+  vfMag[oo] *= (1. - oo/(order[-1] + 1.))
 # mean
 vf_coeffs_mean = np.mean(vfMag,1)
+vf_coeffs_med = np.median(vfMag,1)
+vf_coeffs_max = np.max(vfMag,1)
 vf_coeffs_sdev = np.std(vfMag,1)
-ax2 = fig.add_subplot(212)
-plt.semilogx(vf_coeffs_mean, order, 'ko--')
-#plt.semilogx(vf_coeffs_mean + vf_coeffs_sdev, order, 'ro:')
-#plt.semilogx(vf_coeffs_mean - vf_coeffs_sdev, order, 'ro:')
 
-ax2.set_xlim([5e-4, 5e-1])
+ax2 = fig.add_subplot(212)
+plt.semilogx(vf_coeffs_mean, order, 'ko:')
+plt.semilogx(vf_coeffs_med, order, 'ro:')
+plt.semilogx(vf_coeffs_mean + vf_coeffs_sdev, order, 'k--')
+plt.semilogx(vf_coeffs_mean - vf_coeffs_sdev, order, 'k--')
+plt.semilogx(vf_coeffs_max, order, 'bo:')
+
+ax2.set_ylabel(r"$order\ \ell$")
+ax2.set_xlabel(r"$\langle \left(1 - \frac{\ell}{L+1}\right) |\phi_\ell| \rangle_t$")
+#ax2.set_xlim([.1, 20])
 
 #ax2.xaxis.set_major_locator(MultipleLocator(.25))
 #ax2.xaxis.set_minor_locator(MultipleLocator(.05))
 ax2.yaxis.set_major_locator(MultipleLocator(5))
 ax2.yaxis.set_minor_locator(MultipleLocator(1))
 ax2.grid(True)
+
+## std
+#ax3 = fig.add_subplot(313)
+#plt.semilogx(vf_coeffs_sdev/vf_coeffs_mean, order, 'ro:')
+#ax3.set_xlim([.1,1])
+#ax3.grid(True)
+
+
 
 imgname = imgdir + "vf-coeffs"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

@@ -31,10 +31,9 @@ for zz in np.arange(0, nz):
   vFrac[zz,:] = np.interp(uniform_time, time, vFrac[zz,:])
 
 time = uniform_time
-dt = interpDT
 
 # Fourier Transform Parameters
-dt = np.mean(np.diff(time))
+dt = interpDT
 samplingRate = 1./dt
 freq = scifft.fftfreq(nt, dt)
 
@@ -51,10 +50,9 @@ vfAutoCorrMean = np.mean(vfAutoCorr, 0)
 vfPowerSpecMean = np.mean(vfPowerSpec, 0)
 
 # Plot
-plt.rc('figure', figsize=(4,6))
 vfFig = plt.figure()
 
-# Plot auto-correlation
+# Plot auto-correlation (slices at constant location)
 vfFig.add_subplot(311)
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
