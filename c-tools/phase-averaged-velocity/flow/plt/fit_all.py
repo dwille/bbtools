@@ -1,12 +1,13 @@
 #!/usr/bin/env python2
 
+from confidence import fit_param
+
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import numpy.polynomial.polynomial as poly
 import numpy as np
 import os,sys
 os.system('clear')
-
 
 print ""
 print " ---- Phase-Averaged Fluid Velocity Plotting Utility"
@@ -60,109 +61,79 @@ wfwt_rho33 = flowVel[1:16:4]/termVel[1]
 wfwt_rho40 = flowVel[2:16:4]/termVel[2]
 wfwt_rho50 = flowVel[3:16:4]/termVel[3]
 
-# Fit n,k for each density ratio
-# Linear fit to log(wf/wt) = log(k) + (n-1)log(1-phi)
-# Coefficients return as [A,B,C] in A + Bx + Cx^2...
-[logk_20, nm1_20] = poly.polyfit(np.log(1. - phi), np.log(wfwt_rho20), 1)
-[logk_33, nm1_33] = poly.polyfit(np.log(1. - phi), np.log(wfwt_rho33), 1)
-[logk_40, nm1_40] = poly.polyfit(np.log(1. - phi), np.log(wfwt_rho40), 1)
-[logk_50, nm1_50] = poly.polyfit(np.log(1. - phi), np.log(wfwt_rho50), 1)
+# Fit a line to the log log
+(n20, k20, n20_err, k20_err) = fit_param(np.log(1.-phi), np.log(wfwt_rho20))
+(n33, k33, n33_err, k33_err) = fit_param(np.log(1.-phi), np.log(wfwt_rho33))
+(n40, k40, n40_err, k40_err) = fit_param(np.log(1.-phi), np.log(wfwt_rho40))
+(n50, k50, n50_err, k50_err) = fit_param(np.log(1.-phi), np.log(wfwt_rho50))
 
-k20 = np.exp(logk_20)
-k33 = np.exp(logk_33)
-k40 = np.exp(logk_40)
-k50 = np.exp(logk_50)
-n20 = nm1_20 + 1.
-n33 = nm1_33 + 1.
-n40 = nm1_40 + 1.
-n50 = nm1_50 + 1.
+n20 += 1
+n33 += 1
+n40 += 1
+n50 += 1
+
+# Gather reults and erros from our study
+k_curr = [k20, k33, k40, k50]
+kerrs = [k20_err, k33_err, k40_err, k50_err]
+n_curr = [n20, n33, n40, n50]
+nerrs = [n20_err, n33_err, n40_err, n50_err]
 
 #print "   2.0   3.3   4.0   5.0"
 #print "n  %.2f  %.2f  %.2f  %.2f" % (n20,n33,n40,n50)
+#print "ne %.2f  %.2f  %.2f  %.2f" % (n20_err,n33_err,n40_err,n50_err)
 #print "k  %.2f  %.2f  %.2f  %.2f" % (k20,k33,k40,k50)
+#print "ke %.2f  %.2f  %.2f  %.2f" % (k20_err,k33_err,k40_err,k50_err)
 
 # R-Z relations -- n coefficient
 Ret = d*termVel/nu
 
-# Richardson Zaki
-nRZ = 4.45*Ret**(-0.1)   
-# Garside and Al-Dibouni
-tmp = 0.1*Ret**0.9
-nGAD = (5.1 + 2.7*tmp)/(1 + tmp)
-
-# Determine average k -- (wf/wt) / (1-phi)^(n-1)
-kGAD = np.zeros(16)
-kRZ = np.zeros(16)
-for rr,_ in enumerate(rho):
-  for aa,_ in enumerate(phi):
-    # (wf/wt)
-    if rr==0:     # rho=2.0
-      lhs = wfwt_rho20[aa]
-    elif rr==1:   # rho=3.3
-      lhs = wfwt_rho33[aa]
-    elif rr==2:   # rho=4.0
-      lhs = wfwt_rho40[aa]
-    elif rr==3:   # rho=5.0
-      lhs = wfwt_rho50[aa]
-
-    # (1-phi)^(n-1) -- from garside, al-dibouni
-    rhsGAD = (1 - phi[aa])**(nGAD[rr] - 1) 
-    rhsRZ = (1 - phi[aa])**(nRZ[rr] - 1) 
-
-    # k = lhs/rhs
-    kGAD[aa + 4*rr] = lhs/rhsGAD
-    kRZ[aa + 4*rr] = lhs/rhsRZ
-
-kGAD_mean = np.mean(kGAD)
-kRZ_mean = np.mean(kRZ)
-
+##
 ## Plot k as a function of phi and rho ##
+##
 kFig = plt.figure(figsize=(2,2))
 
 # Yin and Koch, 2007, data
 Re_yk = [1.02, 1.83, 5.00, 9.98, 20.0]
 k_yk = [0.92, 0.90, 0.86, 0.86, 0.88]
+kerr_yk = [0.03, 0.03, 0.06, 0.04, 0.02]
+n_yk = [4.2, 4.1, 4.0, 3.8, 3.6]
+nerr_yk = [0.1, 0.1, 0.3, 0.2, 0.1]
 
-# as a function of rho 
+## k as a function of rho 
 ax2 = kFig.add_subplot(111)
-ax2.plot(Ret, [k20, k33, k40, k50], 'k.', markersize=5)
-ax2.plot(Re_yk, k_yk, 'bo', markersize=5, markerfacecolor='none')
+ax2.errorbar(Ret, k_curr, fmt='k.', markersize=5, 
+  yerr=kerrs)
+ax2.errorbar(Re_yk, k_yk, fmt='ko', markersize=5, markerfacecolor='none',
+  yerr=kerr_yk)
 
 ax2.set_xlim([0,130])
 ax2.set_xticks([0,25,50,75,100,125])
 ax2.set_xticklabels(["0","","50","","100",""])
 ax2.set_xlabel(r"$Re_t$")
-ax2.set_ylim([0.75, 0.95])
-ax2.set_yticks([0.75, 0.8, 0.85, 0.9, 0.95])
-ax2.set_yticklabels(["0.75", "", "0.85", "", "0.95"])
+ax2.set_ylim([0.75, 1.0])
+ax2.set_yticks([0.75, 0.8, 0.85, 0.9, 0.95, 1.00])
+ax2.set_yticklabels(["0.75", "", "0.85", "", "0.95", ""])
 ax2.set_ylabel(r"$\kappa$")
 
 ax2.grid(True)
-
-#lText = [r'$\kappa_{WSP}$', '$\kappa_{YK}$']
-#ax2.legend(lText, bbox_to_anchor=(0,1.05,1,1),loc="lower left",mode="expand",
-#  ncol=2, borderaxespad=0)
 
 imgname = imgdir + "k-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 ## Plot n as a function of rho ##
-Ret_eval = np.arange(0.1, 125, 0.1)
+Ret_eval = np.arange(0.1, 150, 0.1)
 nRZ_eval = 4.45*Ret_eval**(-0.1)   
 nGAD_eval = (5.1 + 2.7*(0.1*Ret_eval**0.9))/(1. + (0.1*Ret_eval**0.9))
-
-# Yin and Koch, 2007, data
-Re_yk = [1.02, 1.83, 5.00, 9.98, 20.0]
-k_yk = [4.2, 4.1, 4.0, 3.8, 3.6]
 
 nFig = plt.figure(figsize=(2,2))
 ax1 = nFig.add_subplot(111)
 ## n from RZ
 ax1.plot(Ret_eval, nRZ_eval, 'k-', markersize=7)
 ax1.plot(Ret_eval, nGAD_eval, 'k--', markersize=7)
-ax1.plot(Ret, [n20, n33, n40, n50], 'k.', markersize=5)
-ax1.plot(Re_yk, k_yk, 'bo', markersize=5, markerfacecolor='none')
+ax1.errorbar(Ret, n_curr, fmt='k.', markersize=5, yerr=nerrs)
+ax1.errorbar(Re_yk, n_yk, fmt='ko', markersize=5, markerfacecolor='none',
+  yerr=nerr_yk)
 
 ax1.set_xlim([0,130])
 ax1.set_xticks([0,25,50,75,100,125])
@@ -171,17 +142,15 @@ ax1.set_xlabel(r"$Re_t$")
 ax1.set_ylim([2.5,5])
 ax1.set_ylabel(r"$n$")
 
-#lText = [r'$n_{RZ}$', r'$n_{GA}$', r'$n_{WSP}$', r'$n_{YK}$']
-#ax1.legend(lText, bbox_to_anchor=(0,1.05,1,1),loc="lower left",mode="expand",
-#  ncol=2, borderaxespad=0)
-
 ax1.grid(True)
 
 imgname = imgdir + "n-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-# Evaluate relationship with RZ, GAD
+##
+## Evaluate relationship with RZ, GAD ##
+##
 phiEval = np.linspace(0.05,0.375,100)
 
 ## Plot as a function of phi ##

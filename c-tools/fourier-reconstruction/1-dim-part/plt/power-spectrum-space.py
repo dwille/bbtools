@@ -10,16 +10,6 @@ import scipy.fftpack as scifft
 
 os.system("clear")
 
-def AutoCorrelationFFT(x1):
-  x1 = np.asarray(x1)
-  y1 = x1 - x1.mean()
-  result = signal.fftconvolve(y1[::-1],y1,mode="full")
-  # Reflip array
-  result = result[::-1]
-  result = result[len(result)/2:]
-  result /= result[0]
-  return result
-
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
 print "             Power Spectrum -- Space"
@@ -47,58 +37,65 @@ dz = evalZ - evalZ[0]
 deltaZ = np.mean(np.diff(dz))
 freq = scifft.fftfreq(nz, deltaZ)
 
-vfAutoCorr = np.zeros((nz, nt))
+vfAutoCorrReal = np.zeros((nz, nt))
+vfAutoCorrImag = np.zeros((nz, nt))
 vfPowerSpec = np.zeros((nz,nt))
-# for tt, tval in enumerate(time):
-#   # length of result is ceil(length(time)/2)
-#   vfAutoCorr[:,tt] = AutoCorrelationFFT(vFrac[:,tt])
-#   vfPowerSpec[:,tt] = np.absolute(scifft.fft(vfAutoCorr[:,tt]))**2
-# 
-# vfPowerSpec /= (nz*nz)
-# vfAutoCorrMean = np.mean(vfAutoCorr, 1)
-# vfPowerSpecMean = np.mean(vfPowerSpec, 1)
-# 
-# # Plot
-vfFig = plt.figure()
-# 
-# # Plot autocorrelation (slices at constant time)
-# vfFig.add_subplot(311)
-# plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
-#   extent=[time[0], time[-1], dz[0], dz[-1]])
+#TODO: would make sense to do this starting at everyz and averaging?
+for tt, tval in enumerate(time):
+  (vfAutoCorrReal[:,tt], vfAutoCorrImag[:,tt], vfPowerSpec[:,tt]) \
+    = AutoCorrelationSpaceFFT(vFrac[:,tt])
+  vfAutoCorrReal[:,tt] /= vfAutoCorrReal[0,tt]
 
-vfFig.add_subplot(211)
-array = vFrac[:,0] - np.mean(vFrac[:,0])
-length = np.size(array)
-for i in np.arange(0,length):
-  array[i] = np.sin(2.*np.pi*i/length)
-plt.plot(array, np.arange(0,length), 'b')
-#plt.ylim([0, 120])
-#plt.plot(test, dz, 'k')
+  #vfPowerSpec[:,tt] = np.absolute(scifft.fft(vfAutoCorrReal[:,tt]))**2
+  # TODO: aren't I already doing this work in AutoCorrelationSpaceFFT?
+  # TODO: actually, aren't i already doing this in the c program...
+ 
+vfPowerSpec /= (nz*nz)
+vfPowerSpecMean = np.mean(vfPowerSpec, 1)
+
+# Make sure imag part is negligible
+if (np.max(vfAutoCorrImag) > 1e-15) or (np.min(vfAutoCorrImag) < -1e-15):
+  print "Imaginary part is not numerical zero:"
+  print "   Max = %.2e" % np.max(vfAutoCorrImag)
+  print "   Min = %.2e" % np.min(vfAutoCorrImag)
+  sys.exit()
+
+# # Plot # #
+vfFig = plt.figure(figsize=(4,8))
+# Plot vFrac
+vfFig.add_subplot(411)
+plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], dz[0], dz[-1]],
+  cmap='bwr')
+
+# Plot autocorrelation (vertical slices at constant time)
+vfFig.add_subplot(412)
+print np.max(vfAutoCorrReal)
+print np.min(vfAutoCorrReal)
+plt.imshow(vfAutoCorrReal, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], dz[0], dz[-1]],
+  vmin=-1., vmax=1.,
+  cmap='bwr')
+
+# Plot power spectrum as a colormap
+vfFig.add_subplot(413)
+plt.imshow(vfPowerSpec, origin="lower", aspect="auto", interpolation="none",
+   extent=[time[0]-0.5*dt, time[-1]+0.5*dt, 0-0.5, np.size(freq)+0.5])
+#plt.plot(vfPowerSpecMean, freq, "ko:")
+plt.ylim([-1, 10])
+plt.ylabel(r"$k$")
 
 
-vfFig.add_subplot(212)
-R = np.fft.ifft(np.fft.fft(array)*np.fft.fft(array[::-1]))
-plt.plot(R, np.arange(0, np.size(R)), 'k--')
-
-# # Plot ALL power spectrums as color map
-# vfFig.add_subplot(312)
-# plt.imshow(vfPowerSpec, origin="lower", aspect="auto", interpolation="none",
-#   #extent=[time[0], time[-1], 0, np.max(freq)])
-#   extent=[time[0]-0.5*dt, time[-1]+0.5*dt, 0-0.5, np.size(freq)+0.5])
-# #plt.plot(vfPowerSpecMean, freq, "ko:")
-# plt.ylim([-1, 10])
-# plt.ylabel(r"$k$")
-# 
-# # Plot MEAN of all power spectrums averaged over time
-# vfAvgPowerSpec = np.mean(vfPowerSpec, 1)
-# 
-# vfFig.add_subplot(313)
-# plt.semilogx(vfAvgPowerSpec, np.arange(0,np.size(freq)), 'ko:')
-# plt.xlabel('PS')
-# #plt.xlim([0, 0.02])
-# plt.ylabel(r"$k$")
-# plt.ylim([0, 20])
-# plt.xlim([1e-4, 1e-1])
+ 
+# Plot MEAN of all power spectrums averaged over time
+vfAvgPowerSpec = np.mean(vfPowerSpec, 1)
+vfFig.add_subplot(414)
+plt.semilogx(vfAvgPowerSpec, np.arange(0,np.size(freq)), 'ko:')
+plt.xlabel('PS')
+#plt.xlim([0, 0.02])
+plt.ylabel(r"$k$")
+plt.ylim([0, 20])
+plt.xlim([1e-15, 1e2])
 
 
 #  #vfAutoCorr = AutoCorrelationFFT(vFrac[zs,:])

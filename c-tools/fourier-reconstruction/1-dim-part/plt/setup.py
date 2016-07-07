@@ -80,6 +80,21 @@ def AutoCorrelationFFT(x1):
   result /= result[0]
   return result
 
+def AutoCorrelationSpaceFFT(arrayIn):
+  arrayFlucts = arrayIn - np.mean(arrayIn)
+  arrayFFT1 = np.fft.fft(arrayFlucts)
+  arrayFFT2 = np.fft.fft(arrayFlucts[::-1])
+  arrayOut = np.fft.ifft(arrayFFT1*arrayFFT2)
+
+  arrayOutReal = np.real(arrayOut)
+  arrayOutImag = np.imag(arrayOut)
+
+  #powerSpec = np.absolute(np.fft.fft(arrayIn))**2
+  powerSpec = np.absolute(arrayFFT1)**2
+
+  return (arrayOutReal, arrayOutImag, powerSpec)
+
+
 def CrossCorrelationFFT(x1,x2):
   #x1 = np.asarray(x1)
   y1 = x1 - x1.mean()
