@@ -61,7 +61,7 @@ for oo in order:
 vfMag = np.absolute(vfTotal)
 
 fig = plt.figure(figsize=(3,5.5))
-## vfrac coeffs ##
+## vfrac coeffs ## colorma plot
 ax1 = fig.add_subplot(211)
 plt.imshow(vfMag, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], order[0]-0.5, order[-1]+0.5],
@@ -71,38 +71,51 @@ plt.xlabel(r"$t\ [s]$")
 plt.ylabel(r"$order\ \ell$")
 plt.title(r'$|\phi_\ell(t)|$')
 
-# cesaro mean
-for oo in order:
-  vfMag[oo] *= (1. - oo/(order[-1] + 1.))
+## cesaro mean
+#for oo in order:
+#  vfMag[oo] *= (1. - oo/(order[-1] + 1.))
 # mean
 vf_coeffs_mean = np.mean(vfMag,1)
 vf_coeffs_med = np.median(vfMag,1)
 vf_coeffs_max = np.max(vfMag,1)
 vf_coeffs_sdev = np.std(vfMag,1)
 
+# ylim for both plots
+orderMax = 20
+
+# plot mean for order
 ax2 = fig.add_subplot(212)
-plt.semilogx(vf_coeffs_mean, order, 'ko:')
-plt.semilogx(vf_coeffs_med, order, 'ro:')
-plt.semilogx(vf_coeffs_mean + vf_coeffs_sdev, order, 'k--')
-plt.semilogx(vf_coeffs_mean - vf_coeffs_sdev, order, 'k--')
-plt.semilogx(vf_coeffs_max, order, 'bo:')
+plt.semilogx(vf_coeffs_mean[1:], order[1:], 'k.')
+# plt.semilogx(vf_coeffs_med, order, 'ro:')
+# plt.semilogx(vf_coeffs_mean + vf_coeffs_sdev, order, 'k--')
+# plt.semilogx(vf_coeffs_mean - vf_coeffs_sdev, order, 'k--')
+# plt.semilogx(vf_coeffs_max, order, 'bo:')
 
 ax2.set_ylabel(r"$order\ \ell$")
-ax2.set_xlabel(r"$\langle \left(1 - \frac{\ell}{L+1}\right) |\phi_\ell| \rangle_t$")
+#ax2.set_xlabel(r"$\langle \left(1 - \frac{\ell}{L+1}\right) |\phi_\ell| \rangle_t$")
+ax2.set_xlabel(r"$|\langle \phi_\ell| \rangle_t$")
 #ax2.set_xlim([.1, 20])
 
 #ax2.xaxis.set_major_locator(MultipleLocator(.25))
 #ax2.xaxis.set_minor_locator(MultipleLocator(.05))
-ax2.yaxis.set_major_locator(MultipleLocator(5))
+ax2.set_yticks(np.arange(0,orderMax+0.001,2))
+ticks = ax2.get_yticks()
+print ticks
+ax2.set_ylim([0,orderMax])
+ax2.yaxis.set_major_locator(MultipleLocator(2))
 ax2.yaxis.set_minor_locator(MultipleLocator(1))
 ax2.grid(True)
 
-## std
-#ax3 = fig.add_subplot(313)
-#plt.semilogx(vf_coeffs_sdev/vf_coeffs_mean, order, 'ro:')
-#ax3.set_xlim([.1,1])
-#ax3.grid(True)
+# plot mean for wavenumber
+ax3 = ax2.twinx()
 
+ticklabel = np.array(60./ticks, dtype=str)
+ticklabel[0] = "const"
+ax3.set_yticks(ticks)
+#ax3.yaxis.set_major_locator(MultipleLocator(10))
+#ax3.yaxis.set_minor_locator(MultipleLocator(2))
+ax3.set_yticklabels(ticklabel)
+ax3.set_ylabel(r"$\lambda_a = \frac{L_z/a}{\ell}$")
 
 
 imgname = imgdir + "vf-coeffs"
