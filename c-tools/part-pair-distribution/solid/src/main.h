@@ -17,27 +17,22 @@
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
 
-// set up batch job submission
-#ifdef BATCH
-  extern char *ROOT_DIR;      // analysis
-  extern char *SIM_ROOT_DIR;  // sim
-#else
-  #define SIM_ROOT_DIR ".."
-  #define ROOT_DIR "."
-#endif
+// Define File Structure
+extern char *SIM_ROOT_DIR;      // Simulation root directory
+extern char *ANALYSIS_DIR;      // Analysis directory
+
+#define PAIR_DIR "part-pair-distribution"
+#define ANALYSIS "solid"
+#define DATA_DIR "data"
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_DIR "data"
 #define CONFIG_FILE "part-pair-solid.config"
 
 #define PERIODIC 0
 #define DIRICHLET 1
 #define NEUMANN 2
 
-#define ALPHA_MAX 0.74048
 #define PI 3.1415926535897932385
-#define nDim 3
-#define nDim2 nDim*nDim
 
 /**** VARIABLES ****/
 // Declare global variables

@@ -1,10 +1,8 @@
 #include "main.h"
 
 // Define global variables declared in header file
-#ifdef BATCH
-  char *ROOT_DIR;
-  char *SIM_ROOT_DIR;
-#endif
+char *SIM_ROOT_DIR;
+char *ANALYSIS_DIR;
 double tStart;
 double tEnd;
 int tt;
@@ -14,27 +12,8 @@ double upSdev, vpSdev, wpSdev;
 
 int main(int argc, char *argv[]) 
 {
-  // setup batch submission
-  #ifdef BATCH
-    SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
-    ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
-
-    // arg[0] = program name
-    // arg[1] = SIM_ROOT_DIR
-    if (argc == 2) {
-      sprintf(SIM_ROOT_DIR, "%s", argv[1]);
-      sprintf(ROOT_DIR, "%s/part_vel", SIM_ROOT_DIR);
-    } else if (argc != 2) {
-      printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
-      exit(EXIT_FAILURE);
-    }
-  #else           // prevent compiler warning
-    argc = argc;
-    argv = argv;
-  #endif
-
-  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
-  printf(" ROOT_DIR = %s\n\n", ROOT_DIR);
+  // Set directory structure
+  directory_init(argc, argv);
 
   // Read input file
   main_read_input();
@@ -97,5 +76,6 @@ int main(int argc, char *argv[])
   // Free and exit
   free_vars();
 
+  printf("Done!!\n");
   return EXIT_SUCCESS;
 }

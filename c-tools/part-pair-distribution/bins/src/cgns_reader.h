@@ -91,6 +91,9 @@ extern dom_struct dom;
 extern BC bc;
 
 /**** FUNCTIONS ****/
+// set up directory structure
+void directory_init(int argc, char *argv[]);
+ 
 // read input file
 void main_read_input(void);
 

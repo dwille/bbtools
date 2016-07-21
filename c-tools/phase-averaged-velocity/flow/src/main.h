@@ -17,29 +17,20 @@
 #define CHAR_BUF_SIZE 256
 
 // set up input if we need batch job submission
-#ifdef BATCH
-  extern char *ROOT_DIR;
-  extern char *SIM_ROOT_DIR;
-#else
-  #define ROOT_DIR "."        // analysis
-  #define SIM_ROOT_DIR ".."   // simulation
-#endif
+extern char *SIM_ROOT_DIR;
+extern char *ANALYSIS_DIR;
+
+#define PHASE_DIR "phase-averaged-velocity"
+#define ANALYSIS "flow"
+#define DATA_DIR "data"
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_DIR "data"
 #define CONFIG_FILE "flowvel.config"
 
 #define MAX_THREADS_1D 128
 #define MAX_THREADS_DIM 16
 
-#define PERIODIC 0
-#define DIRICHLET 1
-#define NEUMANN 2
-
-#define ALPHA_MAX 0.74048
 #define PI 3.1415926535897932385
-#define nDim 3
-#define nDim2 nDim*nDim
 
 /**** STRUCTURES ****/
 /**** VARIABLES ****/

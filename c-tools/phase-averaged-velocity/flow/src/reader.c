@@ -20,8 +20,26 @@ double *phaseAvgVf;
 double *phaseAvgWf;
 dom_struct dom;
 dom_struct *_dom;
-BC bc;
-BC *_bc;
+
+// Set up directory structure
+void directory_init(int argc, char *argv[])
+{
+  SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+  ANALYSIS_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+  // arg[0] = program name
+  // arg[1] = SIM_ROOT_DIR
+  if (argc == 2) {
+  sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+  sprintf(ANALYSIS_DIR, "%s/analysis/%s/%s", SIM_ROOT_DIR, PHASE_DIR, ANALYSIS);
+  } else if (argc != 2) {
+  printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+  exit(EXIT_FAILURE);
+  }
+  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+  printf(" ANALYSIS_DIR = %s\n\n", ANALYSIS_DIR);
+  fflush(stdout);
+}
 
 // Read config input file
 void main_read_input(void)
@@ -31,7 +49,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
+  sprintf(fname, "%s/%s", ANALYSIS_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Error opening file %s!\n", fname);
@@ -232,7 +250,6 @@ void domain_init(void)
   
   // read buffers
   int ibuf = 0;
-  char cbuf[CHAR_BUF_SIZE] = "";
   double dbuf = 0;
 
   // read domain
@@ -256,92 +273,6 @@ void domain_init(void)
   fret = fscanf(infile, "rho_f %lf\n", &dbuf);
   fret = fscanf(infile, "nu %lf\n", &dbuf);
   fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "SIMULATION PARAMETERS\n");
-  fret = fscanf(infile, "duration %lf\n", &dbuf);
-  fret = fscanf(infile, "CFL %lf\n", &dbuf);
-  fret = fscanf(infile, "pp_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "pp_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "lamb_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_relax %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_cut %lf\n", &dbuf);
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "BOUNDARY CONDITIONS\n");
-  fret = fscanf(infile, "vel_tDelay %lf\n", &dbuf);
-
-  fret = fscanf(infile, "PRESSURE\n");
-  fret = fscanf(infile, "bc.pW %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pW = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pW = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error -- read %s\n",cbuf);
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pE %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pE = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pE = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pS %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pS = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pS = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pN %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pN = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pN = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pB %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pB = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pB = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pT %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pT = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pT = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
 
   /**** dom ****/
   // Calculate domain sizes
@@ -440,19 +371,6 @@ void show_domain(void)
      dom.Gcc.s3);
   printf("\n");
 
-  printf("Boundary Condition Structure\n");
-  printf("  PERIODIC = 0\n");
-  printf("  DIRICHLET 1\n");
-  printf("  NEUMANN = 2\n");
-  printf("    bc.pW = %d\n", bc.pW);
-  printf("    bc.pE = %d\n", bc.pE);
-  printf("    bc.pS = %d\n", bc.pS);
-  printf("    bc.pN = %d\n", bc.pN);
-  printf("    bc.pB = %d\n", bc.pB);
-  printf("    bc.pT = %d\n", bc.pT);
-  printf("\n");
-
-
   printf("Input Parameters\n");
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
@@ -465,7 +383,7 @@ void write_averaged(void)
 
   // Set up output file name
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s/phaseAveragedFlowVel", ROOT_DIR, DATA_DIR);
+  sprintf(fname, "%s/%s/phaseAveragedFlowVel", ANALYSIS_DIR, DATA_DIR);
   FILE *fnode = fopen(fname, "w");
   if (fnode == NULL) {
     printf("Error opening file!\n");
@@ -487,7 +405,7 @@ void create_output_dir (void) {
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  sprintf(buf, "%s/%s", ANALYSIS_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -521,9 +439,7 @@ void free_flow(void)
   free(flowFiles);
   free(fileMap);
   free(flowFileTime);
-  #ifdef BATCH
-    free(ROOT_DIR);
-    free(SIM_ROOT_DIR);
-  #endif
+  free(ANALYSIS_DIR);
+  free(SIM_ROOT_DIR);
 }
 

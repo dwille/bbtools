@@ -1,8 +1,17 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
-CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
-CUSP_DIR = /home-1/dwillen3@jhu.edu/.deps/cusplibrary
-CUDA_DIR = /cm/shared/apps/cuda/7.0
+ifeq ($(USER),dwille)
+  $(info User is $(USER))
+  HDF5_DIR = /opt/hdf5
+  CGNS_DIR = /opt/cgns
+  CUSP_DIR = /opt/cusplibrary
+  CUDA_DIR = /opt/cuda
+else ifeq ($(USER),dwillen3@jhu.edu)
+  $(info USER is dwillen3@jhu.edu)
+  HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
+  CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+  CUSP_DIR = /home-1/dwillen3@jhu.edu/.deps/cusplibrary
+  CUDA_DIR = /cm/shared/apps/cuda/7.0
+endif	
 
 ## COMPILERS
 GCC = gcc
@@ -34,17 +43,12 @@ EXTRA = Makefile	\
 # make -g -O2 to optimize
 all: COPT += -O2
 all: CUDAOPT += -O2
-all: flowVel
-
-# compile for batch job submission
-batch: COPT += -O2 -DBATCH
-batch: CUDAOPT += -O2
-batch: flowVel
+all: flowvel
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
 debug: CUDAOPT += -DDEBUG -g
-debug: flowVel
+debug: flowvel
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 OBJSCUDA = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCCUDA))))
@@ -58,8 +62,8 @@ $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 $(SRC_DIR)/bblib.o:$(OBJSCUDA)
 	$(NVCC) $(CUDAOPT) -dlink $+ $(CUDALIBS) -o $(SRC_DIR)/bblib.o
 
-flowVel: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/flowVel
+flowvel: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/flowvel
 
 clean:
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/flowVel
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/flowvel

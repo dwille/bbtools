@@ -17,16 +17,14 @@
 #define CHAR_BUF_SIZE 256
 
 // set up batch job submission
-#ifdef BATCH
-  extern char *ROOT_DIR;
-  extern char *SIM_ROOT_DIR;
-#else
-  #define SIM_ROOT_DIR ".." // simulation
-  #define ROOT_DIR "."      // analysis
-#endif
+extern char *SIM_ROOT_DIR;
+extern char *ANALYSIS_DIR;
+
+#define PHASE_DIR "phase-averaged-velocity"
+#define ANALYSIS "part"
+#define DATA_DIR "data"
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_DIR "data"
 #define CONFIG_FILE "partvel.config"
 
 /**** VARIABLES ****/

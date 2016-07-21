@@ -1,10 +1,8 @@
 #include "main.h"
 
 // take care of batch job submission
-#ifdef BATCH
-  char *ROOT_DIR;
-  char *SIM_ROOT_DIR;
-#endif
+char *SIM_ROOT_DIR;
+char *ANALYSIS_DIR;
 
 // Define global variables declared in header file
 double tStart;
@@ -18,26 +16,8 @@ double pref;
 
 int main(int argc, char *argv[]) 
 {
-  // Set up batch submission
-  #ifdef BATCH
-    SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
-    ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
-
-    // arg[0] = program name
-    // arg[1] = SIM_ROOT_DIR
-    if (argc == 2) {
-      sprintf(SIM_ROOT_DIR, "%s", argv[1]);
-      sprintf(ROOT_DIR, "%s/f-rec-1D", SIM_ROOT_DIR);
-    } else if (argc != 2) {
-      printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
-      exit(EXIT_FAILURE);
-    }
-    printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
-    printf(" ROOT_DIR = %s\n\n", ROOT_DIR);
-  #else           // prevent compiler warning
-    argc = argc;
-    argv = argv;
-  #endif
+  // Set directory structure
+  directory_init(argc, argv);
 
   // Read input file
   main_read_input();
@@ -112,11 +92,11 @@ int main(int argc, char *argv[])
     if (coeffsOut == 1) write_coeffs(-1);
   }
 
-
   // write to file
   write_reconstruct();
    
   // Free and exit
   free_vars();
+  printf("Done!!\n");
   return EXIT_SUCCESS;
 }

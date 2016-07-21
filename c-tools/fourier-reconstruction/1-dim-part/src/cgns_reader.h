@@ -50,17 +50,6 @@ typedef struct dom_struct {
   double dz;
 } dom_struct;
 
-// boundary condition structure
-typedef struct BC {
-  int pW;
-  int pE;
-  int pS;
-  int pN;
-  int pB;
-  int pT;
-} BC;
-
-
 /**** VARIABLES ****/
 // File Variables
 extern int nFiles;
@@ -80,16 +69,14 @@ extern double *wp;
 // Particle kinetic energy
 extern double *ke;
 
-// host and dev part_struct parts;
+// initialize structures
 extern part_struct *parts;
-
-// host and dev dom_struct doms
 extern dom_struct dom;
 
-// host and dev bc struct bcs
-extern BC bc;
-
 /**** FUNCTIONS ****/
+// set up directory structure
+void directory_init(int argc, char *argv[]);
+ 
 // read input file
 void main_read_input(void);
 

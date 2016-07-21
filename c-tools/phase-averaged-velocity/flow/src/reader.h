@@ -42,16 +42,6 @@ typedef struct dom_struct {
   double dz;
 } dom_struct;
 
-// boundary condition structure
-typedef struct BC {
-  int pW;
-  int pE;
-  int pS;
-  int pN;
-  int pB;
-  int pT;
-} BC;
-
 /**** VARIABLES ****/
 // output directory flowFiles and flowFileTime
 extern int nFiles;
@@ -76,11 +66,10 @@ extern double *phaseAvgWf;
 extern dom_struct dom;
 extern dom_struct *_dom;
 
-// host and dev bc struct bcs
-extern BC bc;
-extern BC *_bc;
-
 /**** FUNCTIONS ****/
+// set up directory structure
+void directory_init(int argc, char *argv[]);
+ 
 // read tetrad.config input file
 void main_read_input(void);
 

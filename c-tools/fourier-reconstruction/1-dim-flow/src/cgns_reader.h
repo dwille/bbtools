@@ -42,16 +42,6 @@ typedef struct dom_struct {
   double dz;
 } dom_struct;
 
-// boundary condition structure
-typedef struct BC {
-  int pW;
-  int pE;
-  int pS;
-  int pN;
-  int pB;
-  int pT;
-} BC;
-
 /**** VARIABLES ****/
 // File Variables
 extern int nFiles;
@@ -74,13 +64,13 @@ extern double *evalZ;
 extern double *wf_rec_Re;
 extern double *wf_rec_Im;
 
-// host and dev dom_struct doms
+// dev dom_struct doms
 extern dom_struct dom;
 
-// host and dev bc struct bcs
-extern BC bc;
-
 /**** FUNCTIONS ****/
+// set up directory structure
+void directory_init(int argc, char *argv[]);
+ 
 // read input file
 void main_read_input(void);
 

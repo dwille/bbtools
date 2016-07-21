@@ -35,6 +35,9 @@ extern double *wp;
 extern part_struct *parts;
 
 /**** FUNCTIONS ****/
+// set up directory structure
+void directory_init(int argc, char *argv[]);
+
 // read input file
 void main_read_input(void);
 

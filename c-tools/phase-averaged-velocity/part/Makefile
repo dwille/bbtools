@@ -1,6 +1,13 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
-CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+ifeq ($(USER),dwille)
+  $(info User is $(USER))
+  HDF5_DIR = /opt/hdf5
+  CGNS_DIR = /opt/cgns
+else ifeq ($(USER),dwillen3@jhu.edu)
+  $(info USER is dwillen3@jhu.edu)
+  HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
+  CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+endif	
 
 ## COMPILERS
 GCC = gcc
@@ -21,27 +28,27 @@ EXTRA = Makefile	\
 
 # compile normally:
 all: COPT += -O2
-all: partVel
+all: partvel
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
-debug: partVel
+debug: partvel
 
 # compile for batch job submission
 batch: COPT += -O2 -DBATCH
-batch: partVel
+batch: partvel
 
 # compile with profiler
 profiler: COPT += -pg
-profiler: partVel
+profiler: partvel
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 	$(GCC) $(COPT) -c $< $(LDINCS) -o $@
 
-partVel: $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/partVel
+partvel: $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/partvel
 
 clean: 
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/partVel
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/partvel

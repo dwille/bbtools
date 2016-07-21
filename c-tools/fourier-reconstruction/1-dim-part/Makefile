@@ -1,6 +1,13 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /opt/hdf5
-CGNS_DIR = /opt/cgns
+ifeq ($(USER),dwille)
+  $(info User is $(USER))
+  HDF5_DIR = /opt/hdf5
+  CGNS_DIR = /opt/cgns
+else ifeq ($(USER),dwillen3@jhu.edu)
+  $(info USER is dwillen3@jhu.edu)
+  HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
+  CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+endif	
 
 ## COMPILERS
 GCC = gcc
@@ -23,31 +30,23 @@ EXTRA = Makefile	\
 
 # compile normally:
 all: COPT += -O2
-all: f-reconstruct
+all: f-rec-1D-part
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
-debug: f-reconstruct
-
-# compile for batch job submission
-batch: COPT += -O2 -DBATCH
-batch: f-reconstruct
+debug: f-rec-1D-part
 
 # compile with profiler
 profiler: COPT += -pg
-profiler: f-reconstruct
-
-# compile with debug and batch job sumission
-batchdebug: COPT += -DDEBUG -DBATCH -g
-batchdebug: f-reconstruct
+profiler: f-rec-1D-part
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 	$(GCC) $(COPT) -c $< $(LDINCS) -o $@
 
-f-reconstruct: $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-reconstruct
+f-rec-1D-part: $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-rec-1D-part
 
 clean: 
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-reconstruct
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-rec-1D-part

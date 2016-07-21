@@ -22,6 +22,26 @@ double *evalTh;
 double *evalR;
 double *gHist;
 
+// Set up directory structure
+void directory_init(int argc, char *argv[])
+{
+  SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+  ANALYSIS_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+  // arg[0] = program name
+  // arg[1] = SIM_ROOT_DIR
+  if (argc == 2) {
+  sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+  sprintf(ANALYSIS_DIR, "%s/analysis/%s/%s", SIM_ROOT_DIR, PAIR_DIR, ANALYSIS);
+  } else if (argc != 2) {
+  printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+  exit(EXIT_FAILURE);
+  }
+  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+  printf(" ANALYSIS_DIR = %s\n\n", ANALYSIS_DIR);
+  fflush(stdout);
+}
+
 // Read main.config input file
 void main_read_input(void)
 {
@@ -30,7 +50,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
+  sprintf(fname, "%s/%s", ANALYSIS_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -193,7 +213,7 @@ void create_output(void)
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  sprintf(buf, "%s/%s", ANALYSIS_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -202,7 +222,7 @@ void create_output(void)
   char path2file[FILE_NAME_SIZE] = "";
 
   /* Create eval/time file */
-  sprintf(path2file, "%s/%s/bininfo", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/bininfo", ANALYSIS_DIR, DATA_DIR);
   FILE *file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -592,7 +612,7 @@ void write_avg_reconstruct(void)
 {
   // Set up the filename
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s/part-pair-bin-%d-%d", ROOT_DIR, DATA_DIR, 
+  sprintf(fname, "%s/%s/part-pair-bin-%d-%d", ANALYSIS_DIR, DATA_DIR, 
     nBinsR, nBinsTh);
 
   FILE *fdat = fopen(fname, "w");
@@ -629,10 +649,7 @@ void free_vars(void)
   free(evalTh);
   free(gHist);
 
-  #ifdef BATCH
-    free(ROOT_DIR);
-    free(SIM_ROOT_DIR);
-  #endif
-
+  free(SIM_ROOT_DIR);
+  free(ANALYSIS_DIR);
 }
 

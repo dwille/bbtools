@@ -1,6 +1,13 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /opt/hdf5
-CGNS_DIR = /opt/cgns
+ifeq ($(USER),dwille)
+  $(info User is $(USER))
+  HDF5_DIR = /opt/hdf5
+  CGNS_DIR = /opt/cgns
+else ifeq ($(USER),dwillen3@jhu.edu)
+  $(info USER is dwillen3@jhu.edu)
+  HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
+  CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
+endif	
 
 ## COMPILERS
 GCC = gcc

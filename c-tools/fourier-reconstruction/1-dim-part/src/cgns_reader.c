@@ -15,7 +15,26 @@ double *wp;
 double *ke;
 part_struct *parts;
 dom_struct dom;
-BC bc;
+
+// Set up directory structure
+void directory_init(int argc, char *argv[])
+{
+  SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+  ANALYSIS_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+  // arg[0] = program name
+  // arg[1] = SIM_ROOT_DIR
+  if (argc == 2) {
+  sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+  sprintf(ANALYSIS_DIR, "%s/analysis/%s/%s", SIM_ROOT_DIR, FREC_DIR, ANALYSIS);
+  } else if (argc != 2) {
+  printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+  exit(EXIT_FAILURE);
+  }
+  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+  printf(" ANALYSIS_DIR = %s\n\n", ANALYSIS_DIR);
+  fflush(stdout);
+}
 
 // Read main.config input file
 void main_read_input(void)
@@ -25,7 +44,7 @@ void main_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/%s", ROOT_DIR, CONFIG_FILE);
+  sprintf(fname, "%s/%s", ANALYSIS_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
@@ -179,7 +198,7 @@ void create_output(void)
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  sprintf(buf, "%s/%s", ANALYSIS_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -188,7 +207,7 @@ void create_output(void)
   char path2file[FILE_NAME_SIZE] = "";
 
   /* Create eval/time file */
-  sprintf(path2file, "%s/%s/info", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/info", ANALYSIS_DIR, DATA_DIR);
   FILE *file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -211,7 +230,7 @@ void create_output(void)
   fclose(file);
 
   /* number density */
-  sprintf(path2file, "%s/%s/number-density", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/number-density", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -220,7 +239,7 @@ void create_output(void)
   fclose(file);
 
   /* volume fraction */
-  sprintf(path2file, "%s/%s/volume-fraction", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/volume-fraction", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -229,7 +248,7 @@ void create_output(void)
   fclose(file);
 
   /* part-u */
-  sprintf(path2file, "%s/%s/part-u", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/part-u", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -238,7 +257,7 @@ void create_output(void)
   fclose(file);
 
   /* part-v */
-  sprintf(path2file, "%s/%s/part-v", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/part-v", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -247,7 +266,7 @@ void create_output(void)
   fclose(file);
 
   /* part-w */
-  sprintf(path2file, "%s/%s/part-w", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/part-w", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -256,7 +275,7 @@ void create_output(void)
   fclose(file);
   
   /* particle kinetic energy */
-  sprintf(path2file, "%s/%s/part-kinetic-energy", ROOT_DIR, DATA_DIR);
+  sprintf(path2file, "%s/%s/part-kinetic-energy", ANALYSIS_DIR, DATA_DIR);
   file = fopen(path2file, "w");
   if (file == NULL) {
     printf("Could not open file %s\n", path2file);
@@ -267,14 +286,14 @@ void create_output(void)
   /* only output coefficients if desired */
   if (coeffsOut == 1) {
     // part-w coefficients even and odd
-    sprintf(path2file, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR);
+    sprintf(path2file, "%s/%s/number-dens-coeffs-even", ANALYSIS_DIR, DATA_DIR);
     file = fopen(path2file, "w");
     if (file == NULL) {
       printf("Could not open file %s\n", path2file);
       exit(EXIT_FAILURE);
     }
     fclose(file);
-    sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR);
+    sprintf(path2file, "%s/%s/number-dens-coeffs-odd", ANALYSIS_DIR, DATA_DIR);
     file = fopen(path2file, "w");
     if (file == NULL) {
       printf("Could not open file %s\n", path2file);
@@ -283,14 +302,14 @@ void create_output(void)
     fclose(file);
 
     // part-w coefficients even and odd
-    sprintf(path2file, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR);
+    sprintf(path2file, "%s/%s/part-w-coeffs-even", ANALYSIS_DIR, DATA_DIR);
     file = fopen(path2file, "w");
     if (file == NULL) {
       printf("Could not open file %s\n", path2file);
       exit(EXIT_FAILURE);
     }
     fclose(file);
-    sprintf(path2file, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR);
+    sprintf(path2file, "%s/%s/part-w-coeffs-odd", ANALYSIS_DIR, DATA_DIR);
     file = fopen(path2file, "w");
     if (file == NULL) {
       printf("Could not open file %s\n", path2file);
@@ -308,7 +327,12 @@ int cgns_read_nparts(void)
   char buf[FILE_NAME_SIZE];
   sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
-  cg_open(buf, CG_MODE_READ, &fn);
+  int ier = cg_open(buf, CG_MODE_READ, &fn);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", buf);
+    cg_error_exit();
+  }
+  fflush(stdout);
 
   // Set base index nuber and zone index number (only one, so is 1)
   int bn = 1;
@@ -317,7 +341,12 @@ int cgns_read_nparts(void)
   // Read zone to find cgsize_t *size, or nparts
   char zonename[FILE_NAME_SIZE] = "";
   cgsize_t nparts = 0;
-  cg_zone_read(fn, bn, zn, zonename, &nparts);
+  ier = cg_zone_read(fn, bn, zn, zonename, &nparts);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", buf);
+    cg_error_exit();
+  }
+  fflush(stdout);
 
   cg_close(fn);
 
@@ -348,7 +377,12 @@ void parts_init(void)
   char buf[FILE_NAME_SIZE];
   sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[0]]);
   int fn;
-  cg_open(buf, CG_MODE_READ, &fn);
+  int ier = cg_open(buf, CG_MODE_READ, &fn);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", buf);
+    cg_error_exit();
+  }
+  fflush(stdout);
   
   // Set base, zone, and solutions index numbers
   int bn = 1;
@@ -364,7 +398,12 @@ void parts_init(void)
     r[p] = 0;
   }
 
-  cg_field_read(fn,bn,zn,sn, "Radius", RealDouble, &range_min, &range_max, r);
+  ier = cg_field_read(fn,bn,zn,sn, "Radius", RealDouble, &range_min, &range_max, r);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", buf);
+    cg_error_exit();
+  }
+  fflush(stdout);
 
   meanR = 0.;
   for (int p = 0; p < nparts; p++) {
@@ -393,7 +432,6 @@ void domain_init(void)
   
   // read buffers
   int ibuf = 0;
-  char cbuf[CHAR_BUF_SIZE] = "";
   double dbuf = 0;
 
   // read domain
@@ -417,92 +455,6 @@ void domain_init(void)
   fret = fscanf(infile, "rho_f %lf\n", &dbuf);
   fret = fscanf(infile, "nu %lf\n", &dbuf);
   fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "SIMULATION PARAMETERS\n");
-  fret = fscanf(infile, "duration %lf\n", &dbuf);
-  fret = fscanf(infile, "CFL %lf\n", &dbuf);
-  fret = fscanf(infile, "pp_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "pp_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_max_iter %d\n", &ibuf);
-  fret = fscanf(infile, "lamb_residual %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_relax %lf\n", &dbuf);
-  fret = fscanf(infile, "lamb_cut %lf\n", &dbuf);
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "BOUNDARY CONDITIONS\n");
-  fret = fscanf(infile, "vel_tDelay %lf\n", &dbuf);
-
-  fret = fscanf(infile, "PRESSURE\n");
-  fret = fscanf(infile, "bc.pW %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pW = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pW = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error -- read %s\n",cbuf);
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pE %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pE = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pE = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pS %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pS = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pS = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pN %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pN = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pN = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pB %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pB = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pB = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
-  fret = fscanf(infile, "\n");
-
-  fret = fscanf(infile, "bc.pT %s", cbuf);
-  if(strcmp(cbuf, "PERIODIC") == 0) {
-    bc.pT = PERIODIC;
-  } else if(strcmp(cbuf, "NEUMANN") == 0) {
-    bc.pT = NEUMANN;
-    fret = fscanf(infile, "%lf", &dbuf);
-  } else {
-    printf("flow.config read error.\n");
-    exit(EXIT_FAILURE);
-  }
 
   /**** dom ****/
   // Calculate domain sizes
@@ -557,7 +509,14 @@ void cgns_fill_parts(void)
   char buf[FILE_NAME_SIZE];
   sprintf(buf, "%s/%s/%s", SIM_ROOT_DIR, OUTPUT_DIR, partFiles[partFileMap[tt]]);
   int fn;
-  cg_open(buf, CG_MODE_READ, &fn);
+  int ier = cg_open(buf, CG_MODE_READ, &fn);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", buf);
+    free_vars();
+    cg_close(fn);
+    cg_error_exit();
+  }
+  fflush(stdout);
   
   // Set base, zone, and solutions index numbers
   int bn = 1;
@@ -625,18 +584,6 @@ void show_domain(void)
      dom.Gcc.s3);
   printf("\n");
 
-  printf("Boundary Condition Structure\n");
-  printf("  PERIODIC = 0\n");
-  printf("  DIRICHLET 1\n");
-  printf("  NEUMANN = 2\n");
-  printf("    bc.pW = %d\n", bc.pW);
-  printf("    bc.pE = %d\n", bc.pE);
-  printf("    bc.pS = %d\n", bc.pS);
-  printf("    bc.pN = %d\n", bc.pN);
-  printf("    bc.pB = %d\n", bc.pB);
-  printf("    bc.pT = %d\n", bc.pT);
-  printf("\n");
-
   printf("Input Parameters\n");
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
@@ -651,8 +598,8 @@ void write_coeffs(int in)
   char fnameOdd[CHAR_BUF_SIZE] = "";
 
   // number density
-  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ROOT_DIR, DATA_DIR);
-  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ROOT_DIR, DATA_DIR);
+  sprintf(fnameEven, "%s/%s/number-dens-coeffs-even", ANALYSIS_DIR, DATA_DIR);
+  sprintf(fnameOdd, "%s/%s/number-dens-coeffs-odd", ANALYSIS_DIR, DATA_DIR);
   FILE *fileEven = fopen(fnameEven, "a");
   FILE *fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -680,8 +627,8 @@ void write_coeffs(int in)
   fclose(fileOdd);
 
   // part-w coeffs
-  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ROOT_DIR, DATA_DIR);
-  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ROOT_DIR, DATA_DIR);
+  sprintf(fnameEven, "%s/%s/part-w-coeffs-even", ANALYSIS_DIR, DATA_DIR);
+  sprintf(fnameOdd, "%s/%s/part-w-coeffs-odd", ANALYSIS_DIR, DATA_DIR);
   fileEven = fopen(fnameEven, "a");
   fileOdd = fopen(fnameOdd, "a");
   if (fileEven == NULL) {
@@ -715,8 +662,8 @@ void write_reconstruct(void)
   char fname[CHAR_BUF_SIZE] = "";
 
   /* number desnity */
-  sprintf(fname, "%s/%s/number-density", ROOT_DIR, DATA_DIR);
-  FILE *file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/number-density", ANALYSIS_DIR, DATA_DIR);
+  FILE *file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -733,8 +680,8 @@ void write_reconstruct(void)
   fclose(file);
 
   /* volume fraction */
-  sprintf(fname, "%s/%s/volume-fraction", ROOT_DIR, DATA_DIR);
-  file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/volume-fraction", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -751,8 +698,8 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-u */
-  sprintf(fname, "%s/%s/part-u", ROOT_DIR, DATA_DIR);
-  file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/part-u", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -769,8 +716,8 @@ void write_reconstruct(void)
   fclose(file);
   
   /* part-v */
-  sprintf(fname, "%s/%s/part-v", ROOT_DIR, DATA_DIR);
-  file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/part-v", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -787,8 +734,8 @@ void write_reconstruct(void)
   fclose(file);
 
   /* part-w */
-  sprintf(fname, "%s/%s/part-w", ROOT_DIR, DATA_DIR);
-  file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/part-w", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -805,8 +752,8 @@ void write_reconstruct(void)
   fclose(file);
 
   /* kinetic energy */
-  sprintf(fname, "%s/%s/part-kinetic-energy", ROOT_DIR, DATA_DIR);
-  file = fopen(fname, "a");
+  sprintf(fname, "%s/%s/part-kinetic-energy", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
   if (file == NULL) {
     printf("Error opening file %s!\n", fname);
     exit(EXIT_FAILURE);
@@ -832,6 +779,8 @@ void free_vars(void)
   free(partFiles);
   free(partFileMap);
   free(partFileTime);
+  free(SIM_ROOT_DIR);
+  free(ANALYSIS_DIR);
 
   free(parts);
   free(up);
