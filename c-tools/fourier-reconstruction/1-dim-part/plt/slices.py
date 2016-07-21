@@ -2,6 +2,8 @@
 from setup import *
 os.system('clear')
 
+from matplotlib.ticker import MultipleLocator
+
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
 print "                Slices Plotting"
@@ -14,6 +16,10 @@ print ""
 #(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
 (root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
 
+imgdir = imgdir + "slices/"
+if not os.path.exists(imgdir):
+  os.makedirs(imgdir)
+
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
 dz = evalZ - evalZ[0]
@@ -22,10 +28,12 @@ dz = evalZ - evalZ[0]
 printSimulationData(partR, root, simdir, datadir)
 
 ##
- # Read Volume Fraction
+ # Read Volume Fraction and w-p
  ##
 vFracFile = datadir + "volume-fraction"
+wpFile = datadir + "part-w"
 vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
+wp = np.genfromtxt(wpFile).T[:,tsInd:]
 
 tt = 250
 zz = np.floor(np.size(evalZ)/2)
@@ -39,40 +47,132 @@ gs = matplotlib.gridspec.GridSpec(2,3)
 
 # fixed time slice
 ax1 = vFracFig.add_subplot(gs[0,0])
-ax1.plot(vFrac[:,tt], evalZ, 'b', linewidth=2)
+ax1.plot(vFrac[:,tt], evalZ, 'k-', linewidth=2)
 
-ax1.set_ylim([np.min(evalZ), np.max(evalZ)])
-ax1.set_xticks([0.3, 0.35, 0.40])
 ax1.set_xlabel(r'$\phi$', fontsize=14)
-ax1.set_ylabel(r'$z\ [mm]$', fontsize=14)
+ax1.xaxis.set_major_locator(MultipleLocator(0.05))
+ax1.xaxis.set_minor_locator(MultipleLocator(0.025))
+ax1.set_xlim([0.3, 0.4])
+
+ax1.set_ylabel(r'$z\ [\mathrm{mm}]$', fontsize=14)
+ax1.yaxis.set_major_locator(MultipleLocator(20))
+ax1.yaxis.set_minor_locator(MultipleLocator(10))
+ax1.set_ylim([np.min(evalZ), np.max(evalZ)])
+
+ax1.annotate(r"$(a)$",xy=get_axis_limits(ax1))
 
 # fixed location slice
 ax2 = vFracFig.add_subplot(gs[1,1:3])
 plt.plot(time, vFrac[zz,:], 'k', linewidth=2)
 
 xEnd = time[-1]
-plt.xlim([0, xEnd])
-ax2.set_xlabel(r"$t\ [s]$", fontsize=14)
+
+ax2.set_xlabel(r"$t\ [\mathrm{s}]$", fontsize=14)
+ax2.xaxis.set_major_locator(MultipleLocator(1))
+ax2.xaxis.set_minor_locator(MultipleLocator(0.5))
+ax2.set_xlim([0, xEnd])
+
 ax2.set_ylabel(r"$\phi$", fontsize=14)
-plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
-ax2.set_yticks([0.3, 0.35, 0.40])
+ax2.yaxis.set_major_locator(MultipleLocator(0.05))
+ax2.yaxis.set_minor_locator(MultipleLocator(0.025))
+ax2.set_ylim([0.3, 0.4])
+
+ax2.annotate(r"$(c)$",xy=get_axis_limits(ax2))
 
 # contour plot
 ax3 = vFracFig.add_subplot(gs[0,1:3])
 
 im = ax3.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
       extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-      vmin=0.3, vmax=0.4)
+      vmin=0.3, vmax=0.4, cmap='seismic')
 
-ax3.plot([time[tt], time[tt]], [evalZ[0], evalZ[-1]], 'b-', linewidth=2)
+ax3.plot([time[tt], time[tt]], [evalZ[0], evalZ[-1]], 'k-', linewidth=2)
 ax3.plot([time[0], time[-1]], [evalZ[zz], evalZ[zz]], 'k-', linewidth=2)
+ax3.plot([time[0], time[-1]], [evalZ[zz+50], evalZ[zz+50]], 'k--', linewidth=2)
 
+ax3.xaxis.set_major_locator(MultipleLocator(1))
+ax3.xaxis.set_minor_locator(MultipleLocator(0.5))
 ax3.set_xlim([0, xEnd])
+
+ax3.yaxis.set_major_locator(MultipleLocator(20))
+ax3.yaxis.set_minor_locator(MultipleLocator(10))
 ax3.set_ylim([np.min(evalZ), np.max(evalZ)])
+
 ax3.xaxis.set_ticklabels([])
 ax3.yaxis.set_ticklabels([])
 
+box_props = dict(boxstyle="circle,pad=0.3", fc="w", ec="w", lw=0)
+ax3.annotate(r"$\ (b)$",xy=get_axis_limits(ax3), bbox=box_props)
+
 imgname = imgdir + "volume-fraction-slices"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+##
+ # Plot one velocity slice
+ ##
+wpFig = plt.figure(figsize=(6,4))
+gs = matplotlib.gridspec.GridSpec(2,3)
+
+# fixed time slice
+ax1 = wpFig.add_subplot(gs[0,0])
+ax1.plot(wp[:,tt], evalZ, 'k-', linewidth=2)
+
+ax1.set_xlabel(r'$w_p$', fontsize=14)
+ax1.xaxis.set_major_locator(MultipleLocator(0.025))
+ax1.xaxis.set_minor_locator(MultipleLocator(0.0125))
+ax1.set_xlim([-0.025, 0.025])
+
+ax1.set_ylabel(r'$z\ [\mathrm{mm}]$', fontsize=14)
+ax1.yaxis.set_major_locator(MultipleLocator(20))
+ax1.yaxis.set_minor_locator(MultipleLocator(10))
+ax1.set_ylim([np.min(evalZ), np.max(evalZ)])
+
+ax1.annotate(r"$(a)$",xy=get_axis_limits(ax1))
+
+# fixed location slice
+ax2 = wpFig.add_subplot(gs[1,1:3])
+plt.plot(time, wp[zz,:], 'k', linewidth=2)
+
+xEnd = time[-1]
+
+ax2.set_xlabel(r"$t\ [\mathrm{s}]$", fontsize=14)
+ax2.xaxis.set_major_locator(MultipleLocator(1))
+ax2.xaxis.set_minor_locator(MultipleLocator(0.5))
+plt.xlim([0, xEnd])
+
+ax2.set_ylabel(r"$w_p$", fontsize=14)
+ax2.yaxis.set_major_locator(MultipleLocator(0.025))
+ax2.yaxis.set_minor_locator(MultipleLocator(0.0125))
+ax2.set_ylim([-0.025, 0.025])
+
+ax2.annotate(r"$(c)$",xy=get_axis_limits(ax2))
+
+# contour plot
+ax3 = wpFig.add_subplot(gs[0,1:3])
+
+im = ax3.imshow(wp, origin="lower", aspect="auto", interpolation="none",
+      extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+      vmin=-0.025, vmax=0.025, cmap='seismic')
+
+ax3.plot([time[tt], time[tt]], [evalZ[0], evalZ[-1]], 'k-', linewidth=2)
+ax3.plot([time[0], time[-1]], [evalZ[zz], evalZ[zz]], 'k-', linewidth=2)
+
+ax3.set_xlim([0, xEnd])
+ax3.xaxis.set_major_locator(MultipleLocator(1))
+ax3.xaxis.set_minor_locator(MultipleLocator(0.5))
+
+ax3.yaxis.set_major_locator(MultipleLocator(20))
+ax3.yaxis.set_minor_locator(MultipleLocator(10))
+ax3.set_ylim([np.min(evalZ), np.max(evalZ)])
+
+ax3.xaxis.set_ticklabels([])
+ax3.yaxis.set_ticklabels([])
+
+box_props = dict(boxstyle="circle,pad=0.3", fc="w", ec="w", lw=0)
+ax3.annotate(r"$\ (b)$",xy=get_axis_limits(ax3), bbox=box_props)
+
+imgname = imgdir + "vertical-velocity-slices"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
@@ -89,7 +189,8 @@ bx1.plot(time, vfAutoCorrSlice, 'k-', linewidth=2)
 
 bx1.set_xlim([0, xEnd])
 bx1.set_ylim([-.5, 1])
-bx1.set_ylabel(r'$\langle \phi(t) \phi(t + \Delta t) \rangle$', fontsize=14)
+bx1.set_ylabel(r'$\langle \phi(%d,t) \phi(%d,t + \Delta t) \rangle$' % (evalZ[zz],evalZ[zz]),
+  fontsize=14)
 bx1.xaxis.set_ticklabels([])
 bx1.set_yticks([-0.5, 0 , 0.5, 1])
 
@@ -102,14 +203,15 @@ for zi,_ in enumerate(evalZ):
   vfAutoCorr[zi,:] = AutoCorrelationFFT(vFrac[zi,:])
 
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]])
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]], 
+  vmin=-1., vmax=1., cmap='seismic')
 
 bx2.plot([time[0], time[-1]], [evalZ[zz], evalZ[zz]], 'k-', linewidth=2)
 
 bx2.set_xlim([0, xEnd])
 bx2.set_ylim([evalZ[0], evalZ[-1]])
-bx2.set_xlabel(r"$\Delta t \ [s]$", fontsize=14)
-bx2.set_ylabel(r'$z\ [mm]$', fontsize=14)
+bx2.set_xlabel(r"$\Delta t \ [\mathrm{s}]$", fontsize=14)
+bx2.set_ylabel(r'$z\ [\mathrm{mm}]$', fontsize=14)
 
 imgname = imgdir + "autocorrelate-time-slices"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -118,19 +220,19 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 ##
  # AutoCorrelate -- space slices
  ##
-autoFig = plt.figure(figsize=(6,4))
+autoFig = plt.figure(figsize=(8,4))
 gs = matplotlib.gridspec.GridSpec(1,3)
 
 # Autocorrelate of one slice at constant time
 cx3 = autoFig.add_subplot(gs[0,0])
-vfAutoCorrSpaceSlice = AutoCorrelationFFT(vFrac[:,tt])
+vfAutoCorrSpaceSlice,_,_ = AutoCorrelationSpaceFFT(vFrac[:,tt])
 
 cx3.plot(vfAutoCorrSpaceSlice, dz, 'b-', linewidth=2)
 
 cx3.set_xlim([-.5, 1])
 cx3.set_ylim([dz[0], dz[-1]])
 cx3.set_xlabel(r'$\langle \phi(z) \phi(z + \Delta z) \rangle$', fontsize=14)
-cx3.set_ylabel(r'$\Delta z\ [mm]$', fontsize=14)
+cx3.set_ylabel(r'$\Delta z\ [\mathrm{mm}]$', fontsize=14)
 cx3.set_xticks([-0.5, 0 , 0.5, 1])
 
 # autocorr space, all time
@@ -139,16 +241,17 @@ vfAutoCorr = np.zeros((nz, nt))
 for ti,tval in enumerate(time):
 
   # length of result is ceil(length(time)/2)
-  vfAutoCorr[:,ti] = AutoCorrelationFFT(vFrac[:,ti])
+  vfAutoCorr[:,ti],_,_ = AutoCorrelationSpaceFFT(vFrac[:,ti])
 
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], dz[0], dz[-1]])
+  extent=[time[0], time[-1], dz[0], dz[-1]], 
+  vmin=-1., vmax=1., cmap='seismic')
 
 cx4.plot([time[tt], time[tt]], [dz[0], dz[-1]], 'b-', linewidth=2)
 
 cx4.set_xlim([0, xEnd])
 cx4.set_ylim([dz[0], dz[-1]])
-cx4.set_xlabel(r"$t\ [s]$", fontsize=14)
+cx4.set_xlabel(r"$t\ [\mathrm{s}]$", fontsize=14)
 cx4.yaxis.set_ticklabels([])
 
 imgname = imgdir + "autocorrelate-space-slices"
@@ -158,7 +261,7 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 ##
  # cross-correlate
  ##
-zz = np.floor(np.size(evalZ)/4) - 20
+zz = np.floor(np.size(evalZ)/4) + 10
 zz2 = zz + 150
 crossCorrFig = plt.figure(figsize=(6,4.))
 crossCorrFig.subplots_adjust(bottom=-0.75)
@@ -169,15 +272,15 @@ dx1 = crossCorrFig.add_subplot(gs[0,:])
 
 dx1.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
       extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-      vmin=0.3, vmax=0.4)
+      vmin=0.3, vmax=0.4, cmap='seismic')
 
 dx1.plot([time[0], time[-1]], [evalZ[zz], evalZ[zz]], 'k-', linewidth=2)
 dx1.plot([time[0], time[-1]], [evalZ[zz2], evalZ[zz2]], 'k--', linewidth=2)
 
 dx1.set_xlim([0, xEnd])
 dx1.set_ylim([np.min(evalZ), np.max(evalZ)])
-dx1.set_xlabel(r'$t\ [s]$', fontsize=16)
-dx1.set_ylabel(r'$z\ [mm]$',rotation=0, fontsize=16)
+dx1.set_xlabel(r'$t\ [\mathrm{s}]$', fontsize=16)
+dx1.set_ylabel(r'$z\ [\mathrm{mm}]$',rotation=0, fontsize=16)
 dx1.yaxis.set_label_coords(labelx, 0.5)
 dx1.xaxis.set_ticklabels([])
 
@@ -188,10 +291,10 @@ vfCrossCorrSlice = CrossCorrelationFFT(vFrac[zz,:], vFrac[zz2,:])
 dx2.plot(time, vfCrossCorrSlice, 'k-', linewidth=2)
 
 dx2.set_xlim([0, xEnd])
-dx2.set_ylim([-0.20, 0.4])
-dx2.set_ylabel(r'$\langle \phi(x, t) \phi(x + \Delta x, t + \Delta t)\rangle$', fontsize=16)
+#dx2.set_ylim([-0.20, 0.4])
+dx2.set_ylabel(r'$\langle \phi(z, t) \phi(z + \Delta z, t + \Delta t)\rangle$', fontsize=16)
 dx2.yaxis.set_label_coords(labelx, 0.5)
-dx2.set_yticks([-0.20, 0.0, 0.2, 0.4])
+#dx2.set_yticks([-0.20, 0.0, 0.2, 0.4])
 dx2.xaxis.set_ticklabels([])
 
 # xcorr of all slices
@@ -209,13 +312,14 @@ for zi, zval in enumerate(evalZ):
 vfCrossCorr /= vfCrossCorr[0,0]
 
 plt.imshow(vfCrossCorr, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], dz[0], dz[-1]])
+  extent=[time[0], time[-1], dz[0], dz[-1]], 
+  vmin=-1., vmax=1., cmap='seismic')
 
 dx3.plot([time[0], time[-1]], [dz[zz2] - dz[zz],dz[zz2] - dz[zz]], 'k-', 
   linewidth=2)
 
-dx3.set_xlabel(r'$\Delta t\  [s]$', fontsize=16)
-dx3.set_ylabel(r'$\Delta z\ [mm]$',rotation=0, fontsize=16)
+dx3.set_xlabel(r'$\Delta t\ [\mathrm{s}]$', fontsize=16)
+dx3.set_ylabel(r'$\Delta z\ [\mathrm{mm}]$',rotation=0, fontsize=16)
 dx3.yaxis.set_label_coords(labelx, 0.5)
 
 dx3.set_xlim([0, xEnd])

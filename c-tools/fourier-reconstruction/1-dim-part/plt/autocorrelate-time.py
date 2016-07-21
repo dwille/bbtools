@@ -29,14 +29,17 @@ vfFig = plt.figure()
 vfAutoCorr = np.zeros((nz, nt))
 vfMaxima = np.zeros((nz,3))
 vfFirstMaxima = np.zeros((nz,3))
+vfSecondMaxima = np.zeros((nz,3))
+vfThirdMaxima = np.zeros((nz,3))
 for zz, zval in enumerate(evalZ):
-
   # length of result is ceil(length(time)/2)
   vfAutoCorr[zz,:] = AutoCorrelationFFT(vFrac[zz,:])
 
-  # find maxima
+  # find maxima locations by using where second derivative changes
   maximaLoc = (np.diff(np.sign(np.diff(vfAutoCorr[zz,:]))) < 0).nonzero()[0] + 1
+  # maximum values
   maxima = vfAutoCorr[zz,maximaLoc]
+  # maxium indices
   maxInd = np.argmax(maxima)
   if np.size(maximaLoc) == 0:
     vfMaxima[zz,0] = np.nan
@@ -60,14 +63,15 @@ print "      Freq = 1/dt = %.4f" % (1./tauVal)
 
 plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-0.6, vmax=1.0)
+  vmin=-1, vmax=1.0, cmap='seismic')
 plt.colorbar()
-#plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
-plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
 
-plt.plot([tauVal, tauVal], [evalZ[0], evalZ[-1]], 'k:')
-txtString = r"$\bar{ \Delta t} = %.4f$" % tauVal
-plt.text(1, 0, txtString, fontsize=12)
+#plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
+#plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')
+#
+#plt.plot([tauVal, tauVal], [evalZ[0], evalZ[-1]], 'k:')
+#txtString = r"$\bar{ \Delta t} = %.4f$" % tauVal
+#plt.text(1, 0, txtString, fontsize=12)
 
 plt.xlabel(r"$\Delta t\ [s]$")
 plt.ylabel(r"$z\ [mm]$",rotation=0)

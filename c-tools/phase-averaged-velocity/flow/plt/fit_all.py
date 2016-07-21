@@ -6,8 +6,21 @@ import matplotlib.pyplot as plt
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 import numpy.polynomial.polynomial as poly
 import numpy as np
+import matplotlib.lines as mlines
 import os,sys
 os.system('clear')
+
+# get axis limits (so 24125058)
+def get_axis_limits(ax, scale=0.85):
+  xmin = ax.get_xlim()[0]
+  xmax = ax.get_xlim()[1]
+  ymin = ax.get_ylim()[0]
+  ymax = ax.get_ylim()[1]
+
+  dx = xmax - xmin
+  dy = ymax - ymin
+
+  return xmin + scale*dx, ymin + scale*dy
 
 print ""
 print " ---- Phase-Averaged Fluid Velocity Plotting Utility"
@@ -106,16 +119,19 @@ ax2.errorbar(Ret, k_curr, fmt='k.', markersize=5,
 ax2.errorbar(Re_yk, k_yk, fmt='ko', markersize=5, markerfacecolor='none',
   yerr=kerr_yk)
 
-ax2.set_xlim([0,130])
-ax2.set_xticks([0,25,50,75,100,125])
-ax2.set_xticklabels(["0","","50","","100",""])
 ax2.set_xlabel(r"$Re_t$")
-ax2.set_ylim([0.75, 1.0])
-ax2.set_yticks([0.75, 0.8, 0.85, 0.9, 0.95, 1.00])
-ax2.set_yticklabels(["0.75", "", "0.85", "", "0.95", ""])
-ax2.set_ylabel(r"$\kappa$")
+ax2.xaxis.set_major_locator(MultipleLocator(50))
+ax2.xaxis.set_minor_locator(MultipleLocator(25))
+ax2.set_xlim([0,130])
 
-ax2.grid(True)
+ax2.set_ylabel(r"$\kappa$", rotation=0)
+ax2.yaxis.set_major_locator(MultipleLocator(.05))
+ax2.yaxis.set_minor_locator(MultipleLocator(.025))
+ax2.set_ylim([0.75, 1])
+ax2.yaxis.set_label_coords(-.3, 0.5)
+
+#ax2.grid(True)
+ax2.annotate(r"$(a)$",xy=get_axis_limits(ax2))
 
 imgname = imgdir + "k-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -135,14 +151,19 @@ ax1.errorbar(Ret, n_curr, fmt='k.', markersize=5, yerr=nerrs)
 ax1.errorbar(Re_yk, n_yk, fmt='ko', markersize=5, markerfacecolor='none',
   yerr=nerr_yk)
 
-ax1.set_xlim([0,130])
-ax1.set_xticks([0,25,50,75,100,125])
-ax1.set_xticklabels(["0","","50","","100",""])
 ax1.set_xlabel(r"$Re_t$")
-ax1.set_ylim([2.5,5])
-ax1.set_ylabel(r"$n$")
+ax1.xaxis.set_major_locator(MultipleLocator(50))
+ax1.xaxis.set_minor_locator(MultipleLocator(25))
+ax1.set_xlim([0,130])
 
-ax1.grid(True)
+ax1.set_ylabel(r"$n$", rotation=0)
+ax1.yaxis.set_major_locator(MultipleLocator(0.5))
+ax1.yaxis.set_minor_locator(MultipleLocator(0.25))
+ax1.set_ylim([2.5,5])
+ax1.yaxis.set_label_coords(-.25, 0.5)
+
+#ax1.grid(True)
+ax1.annotate(r"$(b)$", color="black", xy=get_axis_limits(ax1))
 
 imgname = imgdir + "n-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -154,19 +175,35 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 phiEval = np.linspace(0.05,0.375,100)
 
 ## Plot as a function of phi ##
-fig1 = plt.figure(figsize=(4,4))
+fig1 = plt.figure(figsize=(5,2.5))
 
-# linear coodinates
+# linear coodinates (colors from seaborn)
+# dark
+bl= "#4C72B0"
+gr= "#55A868"
+re= "#C44E52"
+pu= "#8172B2"
+go= "#CCB974"
+cy= "#64B5CD"
+
+## muted
+#bl= "#4878CF"
+#gr= "#6ACC65"
+#re= "#D65F5F"
+#pu= "#B47CC7"
+#go= "#C4AD66"
+#cy= "#77BEDB"
+
 ax1 = fig1.add_subplot(111)
-ax1.plot(phi, wfwt_rho20, 'b*', markersize=7, alpha=0.7)
-ax1.plot(phi, wfwt_rho33, 'gs', markersize=7, alpha=0.7)
-ax1.plot(phi, wfwt_rho40, 'ro', markersize=7, alpha=0.7)
-ax1.plot(phi, wfwt_rho50, 'c^', markersize=7, alpha=0.7)
+ax1.plot(phi, wfwt_rho20, '*', color=bl, markersize=7)#, alpha=0.7)
+ax1.plot(phi, wfwt_rho33, 's', color=gr, markersize=7)#, alpha=0.7)
+ax1.plot(phi, wfwt_rho40, 'o', color=re, markersize=7)#, alpha=0.7)
+ax1.plot(phi, wfwt_rho50, '^', color=cy, markersize=7)#, alpha=0.7)
 
-ax1.plot(phiEval, k20*(1-phiEval)**(n20-1), 'b--', zorder=1)
-ax1.plot(phiEval, k33*(1-phiEval)**(n33-1), 'g--', zorder=1)
-ax1.plot(phiEval, k40*(1-phiEval)**(n40-1), 'r--', zorder=1)
-ax1.plot(phiEval, k50*(1-phiEval)**(n50-1), 'c--', zorder=1)
+ax1.plot(phiEval, k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1)
+ax1.plot(phiEval, k33*(1-phiEval)**(n33-1),'-.', color=gr,  zorder=1)
+ax1.plot(phiEval, k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1)
+ax1.plot(phiEval, k50*(1-phiEval)**(n50-1),'--', color=cy,  zorder=1)
 
 ax1.set_xlim([0, 0.4])
 #ax1.set_xticks([0, 0.1, 0.20, 0.30, 0.4])
@@ -180,22 +217,30 @@ ax1.set_ylabel(r'$w_f / w_t$', fontsize=14)
 
 lText = [r'$\rho^* = 2.0$', r'$\rho^* = 3.3$', 
          r'$\rho^* = 4.0$', r'$\rho^* = 5.0$']
-ax1.legend(lText, bbox_to_anchor=(0,1.05,1,1),loc="lower left",mode="expand",
-   ncol=2, borderaxespad=0)
+
+h1 = mlines.Line2D([],[], linestyle=':', color=bl, marker='*', label=lText[0])
+h2 = mlines.Line2D([],[], linestyle='-.', color=gr, marker='s', label=lText[1])
+h3 = mlines.Line2D([],[], linestyle='-', color=re, marker='o', label=lText[2])
+h4 = mlines.Line2D([],[], linestyle='--', color=cy, marker='^', label=lText[3])
+ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
+  mode="expand", ncol=2, borderaxespad=0)
 
 ax1.grid(True)
 
 # Subplot -- bottom left
 a = plt.axes([0.25, 0.2, 0.25, 0.25])
-plt.plot(phi,wfwt_rho20, 'b*', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho33, 'gs', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho40, 'ro', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho50, 'c^', markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho20, '*', color=bl, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho33, 's', color=gr, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho40, 'o', color=re, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho50, '^', color=cy, markersize=7, alpha=0.7)
 
-plt.plot(phiEval,k20*(1-phiEval)**(n20-1), 'b--', zorder=1)
-plt.plot(phiEval,k33*(1-phiEval)**(n33-1), 'g--', zorder=1)
-plt.plot(phiEval,k40*(1-phiEval)**(n40-1), 'r--', zorder=1)
-plt.plot(phiEval,k50*(1-phiEval)**(n50-1), 'c--', zorder=1)
+plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1)
+plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.', color=gr, zorder=1)
+plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1)
+plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--', color=cy, zorder=1)
+
+ax1.arrow(0.09, 0.69, 0.033, -0.185, head_width=0.01, head_length=0.03, 
+  fc='k', ec='k')
 
 plt.xlim([0.07, 0.11])
 plt.ylim([0.69, 0.73])
@@ -204,15 +249,18 @@ plt.yticks([0.7, 0.72])
 
 # Subplot -- top right
 a = plt.axes([0.625, 0.625, 0.25, 0.25])
-plt.plot(phi,wfwt_rho20, 'b*', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho33, 'gs', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho40, 'ro', markersize=7, alpha=0.7)
-plt.plot(phi,wfwt_rho50, 'c^', markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho20, '*', color=bl, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho33, 's', color=gr, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho40, 'o', color=re, markersize=7, alpha=0.7)
+plt.plot(phi,wfwt_rho50, '^', color=cy, markersize=7, alpha=0.7)
 
-plt.plot(phiEval,k20*(1-phiEval)**(n20-1), 'b--', zorder=1)
-plt.plot(phiEval,k33*(1-phiEval)**(n33-1), 'g--', zorder=1)
-plt.plot(phiEval,k40*(1-phiEval)**(n40-1), 'r--', zorder=1)
-plt.plot(phiEval,k50*(1-phiEval)**(n50-1), 'c--', zorder=1)
+plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':',color=bl, zorder=1)
+plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.',color=gr, zorder=1)
+plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-',color=re, zorder=1)
+plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--',color=cy, zorder=1)
+
+ax1.arrow(0.1825, 0.5825, 0.0425, 0.0125, head_width=0.01, head_length=0.02,
+  fc='k', ec='k')
 
 plt.xlim([0.155, 0.195])
 plt.ylim([0.55, 0.59])
@@ -242,6 +290,6 @@ plt.yticks([0.56, 0.58])
 #nAx.set_yticks(np.arange(0.3,.801, 0.1))
 #nAx.set_yticklabels(["0.3","","0.5","","","0.8"])
 
-imgname = imgdir + "phaseAverageWf-phi"
+imgname = imgdir + "rz-comparison"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

@@ -27,34 +27,36 @@ vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
 
 # Autocorrelation of volume fraction
 vfFig = plt.figure()
-vfAutoCorr = np.zeros((nz, nt))
-vfMaxima = np.zeros((nt,3))
-vfFirstMaxima = np.zeros((nt,3))
+vfAutoCorrReal = np.zeros((nz, nt))
+vfAutoCorrImag = np.zeros((nz, nt))
+#vfMaxima = np.zeros((nt,3))
+#vfFirstMaxima = np.zeros((nt,3))
 for tt,tval in enumerate(time):
 
   # length of result is ceil(length(time)/2)
-  vfAutoCorr[:,tt] = AutoCorrelationFFT(vFrac[:,tt])
+  (vfAutoCorrReal[:,tt], vfAutoCorrImag[:,tt], _) \
+    = AutoCorrelationSpaceFFT(vFrac[:,tt])
 
-  # find maxima
-  maximaLoc = (np.diff(np.sign(np.diff(vfAutoCorr[:,tt]))) < 0).nonzero()[0] + 1
-  maxima = vfAutoCorr[maximaLoc,tt]
-  maxInd = np.argmax(maxima)
-  if np.size(maximaLoc) == 0:
-    vfMaxima[tt,0] = time[tt]
-    vfMaxima[tt,1] = np.nan
-    vfMaxima[tt,2] = np.nan
-  else:
-    vfMaxima[tt,0] = time[tt]
-    vfMaxima[tt,1] = dz[maximaLoc[maxInd]]
-    vfMaxima[tt,2] = vfAutoCorr[maximaLoc[maxInd],tt]
+#  # find maxima
+#  maximaLoc = (np.diff(np.sign(np.diff(vfAutoCorrReal[:,tt]))) < 0).nonzero()[0] + 1
+#  maxima = vfAutoCorrReal[maximaLoc,tt]
+#  maxInd = np.argmax(maxima)
+#  if np.size(maximaLoc) == 0:
+#    vfMaxima[tt,0] = time[tt]
+#    vfMaxima[tt,1] = np.nan
+#    vfMaxima[tt,2] = np.nan
+#  else:
+#    vfMaxima[tt,0] = time[tt]
+#    vfMaxima[tt,1] = dz[maximaLoc[maxInd]]
+#    vfMaxima[tt,2] = vfAutoCorrReal[maximaLoc[maxInd],tt]
+#
+#    vfFirstMaxima[tt,0] = time[tt]
+#    vfFirstMaxima[tt,1] = dz[maximaLoc[0]]
+#    vfFirstMaxima[tt,2] = vfAutoCorrReal[maximaLoc[0],tt]
 
-    vfFirstMaxima[tt,0] = time[tt]
-    vfFirstMaxima[tt,1] = dz[maximaLoc[0]]
-    vfFirstMaxima[tt,2] = vfAutoCorr[maximaLoc[0],tt]
-
-plt.imshow(vfAutoCorr, origin="lower", aspect="auto", interpolation="none",
+plt.imshow(vfAutoCorrReal, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], dz[0], dz[-1]],
-  vmin=-1., vmax=1.)
+  vmin=-1., vmax=1., cmap='seismic')
 plt.colorbar()
 #plt.plot(vfMaxima[:,0], vfMaxima[:,1], '--', color='0.75')
 #plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'k--')

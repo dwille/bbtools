@@ -16,7 +16,6 @@ vFracMean = nparts*(4./3.)*np.pi*(partR**3.)/(42.*42.*126.)
 print "      Mean Volume Fraction = %.4f" % vFracMean
 
 # Setup directory structures
-#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
 (root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
 
 # Get time and z data
@@ -106,9 +105,11 @@ H2 = H2.astype(float)*inorm
 # Plot
 histFig = plt.figure(figsize=(5,4))
 
+# volume fraction pdf
 ax1 = histFig.add_subplot(223)
 ax1.plot(vfCenters, Hvf, 'o--')
 ax1.plot([vFracMean, vFracMean], [0, np.max(Hvf)], 'k--')
+ax1.text(vFracMean, 0.05, r"$\phi_{sdev}$ = %.4f" % vfSDEV)
 
 ax1.set_xlabel(r'$\phi$')
 ax1.set_ylabel(r'$P(\phi)$')
@@ -117,9 +118,11 @@ ax1.xaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
 ax1.set_yticks(np.linspace(0, np.max(Hvf), 4))
 ax1.yaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
 
+# wp pdf
 ax2 = histFig.add_subplot(222)
 ax2.plot(Hwp, wpCenters, 'o--')
 ax2.plot([0, np.max(Hwp)], [recMeanWP, recMeanWP], 'k--')
+ax2.text(0.0, recMeanWP, r"$w_{p,sdev}$ = %.4f" % wpSDEV)
 
 ax2.set_xlabel(r'$P(w_p^\prime)$')#/\langle w_f \rangle)$')
 ax2.set_ylabel(r'$w_p^\prime$')#/\langle w_f \rangle$')
@@ -131,13 +134,17 @@ ax2.xaxis.set_major_formatter(tick.FormatStrFormatter('%.2f'))
 ax2.yaxis.tick_right()
 ax2.yaxis.set_label_position("right")
 
+# histogram
 ax3 = histFig.add_subplot(221, sharex=ax1, sharey=ax2)
 im = ax3.imshow(H2, origin="lower", aspect="auto", interpolation="none",
-  extent=[vfMin, vfMax, wpMin, wpMax])
+  extent=[vfMin, vfMax, wpMin, wpMax], 
+  vmin=-np.max(H2), vmax=np.max(H2), cmap = "seismic")
 ax3.plot([vFracMean, vFracMean], [wpMin, wpMax], 'k--')
 ax3.plot([vfMin, vfMax], [recMeanWP, recMeanWP], 'k--')
 ax3.plot(vfCenters, wpCenters[np.argmax(H2, 0)], 'k-', alpha=0.6)
 ax3.plot(phiEval, wpEval, 'w--')
+
+ax3.text(vfMin, recMeanWP, "m = %.3f" % m)
 
 plt.setp( ax3.get_xticklabels(), visible=False)
 plt.setp( ax3.get_yticklabels(), visible=False)

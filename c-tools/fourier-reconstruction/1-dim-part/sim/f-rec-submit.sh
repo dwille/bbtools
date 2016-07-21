@@ -1,14 +1,13 @@
 #!/bin/sh
-# phasevel-submit.sh
+# Submit multiple f-reconstructions at once
 #
-#SBATCH --partition=shared
-#SBATCH --time=2:0:0
+#SBATCH --partition=devel
+#SBATCH --time=1:0:0
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --job-name=f-rec-05-rho3.3
-#SBATCH --output=f-rec.out
-#SBATCH --open-mode=append
+#SBATCH --job-name=all
+#SBATCH --output=allout
 
 
-srun ./f-reconstruct
+srun ./f-reconstruct $1

@@ -87,6 +87,7 @@ def AutoCorrelationSpaceFFT(arrayIn):
   arrayOut = np.fft.ifft(arrayFFT1*arrayFFT2)
 
   arrayOutReal = np.real(arrayOut)
+  arrayOutReal /= arrayOutReal[0]
   arrayOutImag = np.imag(arrayOut)
 
   #powerSpec = np.absolute(np.fft.fft(arrayIn))**2
@@ -125,4 +126,17 @@ def CrossCorrelation(x1,x2):
   result = result[len(result)/2:]
   return result
 
+
+# get axis limits (so 24125058)
+# ax2.annotate(r"$(a)$",xy=get_axis_limits(ax2))
+def get_axis_limits(ax, scale=0.85):
+  xmin = ax.get_xlim()[0]
+  xmax = ax.get_xlim()[1]
+  ymin = ax.get_ylim()[0]
+  ymax = ax.get_ylim()[1]
+
+  dx = xmax - xmin
+  dy = ymax - ymin
+
+  return xmin + scale*dx, ymin + scale*dy
 
