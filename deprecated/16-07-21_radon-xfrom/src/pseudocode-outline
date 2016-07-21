@@ -1,0 +1,6 @@
+RADON XFORM
+- read in time, evalZ from simdir/f-rec-1D/data/volume-fraction
+- get lengths of these arrays, init volume-fraction
+- read in simdir/f-rec-1D/data/volume-fraction (as csv?)
+- start radon xfrom
+- output radon xform to file

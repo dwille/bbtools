@@ -1,7 +1,6 @@
 ## DEPENDENCIES ##
-HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/hdf5
-CGNS_DIR = /home-1/dwillen3@jhu.edu/.deps/cgns
-FFTW_DIR = /home-1/dwillen3@jhu.edu/.deps/fftw-3.3.4
+HDF5_DIR = /opt/hdf5
+CGNS_DIR = /opt/cgns
 
 ## COMPILERS
 GCC = gcc
@@ -10,43 +9,45 @@ SIM_DIR = sim
 SRC_DIR = src
 
 COPT = -std=c99 -pedantic -Wall -Wextra
-LDINCS = -I $(FFTW_DIR)/include -I $(CGNS_DIR)/include 
-LDLIBS = -L $(FFTW_DIR)/lib -lfftw3 -lm -L $(HDF5_DIR)/lib -L $(CGNS_DIR)/lib -lcgns -lhdf5
+LDINCS = -I $(CGNS_DIR)/include
+LDLIBS = -lm -L $(HDF5_DIR)/lib -L $(CGNS_DIR)/lib -lcgns -lhdf5
 
 SRCC =	main.c 		\
+	reconstruct.c	\
 	cgns_reader.c
 
 EXTRA = Makefile	\
 	main.h		\
+	reconstruct.h	\
 	cgns_reader.h
 
 # compile normally:
 all: COPT += -O2
-all: f-rec-part-3D-phase
+all: f-rec-part-3D
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
-debug: f-rec-part-3D-phase
+debug: f-rec-part-3D
 
 # compile for batch job submission
 batch: COPT += -O2 -DBATCH
-batch: f-rec-part-3D-phase
+batch: f-rec-part-3D
 
 # compile with profiler
 profiler: COPT += -pg
-profiler: f-rec-part-3D-phase
+profiler: f-rec-part-3D
 
 # compile with debug and batch job sumission
 batchdebug: COPT += -DDEBUG -DBATCH -g
-batchdebug: f-rec-part-3D-phase
+batchdebug: f-rec-part-3D
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 
 $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 	$(GCC) $(COPT) -c $< $(LDINCS) -o $@
 
-f-rec-part-3D-phase: $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-rec-part-3D-phase
+f-rec-part-3D: $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -o $(SIM_DIR)/f-rec-part-3D
 
 clean: 
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-rec-part-3D-phase
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/f-rec-part-3D

@@ -3,15 +3,18 @@
 
 #include <float.h>
 #include <math.h>
+#include <complex.h>
+#undef I
+#define J _Complex_I
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <fftw3.h>
 
 #include "cgns_reader.h"
+#include "reconstruct.h"
 
 // #Defines
 #define FILE_NAME_SIZE 256
@@ -29,7 +32,8 @@
 #define DATA_DIR "data"
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define CONFIG_FILE "f-rec-part-phase-3D.config"
+#define CONFIG_FILE "f-rec-part-3D.config"
+#define OUTPUT_FILE "f-rec-volfrac-3D"
 
 #define PERIODIC 0
 #define DIRICHLET 1
@@ -44,13 +48,9 @@
 // Declare global variables
 extern double tStart;       // start time
 extern double tEnd;         // end time
-extern int orderX;           // order of fourier expansion
-extern int orderY;           // order of fourier expansion
-extern int orderZ;           // order of fourier expansion
+extern int orderL;          // order of fourier expansion
+extern int orderM;
+extern int orderN;
 extern int tt;              // time iterator
-
-extern fftw_plan chi2phi_k;
-extern fftw_plan phi_k2phi;
-
 
 #endif
