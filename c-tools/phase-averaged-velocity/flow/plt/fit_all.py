@@ -11,7 +11,7 @@ import os,sys
 os.system('clear')
 
 # get axis limits (so 24125058)
-def get_axis_limits(ax, scale=0.85):
+def get_axis_limits(ax, scalex=0.8, scaley=0.85):
   xmin = ax.get_xlim()[0]
   xmax = ax.get_xlim()[1]
   ymin = ax.get_ylim()[0]
@@ -20,7 +20,7 @@ def get_axis_limits(ax, scale=0.85):
   dx = xmax - xmin
   dy = ymax - ymin
 
-  return xmin + scale*dx, ymin + scale*dy
+  return xmin + scalex*dx, ymin + scaley*dy
 
 print ""
 print " ---- Phase-Averaged Fluid Velocity Plotting Utility"
@@ -103,7 +103,7 @@ Ret = d*termVel/nu
 ##
 ## Plot k as a function of phi and rho ##
 ##
-kFig = plt.figure(figsize=(2,2))
+kFig = plt.figure(figsize=(3.25,1.625))
 
 # Yin and Koch, 2007, data
 Re_yk = [1.02, 1.83, 5.00, 9.98, 20.0]
@@ -113,7 +113,7 @@ n_yk = [4.2, 4.1, 4.0, 3.8, 3.6]
 nerr_yk = [0.1, 0.1, 0.3, 0.2, 0.1]
 
 ## k as a function of rho 
-ax2 = kFig.add_subplot(111)
+ax2 = kFig.add_subplot(121)
 ax2.errorbar(Ret, k_curr, fmt='k.', markersize=5, 
   yerr=kerrs)
 ax2.errorbar(Re_yk, k_yk, fmt='ko', markersize=5, markerfacecolor='none',
@@ -128,22 +128,22 @@ ax2.set_ylabel(r"$\kappa$", rotation=0)
 ax2.yaxis.set_major_locator(MultipleLocator(.05))
 ax2.yaxis.set_minor_locator(MultipleLocator(.025))
 ax2.set_ylim([0.75, 1])
-ax2.yaxis.set_label_coords(-.3, 0.5)
+ax2.yaxis.set_label_coords(-.35, 0.5)
 
 #ax2.grid(True)
-ax2.annotate(r"$(a)$",xy=get_axis_limits(ax2))
+ax2.annotate(r"$(a)$", xy=get_axis_limits(ax2))
 
 imgname = imgdir + "k-relations"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 ## Plot n as a function of rho ##
 Ret_eval = np.arange(0.1, 150, 0.1)
 nRZ_eval = 4.45*Ret_eval**(-0.1)   
 nGAD_eval = (5.1 + 2.7*(0.1*Ret_eval**0.9))/(1. + (0.1*Ret_eval**0.9))
 
-nFig = plt.figure(figsize=(2,2))
-ax1 = nFig.add_subplot(111)
+#nFig = plt.figure(figsize=(2,2))
+ax1 = kFig.add_subplot(122)
 ## n from RZ
 ax1.plot(Ret_eval, nRZ_eval, 'k-', markersize=7)
 ax1.plot(Ret_eval, nGAD_eval, 'k--', markersize=7)
@@ -160,12 +160,15 @@ ax1.set_ylabel(r"$n$", rotation=0)
 ax1.yaxis.set_major_locator(MultipleLocator(0.5))
 ax1.yaxis.set_minor_locator(MultipleLocator(0.25))
 ax1.set_ylim([2.5,5])
-ax1.yaxis.set_label_coords(-.25, 0.5)
+ax1.yaxis.tick_right()
+ax1.yaxis.set_ticks_position("both")
+#ax1.yaxis.set_label_position("right")
+ax1.yaxis.set_label_coords(1.3, 0.5)
 
 #ax1.grid(True)
 ax1.annotate(r"$(b)$", color="black", xy=get_axis_limits(ax1))
 
-imgname = imgdir + "n-relations"
+imgname = imgdir + "nk-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
@@ -175,7 +178,7 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 phiEval = np.linspace(0.05,0.375,100)
 
 ## Plot as a function of phi ##
-fig1 = plt.figure(figsize=(5,2.5))
+fig1 = plt.figure(figsize=(3.25,3.25))
 
 # linear coodinates (colors from seaborn)
 # dark

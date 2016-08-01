@@ -43,7 +43,11 @@ extern int orderY;           // order of fourier expansion
 extern int orderZ;           // order of fourier expansion
 extern int tt;              // time iterator
 
-extern fftw_plan chi2phi_k;
-extern fftw_plan phi_k2phi;
+extern fftw_plan to_spectral;
+extern fftw_plan to_cartesian;
+
+/**** FUNCTIONS ****/
+void zero_coefficients();
+void normalize();
 
 #endif

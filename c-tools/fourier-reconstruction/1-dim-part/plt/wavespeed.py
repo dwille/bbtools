@@ -78,10 +78,10 @@ phi = np.array([0.087, 0.175, 0.262, 0.349])
 rho = np.unique(rhoVal)
 
 # wavespeed -- constant density, variable vfrac
-rho20_c = waveSpeed[0:16:4] / termVel[0]
-rho33_c = waveSpeed[1:16:4] / termVel[1]
-rho40_c = waveSpeed[2:12:4] / termVel[2]
-rho50_c = waveSpeed[3:8:4]  / termVel[3]
+rho20_c = waveSpeed[0:16:4] # / termVel[0]
+rho33_c = waveSpeed[1:16:4] # / termVel[1]
+rho40_c = waveSpeed[2:12:4] # / termVel[2]
+rho50_c = waveSpeed[3:8:4]  # / termVel[3]
 
 # fluid velocity -- constant density, variable vfrac
 rho20_vel = flowVel[0:16:4]
@@ -96,12 +96,12 @@ wallis_speed = np.zeros((np.size(phiEval),4))
 for rr,_ in enumerate(rho):
   for pp,_ in enumerate(phiEval):
     wallis_speed[pp,rr] = termVel[rr]*kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
-    wallis_speed[pp,rr] = kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
+    #wallis_speed[pp,rr] = kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
 
 ##
  # Wave Speed Plots
  ##
-fig1 = plt.figure(figsize=(5,2.5))
+fig1 = plt.figure(figsize=(3.25,3.25))
 ax1 = fig1.add_subplot(111)
 
 # dark
@@ -119,8 +119,8 @@ ax1.plot(phi[0:3], rho40_c, 'o', color=re, markersize=7)
 ax1.plot(phi[0:2], rho50_c, '^', color=cy, markersize=7)
 
 ax1.set_xlabel(r'$\phi$')
-#ax1.set_ylabel(r'$c$')
-ax1.set_ylabel(r'$c/w_t$')
+ax1.set_ylabel(r'$c$')
+#ax1.set_ylabel(r'$c/w_t$')
 ax1.set_xlim([0,0.5])
 ax1.grid(True)
 
@@ -143,41 +143,63 @@ ax1.plot(phiEval, wallis_speed[:,2], '-', color=re, zorder=1)
 ax1.plot(phiEval, wallis_speed[:,3], '--', color=cy, zorder=1)
 
 
-#imgname = imgdir + "wavespeed"
-imgname = imgdir + "wavespeed_normed"
+imgname = imgdir + "wavespeed"
+#imgname = imgdir + "wavespeed_normed"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-# ##
-#  # Froude Number Plots
-#  ##
-# fig2 = plt.figure()
-# ax2 = fig2.add_subplot(111)
-## Froude number
-#rho20_Fr = rho20_vel/rho20_c
-#rho33_Fr = rho33_vel/rho33_c
-#rho40_Fr = rho40_vel/rho40_c
-#rho50_Fr = rho50_vel/rho50_c
-#
-# 
-# ax2.plot(phi, rho20_Fr, 'b*', alpha=0.9,markersize=6)
-# ax2.plot(phi, rho33_Fr, 'gs', alpha=0.9,markersize=6)
-# ax2.plot(phi[0:3], rho40_Fr, 'ro', alpha=0.9,markersize=6)
-# ax2.plot(phi[0:2], rho50_Fr, 'c^', alpha=0.9,markersize=6)
-# 
-# ax2.set_xlabel(r'$\phi$', fontsize=14)
-# ax2.set_ylabel(r'$Fr = \frac{w_f}{c}$', fontsize=14)
-# ax2.set_xlim([0,0.5])
-# ax2.set_xticks([0, 0.10, 0.20, 0.30, 0.40, 0.50])
-# ax2.grid(True)
-# 
-# lText = [r'$\rho^* = 2.0$', r'$\rho^* = 3.3$', 
-#          r'$\rho^* = 4.0$', r'$\rho^* = 5.0$']
-# ax2.legend(lText, bbox_to_anchor=(0,1.05,1,1),loc="lower left",mode="expand",
-#   ncol=2, borderaxespad=0)
-# 
-# imgname = imgdir + "froude"
-# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-# plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+# Print Errors
+rho20_c = waveSpeed[0:16:4] # / termVel[0]
+rho33_c = waveSpeed[1:16:4] # / termVel[1]
+rho40_c = waveSpeed[2:12:4] # / termVel[2]
+rho50_c = waveSpeed[3:8:4]  # / termVel[3]
+error = np.zeros((4,4))
+for rr,_ in enumerate(rho):
+  for pp,_ in enumerate(phi):
+    wallis_speed[pp,rr] = termVel[rr]*kappa[rr]*n[rr]*phi[pp]*(1-phi[pp])**(n[rr] - 1)
+    #wallis_speed[pp,rr] = kappa[rr]*n[rr]*phi[pp]*(1-phi[pp])**(n[rr] - 1)
 
-print "      ... Done!"
+    error[pp,0] = ((rho20_c[pp] - wallis_speed[pp,0]) / wallis_speed[pp,0])
+    error[pp,1] = ((rho33_c[pp] - wallis_speed[pp,1]) / wallis_speed[pp,1])
+    if pp < 3:
+      error[pp,2] = ((rho40_c[pp] - wallis_speed[pp,2]) / wallis_speed[pp,2])
+    if pp < 2:
+      error[pp,3] = ((rho50_c[pp] - wallis_speed[pp,3]) / wallis_speed[pp,3])
+                                                      
+# 0500 #
+print "n = 500"
+print "  Error rho2.0 = %.3f" % ((rho20_c[0] - wallis_speed[0,0]) / wallis_speed[0,0])
+print "  Error rho3.3 = %.3f" % ((rho33_c[0] - wallis_speed[0,1]) / wallis_speed[0,1])
+print "  Error rho4.0 = %.3f" % ((rho40_c[0] - wallis_speed[0,2]) / wallis_speed[0,2])
+print "  Error rho5.0 = %.3f" % ((rho50_c[0] - wallis_speed[0,3]) / wallis_speed[0,3])
+
+# 1000 #
+print "n = 1000"
+print "  Error rho2.0 = %.3f" % ((rho20_c[1] - wallis_speed[1,0]) / wallis_speed[1,0])
+print "  Error rho3.3 = %.3f" % ((rho33_c[1] - wallis_speed[1,1]) / wallis_speed[1,1])
+print "  Error rho4.0 = %.3f" % ((rho40_c[1] - wallis_speed[1,2]) / wallis_speed[1,2])
+print "  Error rho5.0 = %.3f" % ((rho50_c[1] - wallis_speed[1,3]) / wallis_speed[1,3])
+
+# 1500 #
+print "n = 1500"
+print "  Error rho2.0 = %.3f" % ((rho20_c[2] - wallis_speed[2,0]) / wallis_speed[2,0])
+print "  Error rho3.3 = %.3f" % ((rho33_c[2] - wallis_speed[2,1]) / wallis_speed[2,1])
+print "  Error rho4.0 = %.3f" % ((rho40_c[2] - wallis_speed[2,2]) / wallis_speed[2,2])
+
+# 2000 #
+print "n = 2000"
+print "  Error rho2.0 = %.3f" % ((rho20_c[3] - wallis_speed[3,0]) / wallis_speed[3,0])
+print "  Error rho3.3 = %.3f" % ((rho33_c[3] - wallis_speed[3,1]) / wallis_speed[3,1])
+
+figErr = plt.figure(figsize=(3.25,1.625))
+ax1 = figErr.add_subplot(111)
+ax1.plot(phi, error[:,0])
+ax1.plot(phi, error[:,1])
+ax1.plot(phi[0:3], error[0:3,2])
+ax1.plot(phi[0:2], error[0:2,3])
+
+imgname = imgdir + "wavespeed_error"
+#imgname = imgdir + "wavespeed_normed"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+

@@ -31,7 +31,7 @@ nparts = int(simdir.partition('/')[0])
 avgVolumeFraction = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
 
 # Plot
-vFracFig = plt.figure(figsize=(6,3))
+vFracFig = plt.figure(figsize=(3.25,1.625))
 
 minVal = np.floor(100*np.amin(vFrac))/100
 maxVal = np.ceil(100*np.amax(vFrac))/100
@@ -40,7 +40,7 @@ lowerDiff = avgVolumeFraction - minVal
 maxDiff = np.max([upperDiff, lowerDiff])
 
 # Highlight Fluid
-vFrac[vFrac >= avgVolumeFraction] = avgVolumeFraction
+#vFrac[vFrac >= avgVolumeFraction] = avgVolumeFraction
 
 # Highight Solid
 #vFrac[vFrac <= avgVolumeFraction] = avgVolumeFraction
@@ -51,7 +51,7 @@ plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
   cmap='seismic')
 
 cbar = plt.colorbar()
-plt.title(r'$Volume\ Fraction$')
+#plt.title(r'$Volume\ Fraction$')
 plt.xlabel(r"$t\ [s]$")
 plt.ylabel(r'$z\ [mm]$')
 
@@ -61,7 +61,7 @@ plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
 
 imgname = imgdir + "volume-fraction"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 # ## NUMBER DENSITY ##
 #nDensFile = datadir + "number-density"

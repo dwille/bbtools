@@ -1,6 +1,7 @@
 #include "main.h"
 #include "cgns_reader.h"
 
+// File variables
 int nFiles;
 char **flowFiles;
 double *flowFileTime;
@@ -8,12 +9,37 @@ int *flowFileMap;
 int sigFigPre;
 int sigFigPost;
 dom_struct dom;
+// part_struct *parts;
 
+// Solution Variables
 int *phase;
-// fftw variables
-fftw_complex *chi;    //indicator function
-fftw_complex *phi;
-fftw_complex *phi_k;
+int nparts;
+double *uf;                 // for pulling info from cgns files, length(nparts)
+double *vf;
+double *wf;
+/* for using information from particles
+double *x;
+double *y;
+double *z;
+double *up;
+double *vp;
+double *wp;
+double *oxp;
+double *oyp;
+double *ozp;
+*/
+
+// fftw variables -- will use INPLACE transforms
+fftw_complex *chi;          // indicator function
+fftw_complex *up_field;     // for taking FFT, size(dom.Gcc.s3)
+fftw_complex *vp_field;
+fftw_complex *wp_field;
+/* if decomposing total velocity
+fftw_complex *uop_field;
+fftw_complex *vop_field;
+fftw_complex *wop_field;
+*/
+
 
 // Set up directory structure
 void directory_init(int argc, char *argv[])
@@ -217,10 +243,23 @@ void domain_init(void)
   int fret = 0;
   fret = fret;  // prevent compiler warning
 
-  // open config file for reading
+  // read nparts from part.config
   char fname[FILE_NAME_SIZE] = "";
-  sprintf(fname, "%s/input/flow.config", SIM_ROOT_DIR);
+  sprintf(fname, "%s/input/part.config", SIM_ROOT_DIR);
   FILE *infile = fopen(fname, "r");
+  if (infile == NULL) {
+    printf("Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  }
+  fret = fscanf(infile, "n %d\n", &nparts);
+  fclose(infile);
+
+  // Init part struct
+  // parts = (part_struct*) malloc(nparts * sizeof(part_struct));
+
+  // open flow.config file for reading
+  sprintf(fname, "%s/input/flow.config", SIM_ROOT_DIR);
+  infile = fopen(fname, "r");
   if (infile == NULL) {
     printf("Could not open file %s\n", fname);
     exit(EXIT_FAILURE);
@@ -280,20 +319,65 @@ void domain_init(void)
   dom.Gcc.s2 = dom.Gcc.jn * dom.Gcc.s1;
   dom.Gcc.s3 = dom.Gcc.kn * dom.Gcc.s2;
 
-  // Set up flow
-  phase = (int*) malloc(dom.Gcc.s3 * sizeof(int));
-  chi = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
-  phi = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
-  phi_k = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  // Set up variables
+  // x = (double*) malloc(nparts * sizeof(double));
+  // y = (double*) malloc(nparts * sizeof(double));
+  // z = (double*) malloc(nparts * sizeof(double));
+  // up = (double*) malloc(nparts * sizeof(double));
+  // vp = (double*) malloc(nparts * sizeof(double));
+  // wp = (double*) malloc(nparts * sizeof(double));
+  // oxp = (double*) malloc(nparts * sizeof(double));
+  // oyp = (double*) malloc(nparts * sizeof(double));
+  // ozp = (double*) malloc(nparts * sizeof(double));
 
+  phase = (int*) malloc(dom.Gcc.s3 * sizeof(int));
+  uf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
+  vf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
+  wf = (double*) malloc(dom.Gcc.s3 * sizeof(double));
+
+  // FFTW variables
+  chi = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  up_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  vp_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  wp_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  // uop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  // vop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  // wop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+
+  //for (int ii = 0; ii < nparts; ii++) {
+  //  x[ii] = 0.;
+  //  y[ii] = 0.;
+  //  z[ii] = 0.;
+  //  up[ii] = 0.;
+  //  vp[ii] = 0.;
+  //  wp[ii] = 0.;
+  //  oxp[ii] = 0.;
+  //  oyp[ii] = 0.;
+  //  ozp[ii] = 0.;
+  //}
   for (int ii = 0; ii < dom.Gcc.s3; ii++) {
     phase[ii] = 0.;
+    uf[ii] = 0.;
+    vf[ii] = 0.;
+    wf[ii] = 0.;
+
+    // real parts of fftw variables
     chi[ii][0] = 0.;
+    up_field[ii][0] = 0.;
+    vp_field[ii][0] = 0.;
+    wp_field[ii][0] = 0.;
+    //uop_field[ii][0] = 0.;
+    //vop_field[ii][0] = 0.;
+    //wop_field[ii][0] = 0.;
+
+    // imag parts of fftw variables
     chi[ii][1] = 0.;
-    phi[ii][0] = 0.;
-    phi[ii][1] = 0.;
-    phi_k[ii][0] = 0.;
-    phi_k[ii][1] = 0.;
+    up_field[ii][1] = 0.;
+    vp_field[ii][1] = 0.;
+    wp_field[ii][1] = 0.;
+    //uop_field[ii][1] = 0.;
+    //vop_field[ii][1] = 0.;
+    //wop_field[ii][1] = 0.;
   }
 
   #ifdef DEBUG
@@ -301,6 +385,74 @@ void domain_init(void)
   #endif
   fclose(infile);
 }
+
+// Read part data -- if using information from parts, not from fluid field
+/*
+void cgns_fill_part(void)
+{
+  // Read time string from flow file -- we want the corresponding part file
+  char timeString1[CHAR_BUF_SIZE] = "";
+  sprintf(timeString1, flowFiles[flowFileMap[tt]]);
+  
+  // We expect flow-*.*.cgns, so split along "-"
+  char *timeString2;
+  timeString2 = strtok(timeString1, "flow-");
+
+  // Now create the part file with directory path
+  char partFile[CHAR_BUF_SIZE] = "";
+  sprintf(partFile, "%s/%s/part-%s", SIM_ROOT_DIR, OUTPUT_DIR, timeString2);
+  printf("%s\n", partFile);
+
+  // Open cgns file for reading -- now with error checking!!
+  int fn;
+  int ier = cg_open(partFile, CG_MODE_READ, &fn);
+  if (ier != 0 ) {
+    printf("\nCGNS Error on file %s\n", partFile);
+    free_vars();
+    cg_close(fn);
+    cg_error_exit();
+  }
+  fflush(stdout);
+
+  // Set base, zone, and solution
+  int bn = 1;
+  int zn = 1;
+  int sn = 1;
+
+  cgsize_t range_min = 1;
+  cgsize_t range_max = nparts;
+
+  // Read part coords
+  cg_coord_read(fn,bn,zn, "CoordinateX", RealDouble, &range_min, &range_max, x);
+  cg_coord_read(fn,bn,zn, "CoordinateY", RealDouble, &range_min, &range_max, y);
+  cg_coord_read(fn,bn,zn, "CoordinateZ", RealDouble, &range_min, &range_max, z);
+
+  // Read part vel
+  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, &range_min, &range_max, up);
+  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, &range_min, &range_max, vp);
+  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, &range_min, &range_max, wp);
+
+  // Read rotation
+  cg_field_read(fn,bn,zn,sn, "AngularVelocityX", RealDouble, &range_min, &range_max, oxp);
+  cg_field_read(fn,bn,zn,sn, "AngularVelocityY", RealDouble, &range_min, &range_max, oyp);
+  cg_field_read(fn,bn,zn,sn, "AngularVelocityZ", RealDouble, &range_min, &range_max, ozp);
+
+  // Fill struct
+  for (int p = 0; p < nparts; p++) {
+    parts[p].x = x[p];
+    parts[p].y = y[p];
+    parts[p].z = z[p];
+    parts[p].u = up[p];
+    parts[p].v = vp[p];
+    parts[p].w = wp[p];
+    parts[p].ox = oxp[p];
+    parts[p].oy = oyp[p];
+    parts[p].oz = ozp[p];
+  }
+
+  cg_close(fn);
+}
+*/
 
 // Read flow_struct data
 void cgns_fill_flow(void)
@@ -333,18 +485,59 @@ void cgns_fill_flow(void)
 
   // Read and fill
   cg_field_read(fn,bn,zn,sn, "Phase", Integer, range_min, range_max, phase);
+  cg_field_read(fn,bn,zn,sn, "VelocityX", RealDouble, range_min, range_max, uf);
+  cg_field_read(fn,bn,zn,sn, "VelocityY", RealDouble, range_min, range_max, vf);
+  cg_field_read(fn,bn,zn,sn, "VelocityZ", RealDouble, range_min, range_max, wf);
 
   // Apply phase mask -- 1 iff particle
+  int cc, pp;
+  // double xc, yc, zc;
+  // double rx, ry, rz;
   for (int kk = 0; kk < dom.zn; kk++) {
     for (int jj = 0; jj < dom.yn; jj++) {
       for (int ii = 0; ii < dom.xn; ii++) {
-        int stride = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
-        chi[stride][0] = (double) (phase[stride] > -1);
-        chi[stride][1] = 0.;
+        cc = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
+        // xc = dom.xs + ii*dx;
+        // yc = dom.ys + jj*dy;
+        // zc = dom.zs + kk*dz;
+        pp = phase[cc];
+
+        // Indicator function (volume fraction)
+        chi[cc][0] = (double) (pp > -1);
+
+        // Zero out velocity in fluid phase
+        up_field[cc][0] = uf[cc]*((double) (pp > -1));
+        vp_field[cc][0] = vf[cc]*((double) (pp > -1));
+        wp_field[cc][0] = wf[cc]*((double) (pp > -1));
+
+        /* For setting up fields from particle data
+        // Set translational velocity fields over entire particle
+        up_field[cc][0] = part[pp].u * (pp > -1);
+        vp_field[cc][0] = part[pp].v * (pp > -1);
+        wp_field[cc][0] = part[pp].w * (pp > -1);
+
+        // Set rotational velocity based on rigid body rotation
+        rx = xc - part[pp].x;
+        ry = yc - part[pp].y;
+        rz = zc - part[pp].z;
+
+        uop_field[cc] = (part[pp].oy * rz - part[pp].oz * ry) * (pp > -1);
+        vop_field[cc] =-(part[pp].ox * rz - part[pp].oz * rx) * (pp > -1);
+        wop_field[cc] = (part[pp].ox * ry - part[pp].oy * rx) * (pp > -1);
+        */
+
+        // Take care of all imaginary parts
+        chi[cc][1] = 0.;
+        up_field[cc][1] = 0.;
+        vp_field[cc][1] = 0.;
+        wp_field[cc][1] = 0.;
+        // uop_field[cc][1] = 0.;
+        // vop_field[cc][1] = 0.;
+        // wop_field[cc][1] = 0.;
 
         //double z = dom.zs + kk*dom.dz;
-        //chi[stride][0] = sin(2.*PI*z/dom.zl);
-        //chi[stride][0] = (double) (kk > dom.zn*0.5);
+        //chi[cc][0] = sin(2.*PI*z/dom.zl);
+        //chi[cc][0] = (double) (kk > dom.zn*0.5);
       }
     }
   }
@@ -364,6 +557,7 @@ void test_fill(void)
   y = y; ystar = ystar;
   z = z; zstar = zstar;
   int cc = 0;
+  cc = cc;
   for (int kk = 0; kk < dom.zn; kk++) {
     for (int jj = 0; jj < dom.yn; jj++) {
       for (int ii = 0; ii < dom.xn; ii++) {
@@ -386,15 +580,15 @@ void test_fill(void)
       }
     }
   }
-  fftw_execute(chi2phi_k);
+  fftw_execute_dft(to_spectral, chi, chi);
 
   double iV = 1./(dom.xl*dom.yl*dom.zl);
   for (int kk = 0; kk < dom.zn; kk++) {
     for (int jj = 0; jj < dom.yn; jj++) {
       for (int ii = 0; ii < dom.xn; ii++) {
         cc = ii + dom.Gcc.s1*jj + dom.Gcc.s2*kk;
-        phi_k[cc][0] *= iV;
-        phi_k[cc][1] *= iV;
+        chi[cc][0] *= iV;
+        chi[cc][1] *= iV;
       }
     }
   }
@@ -408,9 +602,9 @@ void test_out(void)
       for (int ll = 0; ll < dom.Gcc.in; ll++) {   // x
         int cc = ll + dom.Gcc.s1*mm + dom.Gcc.s2*nn;
 
-        if ((fabs(phi_k[cc][0]) > 1e-8) || (fabs(phi_k[cc][1]) > 1e-8)) {
-          printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
-            ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, phi_k[cc][0], phi_k[cc][1]);
+        if ((fabs(chi[cc][0]) > 1e-8) || (fabs(chi[cc][1]) > 1e-8)) {
+          printf("chi[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+            ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, chi[cc][0], chi[cc][1]);
           fflush(stdout);
         }
 
@@ -428,8 +622,8 @@ void test_out(void)
     for (int mm = 0; mm <= kx; mm++) {
       for (int ll = 0; ll <= ky; ll++) {
         int cc = ll + dom.Gcc.s1*mm + dom.Gcc.s2*nn;
-        printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
-          ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, phi_k[cc][0], phi_k[cc][1]);
+        printf("chi[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+          ll, dom.Gcc.s1, mm, dom.Gcc.s2, nn, chi[cc][0], chi[cc][1]);
         fflush(stdout);
       }
     }
@@ -443,10 +637,10 @@ void test_out(void)
         int cc = xFlip
                 +yFlip*dom.Gcc.s1
                 +zFlip*dom.Gcc.s2;
-        printf("phi_k[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
+        printf("chi[%d + %d*%d + %d*%d] = %lf + i%lf\n", 
           xFlip, dom.Gcc.s1, 
           yFlip, dom.Gcc.s2, 
-          zFlip, phi_k[cc][0], phi_k[cc][1]);
+          zFlip, chi[cc][0], chi[cc][1]);
         fflush(stdout);
       }
     }
@@ -511,7 +705,7 @@ void cgns_write_field(void)
   char fnameall2[CHAR_BUF_SIZE] = "";
   sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
 
-  sprintf(fnameall2, "%s/%s/f-rec-part-phase-3D-%s.cgns", ANALYSIS_DIR, DATA_DIR, 
+  sprintf(fnameall2, "%s/%s/f-rec-3D-%s.cgns", ANALYSIS_DIR, DATA_DIR, 
     format);
   sprintf(fnameall, fnameall2, flowFileTime[tt]);
 
@@ -558,20 +752,61 @@ void cgns_write_field(void)
   // Write real data
   int fn_real;
   double *real_out = malloc(dom.Gcc.s3 * sizeof(double));
+
+  // Volume Fraction
   for (int i = 0; i < dom.Gcc.s3; i++) {
-    real_out[i] = phi[i][0];
+    real_out[i] = chi[i][0];
   }
   cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction Real", real_out, &fn_real);
+
+  // Up
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    real_out[i] = up_field[i][0];
+  }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityX Real", real_out, &fn_real);
+
+  // Vp
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    real_out[i] = vp_field[i][0];
+  }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityY Real", real_out, &fn_real);
+
+  // Wp
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    real_out[i] = wp_field[i][0];
+  }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ Real", real_out, &fn_real);
+
   free(real_out);
 
   // Write imaginary
   #ifdef DEBUG
     int fn_imag;  //
     double *imag_out = malloc(dom.Gcc.s3 * sizeof(double));
+    // volume fraction
     for (int i = 0; i < dom.Gcc.s3; i++) {
-      imag_out[i] = phi[i][1];
+      imag_out[i] = chi[i][1];
     }
     cg_field_write(fn, bn, zn, sn, RealDouble, "Volume Fraction Imag", imag_out, &fn_imag);
+
+    // u
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      imag_out[i] = up_field[i][1];
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityX Imag", imag_out, &fn_imag);
+
+    // v
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      imag_out[i] = vp_field[i][1];
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityY Imag", imag_out, &fn_imag);
+
+    // 2
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      imag_out[i] = wp_field[i][1];
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ Imag", imag_out, &fn_imag);
+
     free(imag_out);
   #endif
 
@@ -589,6 +824,9 @@ void cgns_write_field(void)
 // Free vars
 void free_vars(void)
 {
+  free(ANALYSIS_DIR);
+  free(SIM_ROOT_DIR);
+
   for (int i = 0; i < nFiles; i++) {
     free(flowFiles[i]);
   }
@@ -597,11 +835,26 @@ void free_vars(void)
   free(flowFileTime);
 
   free(phase);
+  // free(parts);
+  // free(x);
+  // free(y);
+  // free(z);
+  // free(up);
+  // free(vp);
+  // free(wp);
+  // free(oxp);
+  // free(oyp);
+  // free(ozp);
+  free(uf);
+  free(vf);
+  free(wf);
 
   fftw_free(chi);
-  fftw_free(phi);
-  fftw_free(phi_k);
+  fftw_free(up_field);
+  fftw_free(vp_field);
+  fftw_free(wp_field);
+  // fftw_free(uop_field);
+  // fftw_free(vop_field);
+  // fftw_free(wop_field);
 
-  free(ANALYSIS_DIR);
-  free(SIM_ROOT_DIR);
 }

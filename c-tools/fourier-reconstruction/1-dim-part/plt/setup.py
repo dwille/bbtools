@@ -26,11 +26,11 @@ def simParams(sys):
 
   return (partR, simdir, tstart)
 
-# Setup up directory paths for marcc
+# Setup up directory paths
 def directoryStructureMarcc(simdir):
   home = os.path.expanduser("~")
   root = home + "/scratch/triply_per/"
-  simdir = simdir + 'f-rec-1D/'
+  simdir = simdir + 'analysis/fourier-reconstruction/1-dim-part/'
   datadir = root + simdir + "data/"
 
   # Check if datadir exists so we don't go creating extra dirs
