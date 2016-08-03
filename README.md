@@ -3,6 +3,8 @@ All of the useful ones are written in c and Python, everything else is deprecate
 Feel free to use and modify these under the terms of the Apache License included in this folder.
 The most useful way to use the tools is to probably create a fork of this repository and work on it there.
 If there are any bugs or additions you feel would be useful to any users, please create a pull request.
+Also, if you use this code, please send some acknowlegement my way!
+Any questions and comments are also welcome.
 
 Note that all of the tools have been developed for use with triply-periodic sedimentation (gravity is positive in -z) -- this means that I don't have explicit checks anywhere for boundary conditions!!
 Different simulations will probably require some modifications for boundary conditions, if you want to make the simulations general enough for this please feel free and then submit a pull request!
