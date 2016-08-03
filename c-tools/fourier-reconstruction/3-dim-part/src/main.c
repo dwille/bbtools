@@ -34,7 +34,7 @@ int main(int argc, char *argv[])
 
   // Create output directory
   create_output();
-  get_sigfigs();
+  // get_sigfigs();
 
   // Init FFT
   printf("Initializing fftw plans...\n"); 

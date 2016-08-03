@@ -60,7 +60,6 @@ typedef struct BC {
   int pT;
 } BC;
 
-
 /**** VARIABLES ****/
 // File Variables
 extern int nFiles;
@@ -81,7 +80,7 @@ extern double *evalTh;
 extern double *evalR;
 extern double *gHist;
 
-// host and dev part_struct parts;
+// part_struct parts;
 extern part_struct *parts;
 
 // host and dev dom_struct doms

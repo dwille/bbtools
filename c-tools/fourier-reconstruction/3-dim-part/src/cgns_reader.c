@@ -699,15 +699,18 @@ void get_sigfigs(void)
 // Write reconstructed data
 void cgns_write_field(void)
 {
-  // Set up the cgns filename
-  char format[CHAR_BUF_SIZE] = "";
-  char fnameall[CHAR_BUF_SIZE] = "";
-  char fnameall2[CHAR_BUF_SIZE] = "";
-  sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
+  // Deal with output time format
+  char temp_file[CHAR_BUF_SIZE] = "";
+  sprintf(temp_file, flowFiles[flowFileMap[tt]]);
 
-  sprintf(fnameall2, "%s/%s/f-rec-3D-%s.cgns", ANALYSIS_DIR, DATA_DIR, 
-    format);
-  sprintf(fnameall, fnameall2, flowFileTime[tt]);
+  // we expect flow-%s.cgns, so split along "-"
+  char *temp_split;
+  temp_split = strtok(temp_file, "-");  // flow
+  temp_split = strtok(NULL, "-");       // %s.cgns
+
+  // Setup cgns filename
+  char fname[CHAR_BUF_SIZE] = "";
+  sprintf(fname, "%s/%s/f-rec-3D-%s", ANALYSIS_DIR, DATA_DIR, temp_split);
 
   // Set up grid filename
   char gname[FILE_NAME_SIZE] = "";
@@ -715,22 +718,12 @@ void cgns_write_field(void)
   sprintf(gname, "grid.cgns");
   sprintf(gnameall, "%s/output/%s", SIM_ROOT_DIR, "grid.cgns");
 
-  // Set up cgns file paths
-  char snodename[CHAR_BUF_SIZE] = "";
-  char snodenameall[CHAR_BUF_SIZE] = "";
-  sprintf(snodename, "Solution-");
-  sprintf(snodenameall, "/Base/Zone0/Solution-");
-  sprintf(snodename, "%s%s", snodename, format);
-  sprintf(snodenameall, "%s%s", snodenameall, format);
-  sprintf(snodename, snodename, flowFileTime[tt]);
-  sprintf(snodenameall, snodenameall, flowFileTime[tt]);
-
-  // CGNS vairables
+  // CGNS variables
   int fn; // solution file name
   int bn; // solution base name
   int zn; // solution zone name
   int sn; // solution sol name
-  cg_open(fnameall, CG_MODE_WRITE, &fn);
+  cg_open(fname, CG_MODE_WRITE, &fn);
   cg_base_write(fn, "Base", 3, 3, &bn);
   cgsize_t size[9];
   size[0] = dom.xn+1; // cells -> vertices
