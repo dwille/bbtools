@@ -1,4 +1,5 @@
 This is a collection of tools meant to be used for analysis of disperse multiphase results from Bluebottle simulations.
+All of the useful ones are written in c and Python, everything else is deprecated.
 Feel free to use and modify these under the terms of the Apache License included in this folder.
 The most useful way to use the tools is to probably create a fork of this repository and work on it there.
 If there are any bugs or additions you feel would be useful to any users, please create a pull request.
@@ -11,6 +12,21 @@ As such, there are many areas that require file structures to be a certain way, 
 I've tried to write down as many of them as I remembered, but I'm sure I missed several.
 
 On a similar vein, this repository is CONSTANTLY changing (including file structure updates, I seem to love doing those every month or so...), so check back often for bug fixes, extra features, free ice cream, and other goodies.
+
+# Main Directory
+There are several top-level directories. 
+I use one of them.
+* bbtools
+  * c-tools
+    * This is where every useful tools resides and all of the current development is taking place
+  * deprecated
+    * Stuff that I've moved around but not wanted to throw out yet that I either don't use or may come back to
+  * matlab
+    * OLD matlab tools. I think every one of these has been replaced by a c tool. MATLAB is slow. I don't use MATLAB anymore.
+  * presentation
+    * ignore this
+  * sppressions
+    * suppresion file for using with valgrind when checking out cuda stuff
 
 # File Structure
 The tools are meant to be used on a standard Bluebottle simulation directory with this structure:
