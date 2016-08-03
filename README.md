@@ -21,10 +21,10 @@ I use one of them.
     * This is where every useful tools resides and all of the current development is taking place
   * deprecated
     * Stuff that I've moved around but not wanted to throw out yet that I either don't use or may come back to
-  * matlab
-    * OLD matlab tools. I think every one of these has been replaced by a c tool. MATLAB is slow. I don't use MATLAB anymore.
-  * presentation
-    * ignore this
+    * matlab
+      * OLD matlab tools. I think every one of these has been replaced by a c tool. MATLAB is slow. I don't use MATLAB anymore.
+    * presentation
+      * ignore this
   * sppressions
     * suppresion file for using with valgrind when checking out cuda stuff
 
