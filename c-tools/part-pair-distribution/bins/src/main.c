@@ -82,10 +82,14 @@ int main(int argc, char *argv[])
   //double inFiles = 1./nFiles;
   double inFiles = 1./tcount;
   double prefactor = dom.xl*dom.yl*dom.zl/(nparts*(nparts-1.));
+  double iNorm = 0.;
+  double r_norm, th_norm;
   for (int rr = 0; rr < nBinsR; rr++) {
+    r_norm = evalR[rr] + 0.5*dr;
     for (int th = 0; th < nBinsTh; th++) {
-      gHist[th + rr*nBinsTh] *= inFiles * prefactor;
-      //gHist[th + rr*nBinsTh] *= prefactor;
+      th_norm = evalTh[th] + 0.5*dth;
+      iNorm = 1./(2.*PI*r_norm*r_norm*dr*sin(th_norm)*dth);
+      gHist[th + rr*nBinsTh] *= inFiles * prefactor * iNorm;
     }
   }
 

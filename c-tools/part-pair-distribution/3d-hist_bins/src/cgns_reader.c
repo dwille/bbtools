@@ -97,6 +97,7 @@ void main_read_input(void)
     printf("  Running for less than %.2lf standard deviations from the mean\n",
       cutoff);
   }
+  printf("  %d bins in theta, %d bins in r\n", nBinsTh, nBinsR);
 }
 
 // read and sort flow files directory

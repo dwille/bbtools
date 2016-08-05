@@ -43,18 +43,18 @@ void vfrac_stats(void)
 // calculate part-pair geometery
 void part_pair_geometry(int alpha, int beta)
 {
-  double ri[3], rj[3];
+  double ra[3], rb[3];
   double rx, ry, rz;
   double dx, dx2, flipL, flipR;
   int flipFlag;
 
   // Pull positions
-  ri[0] = parts[alpha].x; 
-  ri[1] = parts[alpha].y; 
-  ri[2] = parts[alpha].z;
-  rj[0] = parts[beta].x; 
-  rj[1] = parts[beta].y; 
-  rj[2] = parts[beta].z;
+  ra[0] = parts[alpha].x; 
+  ra[1] = parts[alpha].y; 
+  ra[2] = parts[alpha].z;
+  rb[0] = parts[beta].x; 
+  rb[1] = parts[beta].y; 
+  rb[2] = parts[beta].z;
 
   /* Check periodicity:
     -- Compute distance between particles
@@ -68,30 +68,24 @@ void part_pair_geometry(int alpha, int beta)
      flipL = s1[i] - (s2[i] + l); \
      flipR = s1[i] - (s2[i] - l); \
      flipFlag = (flipL*flipL < dx2) - (flipR*flipR < dx2); \
-     s2[i] += l*(flipFlag); }
+     s2[i] += l*((double) flipFlag); }
 
   // Flip particles
-  flip(ri, rj, dom.xl, 0);
-  flip(ri, rj, dom.yl, 1);
-  flip(ri, rj, dom.zl, 2);
-
-  // separation in x,y,z and r2
-  rx = ri[0] - rj[0];
-  ry = ri[1] - rj[1];
-  rz = ri[2] - rj[2];
-
-  // r_ab
-  r_ab = sqrt(rx*rx + ry*ry + rz*rz);
-
-  // r_plane 
-  double r_plane = sqrt(rx*rx + ry*ry);
-
-  // th_ab = asin(r_plane/r_ab)
-  // asin[-1:1] -> -pi/2:pi/2
-  // r_plane/r_ab >=0, so 0 <= th <= pi/2
-  th_ab = asin(r_plane/r_ab);
+  flip(ra, rb, dom.xl, 0);
+  flip(ra, rb, dom.yl, 1);
+  flip(ra, rb, dom.zl, 2);
 
   #undef flip
+
+  // separation in x,y,z and r2
+  rx = ra[0] - rb[0];
+  ry = ra[1] - rb[1];
+  rz = fabs(ra[2] - rb[2]);
+  
+  // r_ab
+  r_ab = sqrt(rx*rx + ry*ry + rz*rz);
+  // th_ab -- between 0, pi/2
+  th_ab = acos(rz / r_ab);
 
   // Volume fraction check
   int i1,j1,k1;
@@ -132,6 +126,7 @@ void part_pair_geometry(int alpha, int beta)
   } else {
     r_ab = DBL_MAX;
   }
+
 
 }
 

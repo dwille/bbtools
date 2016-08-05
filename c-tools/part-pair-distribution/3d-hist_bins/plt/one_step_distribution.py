@@ -80,7 +80,7 @@ if not os.path.exists(imgdir):
 time = np.genfromtxt(infoFile, skip_footer=2)[1:]
 nt = np.size(time)
 
-evalR = np.genfromtxt(infoFile, skip_header=1,skip_footer=1)[1:]/(2.*partR)
+evalR = np.genfromtxt(infoFile, skip_header=1,skip_footer=1)[1:] /(2.*partR)
 dr = np.mean(np.diff(evalR))
 evalR = np.append(evalR, evalR[-1] + dr)
 
@@ -95,13 +95,17 @@ if combo == "n":
   case = case + compare + "-%.1fsdev" % nSDEV
   data = np.genfromtxt(datadir + case)
   vmin = 0.
-  vmax = np.max(data)
+  vmax = 1.5
+  print np.max(data)
   cmap = "viridis"
 elif combo == "y":
   # compare a greater and less than case
   case = "bins-r%d-th%d_" % (nBinsR, nBinsTh)
-  case_gtr = case + "gtr" + "-%.1fsdev" % nSDEV
-  case_less = case + "lss" + "-%.1fsdev" % nSDEV
+  case_gtr = case + "gtr" + "-%.1fsdev" % np.abs(nSDEV)
+  if (np.abs(nSDEV) < 1e-8):  # i.e. if 0
+    case_less = case + "lss" + "-%.1fsdev" % np.abs(nSDEV)
+  else:
+    case_less = case + "lss" + "--%.1fsdev" % np.abs(nSDEV)
   data_gtr = np.genfromtxt(datadir + case_gtr)
   data_less = np.genfromtxt(datadir + case_less)
   data = data_gtr - data_less
@@ -120,7 +124,7 @@ theta,rad = np.meshgrid(evalTh, evalR)
 
 fig1 = plt.figure()
 ax1 = fig1.add_subplot(111, polar = True)
-c = ax1.pcolormesh(theta,rad, data, norm=None,
+c = ax1.pcolormesh(theta, rad, data, norm=None,
   cmap=cmap, vmin=vmin, vmax=vmax)
 
 cbaxes = fig1.add_axes([0.45, 0.55, 0.03, 0.4])
@@ -149,12 +153,30 @@ circle2=plt.Circle((0,0),.5,color='k',transform=ax1.transData._b)
 ax1.add_artist(circle1)
 ax1.add_artist(circle2)
 
-#x,y = rad*np.cos(theta), rad*np.sin(theta)
-#c = ax1.pcolormesh(x, y, data, norm=None,
-#plt.axis('equal')
-
-
 imgname = imgdir + "/" + case 
 print "      Printing to " + imgname
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+### Average over th ###
+radial_distribution = np.mean(data, 1)
+
+fig2 = plt.figure()
+ax2 = fig2.add_subplot(111)
+
+evalR_centers = evalR[0:-1] + np.mean(np.diff(evalR))
+ax2.plot(evalR_centers, radial_distribution, 'k')
+
+ax2.set_xlim([0, evalR[-1]])
+ax2.set_xlabel(r'$r/d$')
+if combo == 0:
+  ax2.set_ylim(ymin=0)
+elif combo == 1:
+  ax2.set_ylim([-np.max(np.abs(radial_distribution)), np.max(np.abs(radial_distribution))])
+ax2.set_ylabel(r'$g(r)$')
+
+imgname = imgdir + "/" + case + "_radial"
+print "      Printing to " + imgname
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+

@@ -1,4 +1,4 @@
-#ifndef _RECONSTRUCT_H
+#=ifndef _RECONSTRUCT_H
 #define _RECONSTRUCT_H
 
 #include "main.h"

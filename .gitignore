@@ -25,7 +25,8 @@ out
 .keep
 .sh
 sppressions
-*pyc
+*.pyc
+.pyc
 
 # Tetrad Files
 tetrad_init

@@ -98,17 +98,25 @@ int main(int argc, char *argv[])
     }
 
     // Prefactor and add to averaged
+    double r_norm, th_norm;
     if (printAvgFlag == 1) {           // add to averaged
       for (int rr = 0; rr < nPointsR; rr++) {
+        r_norm = evalR[rr] + 0.5*dr;
         for (int th = 0; th < nPointsTh; th++) {
-          g_rec_avg[th + rr*nPointsTh] += inFiles * prefactor * g_rec[th + rr*nPointsTh];
+          th_norm = evalTh[th] + 0.5*dth;
+          iNorm = 1./(2.*PI*r_norm*r_norm*dr*sin(th_norm)*dth);
+          g_rec_avg[th + rr*nPointsTh] += inFiles * prefactor * iNorm *
+            g_rec[th + rr*nPointsTh];
         }
       }
 
     } else {                        // keep discrete and output each step
       for (int rr = 0; rr < nPointsR; rr++) {
+        r_norm = evalR[rr] + 0.5*dr;
         for (int th = 0; th < nPointsTh; th++) {
-          g_rec[th + rr*nPointsTh] *= prefactor;
+          th_norm = evalTh[th] + 0.5*dth;
+          iNorm = 1./(2.*PI*r_norm*r_norm*dr*sin(th_norm)*dth);
+          g_rec[th + rr*nPointsTh] *= prefactor * iNorm;
         }
       }
       // write to file

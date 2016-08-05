@@ -62,7 +62,6 @@ int main(int argc, char *argv[])
 
           // if we're outside the R0 range, don't do work
           if (r_ab < R0) {
-
             /* Find correct indices for r
              * r = 2*a + i*dr 
              * if ind < 0 (i.e. during contact) set ind = 0
@@ -85,12 +84,23 @@ int main(int argc, char *argv[])
   }
   printf("  Found %d pairs\n", partcount);
 
-  // Prefactor and divide by nfiles
+
+  /* Normalize by:
+   * 1/filecount -- because we're "ensembling" realizations of same sim
+   * V/N(N-1)    -- definition
+   * 1/(2pi r^2 dr sin(th) dth) -- normalization for correct integral
+   */
   double inFiles = 1./filecount;
   double prefactor = dom.xl*dom.yl*dom.zl/(nparts*(nparts-1.));
+  double iNorm = 0.;
+  double r_norm, th_norm;
   for (int rr = 0; rr < nBinsR; rr++) {
+    r_norm = evalR[rr] + 0.5*dr;
     for (int th = 0; th < nBinsTh; th++) {
-      gHist[th + rr*nBinsTh] *= inFiles * prefactor;
+      th_norm = evalTh[th] + 0.5*dth;
+      iNorm = 1./(4. * PI * r_norm * r_norm * dr * sin(th_norm) * dth);
+      // TODO: divide by 2 or 4? 4 gives long distance of 1, but 2 was derived
+      gHist[th + rr*nBinsTh] *= inFiles *prefactor * iNorm;
     }
   }
 
