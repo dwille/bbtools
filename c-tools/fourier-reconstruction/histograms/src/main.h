@@ -46,6 +46,7 @@ extern double tStart;       // start time
 extern double tEnd;         // end time
 extern int tt;              // time iterator
 
+/* Volume Fraction */
 extern double min_vf;
 extern double mean_vf;
 extern double max_vf;
@@ -53,12 +54,21 @@ extern double dBin_vf;
 extern double binStart_vf;
 extern double binEnd_vf;
 
+/* Vertical Velocity */
 extern double min_wp;
 extern double mean_wp;
 extern double max_wp;
 extern double dBin_wp;
 extern double binStart_wp;
 extern double binEnd_wp;
+
+/* Kinetic Energy */
+extern double min_ke;
+extern double mean_ke;
+extern double max_ke;
+extern double dBin_ke;
+extern double binStart_ke;
+extern double binEnd_ke;
 
 /**** FUNCTIONS ****/
 void minmax(double *min, double *max, double *array);

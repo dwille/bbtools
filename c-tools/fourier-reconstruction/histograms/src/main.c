@@ -10,6 +10,7 @@ double tEnd;
 int npoints;
 int tt;
 
+/* Volume Fraction */
 double min_vf = DBL_MAX;
 double mean_vf = 0.;
 double max_vf = -DBL_MAX;
@@ -17,12 +18,21 @@ double dBin_vf;
 double binStart_vf;
 double binEnd_vf;
 
+/* Vertical Velocity */
 double min_wp = DBL_MAX;
 double mean_wp = 0.;
 double max_wp = -DBL_MAX;
 double dBin_wp;
 double binStart_wp;
 double binEnd_wp;
+
+/* Kinetic Energy */
+double min_ke = 0.;
+double mean_ke = 0.;
+double max_ke = -DBL_MAX;
+double dBin_ke;
+double binStart_ke;
+double binEnd_ke;
 
 int main(int argc, char *argv[]) 
 {
@@ -51,8 +61,10 @@ int main(int argc, char *argv[])
   // Find min and max and set up bins
   minmax(&min_vf, &max_vf, volume_fraction);
   minmax(&min_wp, &max_wp, part_w);
+  minmax(&min_ke, &max_ke, part_ke);
   bin_init(min_vf, max_vf, &dBin_vf, &binStart_vf, &binEnd_vf);
   bin_init(min_wp, max_wp, &dBin_wp, &binStart_wp, &binEnd_wp);
+  bin_init(min_ke, max_ke, &dBin_ke, &binStart_ke, &binEnd_ke);
 
   #ifdef DEBUG
     printf("  Bin Start (vf) = %lf\n", binStart_vf);
@@ -61,6 +73,11 @@ int main(int argc, char *argv[])
     printf("  Max (vf) = %lf\n", max_vf);
     printf("  Bin End (vf) = %lf\n", binEnd_vf);
   #endif
+    printf("  Bin Start (ke) = %lf\n", binStart_ke);
+    printf("  Min (ke) = %lf\n", min_ke);
+    printf("  dBin (ke) = %lf\n", dBin_ke);
+    printf("  Max (ke) = %lf\n", max_ke);
+    printf("  Bin End (ke) = %lf\n", binEnd_ke);
 
   // normalization for means
   double norm = 1./(dom.Gcc.s3 * nFiles);
@@ -101,6 +118,13 @@ int main(int argc, char *argv[])
 
       /* Bivariate */
       bihistogram_vf_wp[ind_wp + (nBins + 2)*ind_vf]++;
+
+      /* Kinetic Energy */
+      mean_ke += norm*part_ke[cc];
+      ind = (part_ke[cc] - binStart_ke)/dBin_ke;
+      ind = ind*(ind >= 0);         
+      ind = ind*(ind <= (nBins + 1)) + (nBins + 1)*(ind > (nBins + 1));
+      histogram_ke[ind]++;
     }
 
     // keep track of min max mean std for ALL files?

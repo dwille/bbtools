@@ -57,8 +57,10 @@ extern int nBins;
 extern int nparts;
 extern double *volume_fraction;
 extern double *part_w;
+extern double *part_ke;
 extern int *histogram_vf;
 extern int *histogram_wp;
+extern int *histogram_ke;
 extern int *bihistogram_vf_wp;
 
 // struct init

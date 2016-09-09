@@ -17,8 +17,10 @@ dom_struct dom;
 
 double *volume_fraction;
 double *part_w;
+double *part_ke;
 int *histogram_vf;
 int *histogram_wp;
+int *histogram_ke;
 int *bihistogram_vf_wp;
 
 // Set up directory structure
@@ -306,16 +308,20 @@ void domain_init(void)
   // Set up variables
   volume_fraction = (double*) malloc(dom.Gcc.s3 * sizeof(double));
   part_w = (double*) malloc(dom.Gcc.s3 * sizeof(double));
+  part_ke = (double*) malloc(dom.Gcc.s3 * sizeof(double));
   for (int i = 0; i < dom.Gcc.s3; i++) {
     volume_fraction[i] = 0.;
     part_w[i] = 0.;
+    part_ke[i] = 0.;
   }
   histogram_vf = (int*) malloc((nBins + 2) * sizeof(int));
   histogram_wp = (int*) malloc((nBins + 2) * sizeof(int));
+  histogram_ke = (int*) malloc((nBins + 2) * sizeof(int));
   bihistogram_vf_wp = (int*) malloc((nBins + 2)*(nBins + 2) * sizeof(int));
   for (int i = 0; i < (nBins+2); i++) {
     histogram_vf[i] = 0;
     histogram_wp[i] = 0;
+    histogram_ke[i] = 0;
     for (int j = 0; j < (nBins+2); j++) {
       bihistogram_vf_wp[j + (nBins + 2)*i] = 0; 
     }
@@ -359,6 +365,8 @@ void cgns_fill(void)
     range_max, volume_fraction);
   cg_field_read(fn,bn,zn,sn, "VelocityZ Real", RealDouble, range_min, 
     range_max, part_w);
+  cg_field_read(fn,bn,zn,zn, "Kinetic Energy Real", RealDouble, range_min, 
+    range_max, part_ke);
 
   cg_close(fn);
 }
@@ -430,6 +438,8 @@ void write_field(void)
     binStart_vf, min_vf, dBin_vf, max_vf, binEnd_vf, mean_vf);
   fprintf(file, "part_wp %lf %lf %lf %lf %lf %lf\n", 
     binStart_wp, min_wp, dBin_wp, max_wp, binEnd_wp, mean_wp);
+  fprintf(file, "part_ke %lf %lf %lf %lf %lf %lf\n", 
+    binStart_ke, min_ke, dBin_ke, max_ke, binEnd_ke, mean_ke);
 
   fclose(file);
 
@@ -446,6 +456,14 @@ void write_field(void)
   file = fopen(fname, "w");
   for (int c = 0; c < (nBins + 2); c++) {
     fprintf(file, "%d ", histogram_wp[c]);
+  }
+  fclose(file);
+
+  /* KE Counts */
+  sprintf(fname, "%s/%s/%s", ANALYSIS_DIR, DATA_DIR, "part_ke_hist");
+  file = fopen(fname, "w");
+  for (int c = 0; c < (nBins + 2); c++) {
+    fprintf(file, "%d ", histogram_ke[c]);
   }
   fclose(file);
 
@@ -478,8 +496,12 @@ void free_vars(void)
 
   free(volume_fraction);
   free(histogram_vf);
+
   free(part_w);
   free(histogram_wp);
+
+  free(part_ke);
+  free(histogram_ke);
   
   free(bihistogram_vf_wp);
 }

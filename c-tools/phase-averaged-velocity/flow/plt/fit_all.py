@@ -91,11 +91,26 @@ kerrs = [k20_err, k33_err, k40_err, k50_err]
 n_curr = [n20, n33, n40, n50]
 nerrs = [n20_err, n33_err, n40_err, n50_err]
 
-#print "   2.0   3.3   4.0   5.0"
-#print "n  %.2f  %.2f  %.2f  %.2f" % (n20,n33,n40,n50)
-#print "ne %.2f  %.2f  %.2f  %.2f" % (n20_err,n33_err,n40_err,n50_err)
-#print "k  %.2f  %.2f  %.2f  %.2f" % (k20,k33,k40,k50)
-#print "ke %.2f  %.2f  %.2f  %.2f" % (k20_err,k33_err,k40_err,k50_err)
+print "Error on coefficients"
+print "   2.0   3.3   4.0   5.0"
+print "n  %.2f  %.2f  %.2f  %.2f" % (n20,n33,n40,n50)
+print "ne %.2f  %.2f  %.2f  %.2f" % (n20_err,n33_err,n40_err,n50_err)
+print "k  %.2f  %.2f  %.2f  %.2f" % (k20,k33,k40,k50)
+print "ke %.2f  %.2f  %.2f  %.2f" % (k20_err,k33_err,k40_err,k50_err)
+print ""
+print "Error on wavespeed"
+print "k = k + k', n = n + n', c = c + c'"
+print "Thus (c + c')/c = (k+k')/k (n+n')/n (1-phi)^n' "
+print "              2.0   3.3   4.0   5.0"
+phi = np.array([0.087, 0.175, 0.262, 0.349])
+p20 = (1. + n20_err/n20)*(1. + k20_err/k20)*(1-phi)**(+n20_err)
+p33 = (1. + n33_err/n33)*(1. + k33_err/k33)*(1-phi)**(+n33_err)
+p40 = (1. + n40_err/n40)*(1. + k40_err/k40)*(1-phi)**(+n40_err)
+p50 = (1. + n50_err/n50)*(1. + k50_err/k50)*(1-phi)**(+n50_err)
+print "phi = 0.087   %.3f  %.3f  %.3f  %.3f" % (p20[0], p20[1], p20[2], p20[3])
+print "phi = 0.175   %.3f  %.3f  %.3f  %.3f" % (p33[0], p33[1], p33[2], p33[3])
+print "phi = 0.262   %.3f  %.3f  %.3f  %.3f" % (p40[0], p40[1], p40[2], p40[3])
+print "phi = 0.349   %.3f  %.3f  %.3f  %.3f" % (p50[0], p50[1], p50[2], p50[3])
 
 # R-Z relations -- n coefficient
 Ret = d*termVel/nu
@@ -221,12 +236,12 @@ ax1.set_ylabel(r'$w_f / w_t$', fontsize=14)
 lText = [r'$\rho^* = 2.0$', r'$\rho^* = 3.3$', 
          r'$\rho^* = 4.0$', r'$\rho^* = 5.0$']
 
-h1 = mlines.Line2D([],[], linestyle=':', color=bl, marker='*', label=lText[0])
-h2 = mlines.Line2D([],[], linestyle='-.', color=gr, marker='s', label=lText[1])
-h3 = mlines.Line2D([],[], linestyle='-', color=re, marker='o', label=lText[2])
-h4 = mlines.Line2D([],[], linestyle='--', color=cy, marker='^', label=lText[3])
-ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
-  mode="expand", ncol=2, borderaxespad=0)
+#h1 = mlines.Line2D([],[], linestyle=':', color=bl, marker='*', label=lText[0])
+#h2 = mlines.Line2D([],[], linestyle='-.', color=gr, marker='s', label=lText[1])
+#h3 = mlines.Line2D([],[], linestyle='-', color=re, marker='o', label=lText[2])
+#h4 = mlines.Line2D([],[], linestyle='--', color=cy, marker='^', label=lText[3])
+#ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
+#  mode="expand", ncol=2, borderaxespad=0)
 
 ax1.grid(True)
 
