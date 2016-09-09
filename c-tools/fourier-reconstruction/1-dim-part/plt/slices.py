@@ -282,7 +282,7 @@ dx1.set_ylim([np.min(evalZ), np.max(evalZ)])
 dx1.set_xlabel(r'$t\ [\mathrm{s}]$', fontsize=16)
 dx1.set_ylabel(r'$z\ [\mathrm{mm}]$',rotation=0, fontsize=16)
 dx1.yaxis.set_label_coords(labelx, 0.5)
-dx1.xaxis.set_ticklabels([])
+#dx1.xaxis.set_ticklabels([])
 
 # xcorr of two slices
 dx2 = crossCorrFig.add_subplot(gs[1,:])
@@ -292,10 +292,12 @@ dx2.plot(time, vfCrossCorrSlice, 'k-', linewidth=2)
 
 dx2.set_xlim([0, xEnd])
 #dx2.set_ylim([-0.20, 0.4])
-dx2.set_ylabel(r'$\langle \phi(z, t) \phi(z + \Delta z, t + \Delta t)\rangle$', fontsize=16)
+#dx2.set_ylabel(r'$\langle \phi(z, t) \phi(z + \Delta z, t + \Delta t)\rangle$', fontsize=16)
+dx2.set_ylabel(r'$(\phi(z_1,t) \ast \phi(z_2,t))(\Delta t)$', fontsize=16)
 dx2.yaxis.set_label_coords(labelx, 0.5)
 #dx2.set_yticks([-0.20, 0.0, 0.2, 0.4])
-dx2.xaxis.set_ticklabels([])
+dx2.set_xlabel(r'$\Delta t\ [\mathrm{s}]$', fontsize=16)
+#dx2.xaxis.set_ticklabels([])
 
 # xcorr of all slices
 dx3 = crossCorrFig.add_subplot(gs[2,:])

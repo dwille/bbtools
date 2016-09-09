@@ -11,8 +11,7 @@ print ""
 (partR, simdir, tstart) = simParams(sys)
 
 # Setup directory structures
-#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
-(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)

@@ -34,8 +34,6 @@ for zz in np.arange(0,nz):
   maximaLoc = (np.diff(np.sign(np.diff(vfCrossCorr[zz,:]))) < 0).nonzero()[0] + 1
   # maximum values
   maxima = vfCrossCorr[zz,maximaLoc]
-  # maximum indices
-  maxInd = np.argmax(maxima)
 
   if np.size(maximaLoc) == 0:
     vfFirstMaxima[zz,0] = np.nan
@@ -122,17 +120,17 @@ plt.colorbar()
 plt.plot(tau, zeta, 'k-')
 
 plt.plot(tau, yFit, 'w--')
-cTxtString = r"$dz = %.4f\Delta t$" % p
+cTxtString = r"$dz = %.1f\Delta t$" % p
 plt.text(time[len(time)/2], dz[len(dz)/2], cTxtString, fontsize=12)
 
-plt.xlabel(r"$\tau_j\ [s]$")
+plt.xlabel(r"$\Delta t\ [s]$")
 plt.xlim([0, time[-1]])
 plt.xticks(np.floor(np.arange(time[0], time[-1], 1)))
 
-plt.ylabel(r"$\Delta z_j\ [mm]$", rotation=0, labelpad=20)
+plt.ylabel(r"$\Delta z\ [mm]$", rotation=0, labelpad=20)
 plt.ylim([dz[0], dz[-1]])
 
-plt.title(r"$R(\Delta z_j, \tau_j)$")
+#plt.title(r"$\langle \Delta z, \Delta t \rangle$")
 
 imgname = imgdir + "avg-crosscorr-spacetime-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')

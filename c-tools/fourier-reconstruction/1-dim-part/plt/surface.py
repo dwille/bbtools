@@ -48,7 +48,7 @@ maxDiff = np.max([upperDiff, lowerDiff])
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
   vmin=avgVolumeFraction + maxDiff, vmax=avgVolumeFraction - maxDiff,
-  cmap='seismic')
+  cmap='coolwarm')
 
 cbar = plt.colorbar()
 #plt.title(r'$Volume\ Fraction$')
@@ -62,6 +62,9 @@ plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
 imgname = imgdir + "volume-fraction"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+print "I'm lazy, let's exit here. (line 66)"
+sys.exit()
 
 # ## NUMBER DENSITY ##
 #nDensFile = datadir + "number-density"
@@ -179,32 +182,34 @@ plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
 imgname = imgdir + "part-w"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-# 
-# ## Kinetic Energy ##
-# keFig = plt.figure()
-# 
-# keFile = datadir + "part-kinetic-energy"
-# ke = np.genfromtxt(keFile).T
-# 
-# maxVal = np.ceil(1000*np.amax(ke))/1000
-# maxVal = np.max((np.abs(minVal), np.abs(maxVal)))
-# maxVal = np.amax(ke)
-# 
-# plt.imshow(ke, origin="lower", aspect="auto", interpolation="none",
-#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-#   vmin=0, vmax=maxVal)
-# 
-# cbar = plt.colorbar()
-# plt.title(r"$\kappa\ [mm^2/ms^2]$")
-# plt.xlabel(r"$t\ [s]$")
-# plt.ylabel(r'$z\ [mm]$')
-# 
-# xEnd = time[-1]
-# plt.xlim([0, xEnd])
-# plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
-# 
-# imgname = imgdir + "part-ke"
-# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-# #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+ 
+## Kinetic Energy ##
+keFig = plt.figure(figsize=(3.25,1.625))
+
+keFile = datadir + "part-kinetic-energy"
+ke = np.genfromtxt(keFile).T
+
+#ke = np.multiply(ke, vFrac)
+
+maxVal = np.ceil(1000*np.amax(ke))/1000
+maxVal = np.max((np.abs(minVal), np.abs(maxVal)))
+maxVal = np.amax(ke)
+
+plt.imshow(ke, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+  vmin=0, vmax=maxVal, cmap="viridis")
+
+cbar = plt.colorbar()
+#plt.title(r"$\kappa\ [mm^2/ms^2]$")
+plt.xlabel(r"$t\ [s]$")
+plt.ylabel(r'$z\ [mm]$')
+
+xEnd = time[-1]
+plt.xlim([0, xEnd])
+plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
+
+imgname = imgdir + "part-ke"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 print "      Done!"

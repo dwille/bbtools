@@ -112,14 +112,17 @@ pu= "#8172B2"
 go= "#CCB974"
 cy= "#64B5CD"
 
+# Reynolds prefactor
+Rep = d/nu
 # Data
-ax1.plot(phi, rho20_c, '*', color=bl, markersize=7)
-ax1.plot(phi, rho33_c, 's', color=gr, markersize=7)
-ax1.plot(phi[0:3], rho40_c, 'o', color=re, markersize=7)
-ax1.plot(phi[0:2], rho50_c, '^', color=cy, markersize=7)
+
+ax1.plot(phi, Rep*rho20_c, '*', color=bl, markersize=7)
+ax1.plot(phi, Rep*rho33_c, 's', color=gr, markersize=7)
+ax1.plot(phi[0:3], Rep*rho40_c, 'o', color=re, markersize=7)
+ax1.plot(phi[0:2], Rep*rho50_c, '^', color=cy, markersize=7)
 
 ax1.set_xlabel(r'$\phi$')
-ax1.set_ylabel(r'$c$')
+ax1.set_ylabel(r'$2ac/\nu$')
 #ax1.set_ylabel(r'$c/w_t$')
 ax1.set_xlim([0,0.5])
 ax1.grid(True)
@@ -133,14 +136,14 @@ h1 = mlines.Line2D([],[], linestyle=':', color=bl, marker='*', label=lText[0])
 h2 = mlines.Line2D([],[], linestyle='-.', color=gr, marker='s', label=lText[1])
 h3 = mlines.Line2D([],[], linestyle='-', color=re, marker='o', label=lText[2])
 h4 = mlines.Line2D([],[], linestyle='--', color=cy, marker='^', label=lText[3])
-ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
-  mode="expand", ncol=2, borderaxespad=0)
+#ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
+  #mode="expand", ncol=2, borderaxespad=0)
 
 # Wallis correlations
-ax1.plot(phiEval, wallis_speed[:,0], ':', color=bl, zorder=1)
-ax1.plot(phiEval, wallis_speed[:,1], '-.', color=gr, zorder=1)
-ax1.plot(phiEval, wallis_speed[:,2], '-', color=re, zorder=1)
-ax1.plot(phiEval, wallis_speed[:,3], '--', color=cy, zorder=1)
+ax1.plot(phiEval, Rep*wallis_speed[:,0], ':', color=bl, zorder=1)
+ax1.plot(phiEval, Rep*wallis_speed[:,1], '-.', color=gr, zorder=1)
+ax1.plot(phiEval, Rep*wallis_speed[:,2], '-', color=re, zorder=1)
+ax1.plot(phiEval, Rep*wallis_speed[:,3], '--', color=cy, zorder=1)
 
 
 imgname = imgdir + "wavespeed"

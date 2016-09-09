@@ -27,7 +27,7 @@ def simParams(sys):
   return (partR, simdir, tstart)
 
 # Setup up directory paths
-def directoryStructureMarcc(simdir):
+def directoryStructure(simdir):
   home = os.path.expanduser("~")
   root = home + "/scratch/triply_per/"
   simdir = simdir + 'analysis/fourier-reconstruction/1-dim-part/'
