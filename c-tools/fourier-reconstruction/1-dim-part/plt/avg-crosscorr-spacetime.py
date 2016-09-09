@@ -22,12 +22,13 @@ printSimulationData(partR, root, simdir, datadir)
 
 # Find output data -- each column is a different time
 vFracFile = datadir + "volume-fraction"
-vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
+vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]  # ignore time before tstart
 
 ## Crosscorrelation of volume fraction ##
 # each of (0,nz,nt) is a correlation at a starting zs
 # we will average these over (nz,:,:)
 vfCrossCorr = np.zeros((nz,nt))
+
 temp = np.zeros((nz,nt))
 for zs in np.arange(0,nz):
   for zz, zval in enumerate(evalZ):

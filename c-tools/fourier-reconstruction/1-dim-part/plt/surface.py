@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from setup import *
 os.system('clear')
+from matplotlib.ticker import MultipleLocator
 
 print ""
 print " ---- Fourier Reconstruction Plotting Utility ---- "
@@ -9,9 +10,12 @@ print ""
 
 # Setup simulation parameters
 (partR, simdir, tstart) = simParams(sys)
+nparts = int(simdir.partition('/')[0])
+rho = float(simdir.partition('/')[2][-4:-1])
+nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
-(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
@@ -24,11 +28,21 @@ vFracFile = datadir + "volume-fraction"
 vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
 
 # get avg volume fraction
-domX = 42
-domY = 42
-domZ = 126
-nparts = int(simdir.partition('/')[0])
+domX = 42 # XXX
+domY = 42 # XXX
+domZ = 126 # XXX
 avgVolumeFraction = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
+
+# get phase averaged data
+phaseVelDir = root + "simdata/phaseAveragedFluidVel"
+phaseVelData = np.genfromtxt(phaseVelDir, skip_header=1)
+
+for nn in np.arange(0,np.size(phaseVelData, 0)):
+  currN = phaseVelData[nn,0]
+  currRho = phaseVelData[nn,1]
+  if (nparts == currN) & (rho == currRho):
+    phaseVel = phaseVelData[nn,2]
+phaseVel *= 1000  # mm / ms -> mm / s
 
 # Plot
 vFracFig = plt.figure(figsize=(3.25,1.625))
@@ -38,6 +52,7 @@ maxVal = np.ceil(100*np.amax(vFrac))/100
 upperDiff = maxVal - avgVolumeFraction
 lowerDiff = avgVolumeFraction - minVal
 maxDiff = np.max([upperDiff, lowerDiff])
+maxDiff = np.floor(maxDiff * 100.) / 100.
 
 # Highlight Fluid
 #vFrac[vFrac >= avgVolumeFraction] = avgVolumeFraction
@@ -45,23 +60,36 @@ maxDiff = np.max([upperDiff, lowerDiff])
 # Highight Solid
 #vFrac[vFrac <= avgVolumeFraction] = avgVolumeFraction
 
+#tau = (2.*partR) / phaseVel       ## mm / (mm/s) = s
+# Non-dimensionalize
+evalZ /= (2.*partR)               ## mm / mm
+tau = (2.*partR)*(2.*partR)/nu    ## mm^2/(mm^2/ms) = ms
+tau /= 1000                       ## ms -> s
+time /= tau                       ## s / s
+
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=avgVolumeFraction + maxDiff, vmax=avgVolumeFraction - maxDiff,
+  vmin=avgVolumeFraction - maxDiff, vmax=avgVolumeFraction + maxDiff,
   cmap='coolwarm')
 
 cbar = plt.colorbar()
-#plt.title(r'$Volume\ Fraction$')
-plt.xlabel(r"$t\ [s]$")
-plt.ylabel(r'$z\ [mm]$')
+plt.xlabel(r"$\nu t/(2a)^2$")
+plt.ylabel(r'$z/2a$', rotation=90)
+plt.gca().yaxis.set_label_coords(-0.15, 0.5)
 
 xEnd = time[-1]
+xEnd = 10.*np.floor(xEnd / 10.)
+xEnd = 14 # XXX
 plt.xlim([0, xEnd])
-plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
+plt.gca().xaxis.set_major_locator(MultipleLocator(2))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
+plt.gca().yaxis.set_major_locator(MultipleLocator(5))
+plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
 
 imgname = imgdir + "volume-fraction"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
 print "I'm lazy, let's exit here. (line 66)"
 sys.exit()

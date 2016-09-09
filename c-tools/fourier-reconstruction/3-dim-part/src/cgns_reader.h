@@ -85,6 +85,7 @@ extern fftw_complex *chi;
 extern fftw_complex *up_field;             // for taking FFT, size(dom.Gcc.s3)
 extern fftw_complex *vp_field;
 extern fftw_complex *wp_field;
+extern fftw_complex *ke_field;
 // extern fftw_complex *uop_field;
 // extern fftw_complex *vop_field;
 // extern fftw_complex *wop_field;

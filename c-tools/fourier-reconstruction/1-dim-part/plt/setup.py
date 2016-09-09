@@ -10,12 +10,12 @@ import scipy.fftpack as scifft
 # Define simulation parameters, get simulation directory and startin time
 def simParams(sys):
   # Parameters
-  partR = 2.1
+  partR = 2.1 # XXX
 
   # Parse command line args
   if len(sys.argv) > 2:
     simdir = sys.argv[1]
-    tstart = float(sys.argv[2]) / 1000
+    tstart = float(sys.argv[2]) / 1000 ## CONVERT FROM MS TO S!!!
   else:
     simdir = raw_input("      Simulation directory: ")
     tstart = float(raw_input("      Starting time [ms]: ")) / 1000
