@@ -67,6 +67,7 @@ int main(int argc, char *argv[])
     fftw_execute_dft(to_spectral, up_field, up_field);
     fftw_execute_dft(to_spectral, vp_field, vp_field);
     fftw_execute_dft(to_spectral, wp_field, wp_field);
+    fftw_execute_dft(to_spectral, ke_field, ke_field);
 
     // Debug tests
     //test_fill();
@@ -80,6 +81,7 @@ int main(int argc, char *argv[])
     fftw_execute_dft(to_cartesian, up_field, up_field);
     fftw_execute_dft(to_cartesian, vp_field, vp_field);
     fftw_execute_dft(to_cartesian, wp_field, wp_field);
+    fftw_execute_dft(to_cartesian, ke_field, ke_field);
 
     // Normalize
     normalize();
@@ -117,6 +119,12 @@ void zero_coefficients()
   int cc; 
   double cesaroX, cesaroY, cesaroZ;
 
+  /* TODO:
+   * Create zeroed array, get rid of triple for loop by only looping
+   * over indices we know need to be filled -- O((2n)^3) rather than
+   * order N^3
+   */
+
   // Zero coefficients higher than we'd like, also divide by N3
   for (int nn = 0; nn < dom.zn; nn++) {
     cesaroZ = (1. - nn/(orderZ + 1.))*(nn <= orderZ)
@@ -138,11 +146,13 @@ void zero_coefficients()
         up_field[cc][0] *= iN3*cesaroX*cesaroY*cesaroZ;
         vp_field[cc][0] *= iN3*cesaroX*cesaroY*cesaroZ;
         wp_field[cc][0] *= iN3*cesaroX*cesaroY*cesaroZ;
+        ke_field[cc][0] *= iN3*cesaroX*cesaroY*cesaroZ;
 
         chi[cc][1] *= iN3*cesaroX*cesaroY*cesaroZ;
         up_field[cc][1] *= iN3*cesaroX*cesaroY*cesaroZ;
         vp_field[cc][1] *= iN3*cesaroX*cesaroY*cesaroZ;
         wp_field[cc][1] *= iN3*cesaroX*cesaroY*cesaroZ;
+        ke_field[cc][1] *= iN3*cesaroX*cesaroY*cesaroZ;
       }
     }
   }
@@ -159,11 +169,13 @@ void normalize()
         up_field[cc][0] /= chi[cc][0];
         vp_field[cc][0] /= chi[cc][0];
         wp_field[cc][0] /= chi[cc][0];
+        ke_field[cc][0] /= chi[cc][0];
 
         #ifdef DEBUG
           up_field[cc][1] /= chi[cc][1];
           vp_field[cc][1] /= chi[cc][1];
           wp_field[cc][1] /= chi[cc][1];
+          ke_field[cc][1] /= chi[cc][1];
         #endif
       }
     }

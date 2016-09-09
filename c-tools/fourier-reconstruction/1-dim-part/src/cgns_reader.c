@@ -553,8 +553,8 @@ void cgns_fill_parts(void)
 
   // Calculate kinetic energy
   for (int p = 0; p < nparts; p++) {
-    //ke[p] = 0.5*(up[p]*up[p] + vp[p]*vp[p] + wp[p]*wp[p]);
-    ke[p] = 0.5*wp[p]*wp[p];
+    ke[p] = 0.5*(up[p]*up[p] + vp[p]*vp[p] + wp[p]*wp[p]);
+    //ke[p] = 0.5*wp[p]*wp[p];
   }
 
   free(x);

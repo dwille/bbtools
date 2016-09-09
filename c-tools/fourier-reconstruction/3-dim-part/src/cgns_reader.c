@@ -34,6 +34,7 @@ fftw_complex *chi;          // indicator function
 fftw_complex *up_field;     // for taking FFT, size(dom.Gcc.s3)
 fftw_complex *vp_field;
 fftw_complex *wp_field;
+fftw_complex *ke_field;
 /* if decomposing total velocity
 fftw_complex *uop_field;
 fftw_complex *vop_field;
@@ -340,6 +341,7 @@ void domain_init(void)
   up_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
   vp_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
   wp_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
+  ke_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
   // uop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
   // vop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
   // wop_field = (fftw_complex*) fftw_malloc(dom.Gcc.s3 * sizeof(fftw_complex));
@@ -366,6 +368,7 @@ void domain_init(void)
     up_field[ii][0] = 0.;
     vp_field[ii][0] = 0.;
     wp_field[ii][0] = 0.;
+    ke_field[ii][0] = 0.;
     //uop_field[ii][0] = 0.;
     //vop_field[ii][0] = 0.;
     //wop_field[ii][0] = 0.;
@@ -375,6 +378,7 @@ void domain_init(void)
     up_field[ii][1] = 0.;
     vp_field[ii][1] = 0.;
     wp_field[ii][1] = 0.;
+    ke_field[ii][1] = 0.;
     //uop_field[ii][1] = 0.;
     //vop_field[ii][1] = 0.;
     //wop_field[ii][1] = 0.;
@@ -509,28 +513,32 @@ void cgns_fill_flow(void)
         up_field[cc][0] = uf[cc]*((double) (pp > -1));
         vp_field[cc][0] = vf[cc]*((double) (pp > -1));
         wp_field[cc][0] = wf[cc]*((double) (pp > -1));
-
-        /* For setting up fields from particle data
-        // Set translational velocity fields over entire particle
-        up_field[cc][0] = part[pp].u * (pp > -1);
-        vp_field[cc][0] = part[pp].v * (pp > -1);
-        wp_field[cc][0] = part[pp].w * (pp > -1);
-
-        // Set rotational velocity based on rigid body rotation
-        rx = xc - part[pp].x;
-        ry = yc - part[pp].y;
-        rz = zc - part[pp].z;
-
-        uop_field[cc] = (part[pp].oy * rz - part[pp].oz * ry) * (pp > -1);
-        vop_field[cc] =-(part[pp].ox * rz - part[pp].oz * rx) * (pp > -1);
-        wop_field[cc] = (part[pp].ox * ry - part[pp].oy * rx) * (pp > -1);
-        */
-
+        ke_field[cc][0] = 0.5*sqrt(up_field[cc][0]*up_field[cc][0] + 
+                                   vp_field[cc][0]*vp_field[cc][0] + 
+                                   wp_field[cc][0]*wp_field[cc][0]);
         // Take care of all imaginary parts
         chi[cc][1] = 0.;
         up_field[cc][1] = 0.;
         vp_field[cc][1] = 0.;
         wp_field[cc][1] = 0.;
+        ke_field[cc][1] = 0.;
+
+        /* For setting up fields from particle data
+          // Set translational velocity fields over entire particle
+          up_field[cc][0] = part[pp].u * (pp > -1);
+          vp_field[cc][0] = part[pp].v * (pp > -1);
+          wp_field[cc][0] = part[pp].w * (pp > -1);
+
+          // Set rotational velocity based on rigid body rotation
+          rx = xc - part[pp].x;
+          ry = yc - part[pp].y;
+          rz = zc - part[pp].z;
+
+          uop_field[cc] = (part[pp].oy * rz - part[pp].oz * ry) * (pp > -1);
+          vop_field[cc] =-(part[pp].ox * rz - part[pp].oz * rx) * (pp > -1);
+          wop_field[cc] = (part[pp].ox * ry - part[pp].oy * rx) * (pp > -1);
+        */
+
         // uop_field[cc][1] = 0.;
         // vop_field[cc][1] = 0.;
         // wop_field[cc][1] = 0.;
@@ -770,6 +778,12 @@ void cgns_write_field(void)
   }
   cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ Real", real_out, &fn_real);
 
+  // KE
+  for (int i = 0; i < dom.Gcc.s3; i++) {
+    real_out[i] = ke_field[i][0];
+  }
+  cg_field_write(fn, bn, zn, sn, RealDouble, "Kinetic Energy Real", real_out, &fn_real);
+
   free(real_out);
 
   // Write imaginary
@@ -794,11 +808,17 @@ void cgns_write_field(void)
     }
     cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityY Imag", imag_out, &fn_imag);
 
-    // 2
+    // w
     for (int i = 0; i < dom.Gcc.s3; i++) {
       imag_out[i] = wp_field[i][1];
     }
     cg_field_write(fn, bn, zn, sn, RealDouble, "VelocityZ Imag", imag_out, &fn_imag);
+
+    // ke
+    for (int i = 0; i < dom.Gcc.s3; i++) {
+      imag_out[i] = ke_field[i][1];
+    }
+    cg_field_write(fn, bn, zn, sn, RealDouble, "Kinetic Energy Imag", imag_out, &fn_imag);
 
     free(imag_out);
   #endif
@@ -846,6 +866,7 @@ void free_vars(void)
   fftw_free(up_field);
   fftw_free(vp_field);
   fftw_free(wp_field);
+  fftw_free(ke_field);
   // fftw_free(uop_field);
   // fftw_free(vop_field);
   // fftw_free(wop_field);
