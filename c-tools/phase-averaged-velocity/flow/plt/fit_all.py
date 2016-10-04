@@ -143,7 +143,7 @@ ax2.set_ylabel(r"$\kappa$", rotation=0)
 ax2.yaxis.set_major_locator(MultipleLocator(.05))
 ax2.yaxis.set_minor_locator(MultipleLocator(.025))
 ax2.set_ylim([0.75, 1])
-ax2.yaxis.set_label_coords(-.35, 0.5)
+ax2.yaxis.set_label_coords(-.40, 0.5)
 
 #ax2.grid(True)
 ax2.annotate(r"$(a)$", xy=get_axis_limits(ax2))
@@ -178,7 +178,7 @@ ax1.set_ylim([2.5,5])
 ax1.yaxis.tick_right()
 ax1.yaxis.set_ticks_position("both")
 #ax1.yaxis.set_label_position("right")
-ax1.yaxis.set_label_coords(1.3, 0.5)
+ax1.yaxis.set_label_coords(1.35, 0.5)
 
 #ax1.grid(True)
 ax1.annotate(r"$(b)$", color="black", xy=get_axis_limits(ax1))
@@ -186,6 +186,7 @@ ax1.annotate(r"$(b)$", color="black", xy=get_axis_limits(ax1))
 imgname = imgdir + "nk-relations"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
 ##
 ## Evaluate relationship with RZ, GAD ##
@@ -218,10 +219,12 @@ ax1.plot(phi, wfwt_rho33, 's', color=gr, markersize=7)#, alpha=0.7)
 ax1.plot(phi, wfwt_rho40, 'o', color=re, markersize=7)#, alpha=0.7)
 ax1.plot(phi, wfwt_rho50, '^', color=cy, markersize=7)#, alpha=0.7)
 
-ax1.plot(phiEval, k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1)
-ax1.plot(phiEval, k33*(1-phiEval)**(n33-1),'-.', color=gr,  zorder=1)
-ax1.plot(phiEval, k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1)
-ax1.plot(phiEval, k50*(1-phiEval)**(n50-1),'--', color=cy,  zorder=1)
+ax1.plot(phiEval, k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1, 
+  linewidth=2, dashes=[2, 2])
+ax1.plot(phiEval, k33*(1-phiEval)**(n33-1),'-.', color=gr, zorder=1, 
+  linewidth=2, dashes=[6, 2, 2, 2])
+ax1.plot(phiEval, k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1, linewidth=2)
+ax1.plot(phiEval, k50*(1-phiEval)**(n50-1),'--', color=cy, zorder=1, linewidth=2)
 
 ax1.set_xlim([0, 0.4])
 #ax1.set_xticks([0, 0.1, 0.20, 0.30, 0.4])
@@ -231,7 +234,9 @@ ax1.set_xlabel(r"$\phi$")
 ax1.set_ylim([0.2, 0.8])
 ax1.yaxis.set_major_locator(MultipleLocator(0.2))
 ax1.yaxis.set_minor_locator(MultipleLocator(0.1))
-ax1.set_ylabel(r'$w_f / w_t$', fontsize=14)
+ax1.set_ylabel(r'$\frac{\langle w_f \rangle - \langle w_p \rangle}{w_t}$',
+  fontsize=14)
+ax1.yaxis.set_label_coords(-0.12, 0.5)
 
 lText = [r'$\rho^* = 2.0$', r'$\rho^* = 3.3$', 
          r'$\rho^* = 4.0$', r'$\rho^* = 5.0$']
@@ -252,10 +257,12 @@ plt.plot(phi,wfwt_rho33, 's', color=gr, markersize=7, alpha=0.7)
 plt.plot(phi,wfwt_rho40, 'o', color=re, markersize=7, alpha=0.7)
 plt.plot(phi,wfwt_rho50, '^', color=cy, markersize=7, alpha=0.7)
 
-plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1)
-plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.', color=gr, zorder=1)
-plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1)
-plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--', color=cy, zorder=1)
+plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':', color=bl, zorder=1,
+  linewidth=2, dashes=[2, 2])
+plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.', color=gr, zorder=1,
+  linewidth=2, dashes=[6, 2, 2, 2])
+plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-', color=re, zorder=1, linewidth=2)
+plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--', color=cy, zorder=1, linewidth=2)
 
 ax1.arrow(0.09, 0.69, 0.033, -0.185, head_width=0.01, head_length=0.03, 
   fc='k', ec='k')
@@ -272,10 +279,12 @@ plt.plot(phi,wfwt_rho33, 's', color=gr, markersize=7, alpha=0.7)
 plt.plot(phi,wfwt_rho40, 'o', color=re, markersize=7, alpha=0.7)
 plt.plot(phi,wfwt_rho50, '^', color=cy, markersize=7, alpha=0.7)
 
-plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':',color=bl, zorder=1)
-plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.',color=gr, zorder=1)
-plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-',color=re, zorder=1)
-plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--',color=cy, zorder=1)
+plt.plot(phiEval,k20*(1-phiEval)**(n20-1), ':',color=bl, zorder=1,
+  linewidth=2, dashes=[2, 2])
+plt.plot(phiEval,k33*(1-phiEval)**(n33-1),'-.',color=gr, zorder=1,
+  linewidth=2, dashes=[6, 2, 2, 2])
+plt.plot(phiEval,k40*(1-phiEval)**(n40-1), '-',color=re, zorder=1, linewidth=2)
+plt.plot(phiEval,k50*(1-phiEval)**(n50-1),'--',color=cy, zorder=1, linewidth=2)
 
 ax1.arrow(0.1825, 0.5825, 0.0425, 0.0125, head_width=0.01, head_length=0.02,
   fc='k', ec='k')
@@ -311,3 +320,4 @@ plt.yticks([0.56, 0.58])
 imgname = imgdir + "rz-comparison"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
