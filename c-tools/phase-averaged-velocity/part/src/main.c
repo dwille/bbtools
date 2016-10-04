@@ -35,8 +35,13 @@ int main(int argc, char *argv[])
   // Create output directory
   create_output();
 
-  // Loop over time, avg
+  // Loop over time, avg at each time step
+  // Also, keep track of average over all particles and time
+  double up_overall_mean = 0.;
+  double vp_overall_mean = 0.;
+  double wp_overall_mean = 0.;
   double inparts = 1./nparts;
+  double inFiles = 1./nFiles;
   for (tt = 0; tt < nFiles; tt++) {
     // Fill parts
     cgns_fill_parts();
@@ -55,6 +60,11 @@ int main(int argc, char *argv[])
     vpMean *= inparts;
     wpMean *= inparts;
 
+    // Keep track of mean over time
+    up_overall_mean += upMean;
+    vp_overall_mean += vpMean;
+    wp_overall_mean += wpMean;
+
     // Calculate standard dev
     upSdev = 0.;
     vpSdev = 0.;
@@ -72,6 +82,47 @@ int main(int argc, char *argv[])
     write_mean();
   }
 
+  // Normalize mean
+  up_overall_mean *= inFiles;
+  vp_overall_mean *= inFiles;
+  wp_overall_mean *= inFiles;
+
+  // Loop again, this time calculating variance
+  double vertical_var = 0;
+  double horizontal_var = 0;
+  for (tt = 0; tt < nFiles; tt++) {
+    // Fill parts
+    cgns_fill_parts();
+
+    // Loop over particles, add to variance
+    // vertical = sqrt( < sum [ ( w(n,t) - <w>_t )^2 ] >_t )
+    // horizont = sqrt( 0.5 * < sum [ (u(n,t) - <u>_t)^2 + 
+    //                                (v(n,t) - <v>_t)^2 ] >_t )
+    for (int pp = 0; pp < nparts; pp++) {
+      vertical_var += (wp[pp] - wp_overall_mean)*(wp[pp] - wp_overall_mean);
+      horizontal_var += (up[pp] - up_overall_mean)*(up[pp] - up_overall_mean) +
+                        (vp[pp] - vp_overall_mean)*(vp[pp] - vp_overall_mean);
+    }
+    // Variance
+    // horizontal
+
+  }
+  // Normalize mean
+  vertical_var *= inFiles * inparts;
+  horizontal_var *= 0.5 * inFiles * inparts;
+
+  vertical_var = sqrt(vertical_var);
+  horizontal_var = sqrt(horizontal_var);
+
+  // Print to stdout
+  printf("  Starting time = %lf\n", tStart);
+  if (floor(tStart) == 0) {
+    printf("  WARNING: Starting time set to %lf. If the simulation has a \n"
+           "    start up time, the variance will reflect this. Choose a \n"
+           "    steady-state time to avoid this issue\n", tStart);
+  }
+  printf("  Vertical variance = %lf\n", vertical_var);
+  printf("  Horizontal variance = %lf\n", horizontal_var);
    
   // Free and exit
   free_vars();

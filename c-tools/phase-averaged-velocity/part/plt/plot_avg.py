@@ -1,64 +1,27 @@
 #!/usr/bin/env python2
-import sys, os, csv
-import matplotlib
-#matplotlib.use('Agg')      ## marcc savefig
-matplotlib.use(u'Qt4Agg')  ## marcc plt.show
-#matplotlib.use(u'GTKAgg')  ## lucan plt.show
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy import signal
-import scipy.fftpack as scifft
+from setup import *
 
 os.system('clear')
-
-
-#print ""
-#print " ---- Phase-Averaged Particle Velocity Plotting Utility ---- "
-#print ""
+print ""
+print " ---- Phase-Averaged Particle Velocity Plotting Utility ---- "
+print ""
 
 # Parse command line args and set up directory structure
-if len(sys.argv) > 2:
-  simdir = sys.argv[1]
-  tstart = float(sys.argv[2])
-else:
-  simdir = raw_input("      Simulation directory: ")
-  tstart = float(raw_input("      Starting time [ms]: "))
-  # TODO if tstart is -1 or empty, choose statsimtime
-
-if not simdir.endswith('/'):
-  simdir = simdir + '/'
-
-home = os.path.expanduser("~")
-root = home + "/scratch/triply_per/" + simdir
-
-fdatadir = root + simdir + "flow_vel/data/"
-pdatadir = root + simdir + "part_vel/data/"
+(partR, simdir, tstart) = simParams(sys)
+(root, simdir, pdatadir, fdatadir, imgdir) = directoryStructure(simdir)
+printSimulationData(partR, root, simdir, pdatadir, fdatadir)
 
 # Find nparts and rho
 nparts = int(simdir.partition('/')[0])
-rho = float(simdir.partition('/')[2][-4:-1])
-
-# Print simulation data
-#print "      Sim root directory set to: " + root
-#print "      Sim directory set to: " + simdir
+rho = float(simdir.partition('/')[2][3:6])
 
 # Set up output file paths
-fdatadir = root + "flow_vel/data/"
 fdataFile = fdatadir + "phaseAveragedFlowVel"
-pdatadir = root + "part_vel/data/"
 pdataFile = pdatadir + "particleAvgVel"
-termFile = home + "/scratch/triply_per/simdata/singlePartSedi"
+termFile = root + "simdata/singlePartSedi"
 
-# Check if datadir exists so we don't go creating extra dirs
-if not os.path.exists(fdatadir):
-  print "      " + fdatadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-elif not os.path.exists(pdatadir):
-  print "      " + pdatadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-elif not os.path.exists(termFile):
+# Check if terminal vel file exists
+if not os.path.exists(termFile):
   print "      " + termFile + " does not exist. Exiting..."
   print ""
   sys.exit()
@@ -93,24 +56,20 @@ elif rho == 5.0:
 
 # Interpolate fluid/particle times together
 commonMaxTime = np.min([ptime[-1], ftime[-1]])
-time = np.arange(0., commonMaxTime + 0.00001, 2.)
-#tIn = float(raw_input('Choose a time where you want to take a mean from: '))
-tIn = tstart
-ind = np.argwhere(time >= tIn)
-#print "Time averaged over %f to %f" % (time[ind[0]], time[-1])
-
+dt = np.mean(np.diff(ptime))
+time = np.arange(0., commonMaxTime + 0.00001, dt)
 
 up = np.interp(time, ptime, up)
 vp = np.interp(time, ptime, vp)
 wp = np.interp(time, ptime, wp)
 
-upSdev= np.interp(time, ptime, upSdev)
-vpSdev= np.interp(time, ptime, vpSdev)
-wpSdev= np.interp(time, ptime, wpSdev)
-
 uf = np.interp(time, ftime, uf)
 vf = np.interp(time, ftime, vf)
 wf = np.interp(time, ftime, wf)
+
+upSdev= np.interp(time, ptime, upSdev)
+vpSdev= np.interp(time, ptime, vpSdev)
+wpSdev= np.interp(time, ptime, wpSdev)
 
 # Relative velocity
 urel = uf - up
@@ -130,46 +89,51 @@ ufluct_term = upSdev / termVel
 vfluct_term = vpSdev / termVel
 wfluct_term = wpSdev / termVel
 
-# particle / velocity ratio
-print ""
-print "max(wp/wf) = %.5f" % np.max(wp[ind]/wf[ind])
-print ""
+# For averaging velocities over time
+#tIn = float(raw_input('Choose a time where you want to take a mean from: '))
+tIn = tstart
+ind = np.argwhere(time >= tIn)
+#print "Time averaged over %f to %f" % (time[ind[0]], time[-1])
+
+# particle / fluid velocity ratio
+# print ""
+# print "max(wp/wf) = %.5f" % np.max(wp[ind]/wf[ind])
+# print ""
+
+# Plot urel
+uFig = plt.figure()
+
+# urel
+ax1 = uFig.add_subplot(111)
+ax1.plot(time, urel, 'k-', linewidth=2)
+ax1.plot(time, vrel, 'b-', linewidth=2)
+ax1.plot(time, wrel, 'r-', linewidth=2)
+
+ax1.set_ylabel(r'$\langle u_i^f \rangle - \langle u_i^p \rangle\ (m/s)$')
+ax1.set_xlabel(r'$t\ (s)$')
+
+ax1.legend([r"$u$", r"$v$", r"$w$"])
 
 
-# Plot up,uf separately
-phaseVel = plt.figure(figsize=(12,8))
-phaseVel.suptitle('Particle Averaged Relative Vel', fontsize=20)
+#plt.show()
+imgname = imgdir + "relative_vel"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+sys.exit()
 
-# u
-uAx = phaseVel.add_subplot(311)
-uAx.plot(time, urel, 'k-', linewidth=2)
 #uAx.plot(time, up, 'k-', linewidth=2)
 #uAx.plot(time, up + upSdev , 'k--', linewidth=2)
 #uAx.plot(time, up - upSdev , 'k--', linewidth=2)
 #uAx.plot(time, uf, 'b-', linewidth=2)
-uAx.set_ylabel('u [m/s]')
-
-# v
-vAx = phaseVel.add_subplot(312)
-vAx.plot(time, vrel, 'k-', linewidth=2)
 #vAx.plot(time, vp, 'k-', linewidth=2)
 #vAx.plot(time, vp + vpSdev , 'k--', linewidth=2)
 #vAx.plot(time, vp - vpSdev , 'k--', linewidth=2)
 #vAx.plot(time, vf, 'b-', linewidth=2)
-vAx.set_ylabel('v [m/s]')
-
-# w
-wAx = phaseVel.add_subplot(313)
-wAx.plot(time, wrel, 'k-', linewidth=2)
 #wAx.plot(time, wp, 'k-', linewidth=2)
 #wAx.plot([time[0], time[-1]], [0,0], 'k-', linewidth=2)
 #wAx.plot(time, wp + wpSdev , 'k--', linewidth=2)
 #wAx.plot(time, wp - wpSdev , 'k--', linewidth=2)
 #wAx.plot(time, wf, 'b-', linewidth=2)
-wAx.set_ylabel('w [m/s]')
-wAx.set_xlabel('Time [s]')
-
-#plt.show()
 
 # Plot sdev/urel
 fig2 = plt.figure(figsize=(12,8))
