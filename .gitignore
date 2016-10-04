@@ -9,6 +9,10 @@ part.config
 flow.config
 
 # c-tool binaries
+f-rec-1D-part
+f-rec-3D-part
+3d-hist_bins
+partvel
 
 # phase averaged velocity files
 flowVel
@@ -26,7 +30,7 @@ out
 .sh
 sppressions
 *.pyc
-.pyc
+setup.pyc
 
 # Tetrad Files
 tetrad_init

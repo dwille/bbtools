@@ -1,5 +1,9 @@
 #include "tetrad_init.h"
 
+// take care of batch job submission
+char *SIM_ROOT_DIR;
+char *ANALYSIS_DIR;
+
 // Define global variables declared in header file
 int dev_start;
 double tStart;
@@ -15,8 +19,11 @@ int multRuns;
 int nRegular;
 int tt;
 
-int main(void) 
+int main(int argc, char *argv[]) 
 {
+  // Set directory structure
+  directory_init(argc, argv);
+
   // Read tetrad input file
   tetrad_read_input();
 

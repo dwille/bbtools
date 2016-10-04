@@ -1,40 +1,20 @@
 #!/usr/bin/env python2
 
-import sys, os
-import glob
-import matplotlib.pyplot as plt
-from matplotlib.ticker import AutoMinorLocator
-from matplotlib import lines as mlines
-import numpy as np
-import re
+from setup import *
 
 ## Get info
 print ""
 print " ---- Mean Measures plotting utility ---- "
 print ""
 
-# DEVEL
-#root = "../sim"
-#datadir = root + "data-tetrads/"
+# Setup simulation parameters
+(partR, simdir, tstart) = simParams(sys)
 
-# MARCC
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-print "      Sim root directory set to: " + root
-simdir = raw_input("      Simulation directory: ")
-if not simdir.endswith('/'):
-  simdir = simdir + '/'
-datadir = root + simdir + "data-tetrads/"
+# Setup directory structures
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
-# Check if datadir exists so we don't go creating extra dirs
-if not os.path.exists(datadir):
-  print "      " + datadir + " does not exist. Exiting..."
-  print ""
-  sys.exit()
-
-# Create imgdir if necessary
-imgdir = root + simdir + "/img/"
-if not os.path.exists(imgdir):
-  os.makedirs(imgdir)
+# Print simulation data
+printSimulationData(partR, root, simdir, datadir)
 
 statMean = datadir + "stat.mean"
 statSdev = datadir + "stat.sdev"
@@ -86,14 +66,6 @@ kurtS22 = np.genfromtxt(statKurt, skip_header=1, usecols = 8)
 kurtS33 = np.genfromtxt(statKurt, skip_header=1, usecols = 9)
 
 # Plot specs
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=11, numpoints=3)
-plt.rc('lines', markersize=4)
-plt.rc('savefig', dpi=250)
 labelx = -0.17
 
 ## SHAPE MEASURES ##

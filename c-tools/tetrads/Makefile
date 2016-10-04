@@ -34,12 +34,12 @@ EXTRA = Makefile		\
 # make -g -O2 to optimize
 all: COPT += -O2
 all: CUDAOPT += -O2
-all: tetrad_init
+all: tetrads
 
 # compile with debug flags
 debug: COPT += -DDEBUG -g
 debug: CUDAOPT += -DDEBUG -g
-debug: tetrad_init
+debug: tetrads
 
 OBJS = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCC))))
 OBJSCUDA = $(addprefix $(SRC_DIR)/, $(addsuffix .o, $(basename $(SRCCUDA))))
@@ -53,8 +53,8 @@ $(OBJS):$(SRC_DIR)/%.o:$(SRC_DIR)/%.c
 $(SRC_DIR)/bblib.o:$(OBJSCUDA)
 	$(NVCC) $(CUDAOPT) -dlink $+ $(CUDALIBS) -o $(SRC_DIR)/bblib.o
 
-tetrad_init: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
-	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/tetrad_init
+tetrads: $(OBJSCUDA) $(SRC_DIR)/bblib.o $(OBJS)
+	$(GCC) $(COPT) $+ $(LDLIBS) -lcudadevrt -lstdc++ $(CUDALIBS) -o $(SIM_DIR)/tetrads
 
 clean:
-	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/tetrad_init
+	rm -f $(SRC_DIR)/*.o $(SIM_DIR)/tetrads

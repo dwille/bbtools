@@ -1,127 +1,28 @@
 #!/usr/bin/env python2
 # Combine various runs of a tetrad analysis into master dat files
 
-import sys
-import os, re
-import glob
+from setup import *
 import csv
-import numpy as np
-import matplotlib.pyplot as plt
 
-## Define structure class
-class structtype():
-  pass
-
-## Get file length
-def file_len(fname):
-  with open(fname) as f:
-    for i, l in enumerate(f):
-      pass
-  return i    # bc don't count header line
-
-## Nicely sorted function
-def sorted_nicely( l ):
-  """ Sorts the given iterable in a natural way
-
-  Required arguments:
-  l -- The iterable to be sroted.
-
-  courtesy stackoverflow/2669059
-  """
-  convert = lambda text: int(text) if text.isdigit() else text
-  alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-  return sorted(l, key = alphanum_key)
-
-## Interpolate
-def interp(time, allTime, array, nRuns):
-  for rr in np.arange(0,nRuns):
-    array[rr].mean = np.interp(time, allTime[:,rr], array[rr].mean)
-    array[rr].sdev = np.interp(time, allTime[:,rr], array[rr].sdev)
-    array[rr].skew = np.interp(time, allTime[:,rr], array[rr].skew)
-    array[rr].kurt = np.interp(time, allTime[:,rr], array[rr].kurt)
-
-  return array
-
-## Overall moments
-def stats(data):
-  mean = np.zeros(minTsteps)
-  var = np.zeros(minTsteps)
-  skew = np.zeros(minTsteps)
-  kurt = np.zeros(minTsteps)
-
-  # Mean
-  for rr in np.arange(0,nRuns):
-    mean += nTetrads[rr] * data[rr].mean
-  mean /= np.sum(nTetrads)
-
-  # sdev
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    var += (Nr - 1.) * np.square(data[rr].sdev) + Nr * diff * diff
-  var /= (np.sum(nTetrads) - 1.)
-  sdev = np.sqrt(var)
-
-  # skew
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    skew += Nr*np.power(data[rr].sdev, 3.)*data[rr].skew 
-    + 3.*(Nr - 1.)*diff 
-    + diff*diff*diff
-  skew /= np.sum(nTetrads)
-  skew /= np.power(sdev, 3.)
-
-  # kurt
-  kurt = np.zeros(minTsteps)
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    kurt += Nr*np.power(data[rr].sdev, 4.)*data[rr].kurt 
-    + 4.*Nr*np.power(data[rr].sdev, 3.)*data[rr].skew*diff
-    + 6.*Nr*np.power(data[rr].sdev, 2.)*diff*diff
-    + diff*diff*diff*diff
-  kurt /= np.sum(nTetrads)
-  kurt /= np.power(sdev, 4.)
-
-  moments = np.zeros((minTsteps,4))
-  moments[:,0] = mean
-  moments[:,1] = sdev
-  moments[:,2] = skew
-  moments[:,3] = kurt
-  return moments
-
-## Parse commandline args
-#simdir = ""
-#if len(sys.argv) == 2:
-#  simdir = sys.argv[1]
-#else:
-#  sys.exit("Usage: ./combine_runs_shape.py <inputfile>")
+#os.system('clear')
 
 ## Setup directories
 print "     ---- Combine-Runs Utility ----"
 print ""
 
-## Set root dir, simdir, and datadir
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("  Simulation directory: ")
-root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
-simdir =  "sim/"
+# Setup directory structure and print
+(_, simdir, _) = simParams(sys)
+(root, simdir, datadir, _) = directoryStructure(simdir)
 
-if not simdir.endswith('/'):
-  simdir = simdir + '/'
-
-print "      Sim root directory set to: " + root
-
-## Get simdir and create datadir
-datadir = root + simdir + "data-tetrads/"
+print " Root dir: " + root
+print " Sim dir:  " + simdir
+print " Data dir:  " + datadir
 
 # Get list of directories in the datadir -- corresponds to different runs
 runs = sorted_nicely(glob.glob(datadir + "ts_*"))
 
 # Initalize data structs and arrays
 nRuns = int(len(runs))
-global nTetrads 
 nTetrads = np.zeros(nRuns)
 global nTsteps 
 nTsteps = np.zeros(nRuns)
@@ -141,7 +42,6 @@ for rr, run in enumerate(runs):
   nTsteps[rr] = np.genfromtxt(infoFile, skip_header=1, usecols=1)
 
 # find minTsteps
-global minTsteps
 minTsteps = np.min(nTsteps)
 allTime = np.zeros((minTsteps, nRuns))
 
@@ -256,12 +156,12 @@ I2 = interp(time, allTime, I2, nRuns)
 I3 = interp(time, allTime, I3, nRuns)
 
 ## Find Moments
-m_RoG = stats(RoG)
-m_EVar = stats(EVar)
-m_Shape = stats(Shape)
-m_I1 = stats(I1)
-m_I2 = stats(I2)
-m_I3 = stats(I3)
+m_RoG = stats(RoG, minTsteps, nTetrads, nRuns)
+m_EVar = stats(EVar, minTsteps, nTetrads, nRuns)
+m_Shape = stats(Shape, minTsteps, nTetrads, nRuns)
+m_I1 = stats(I1, minTsteps, nTetrads, nRuns)
+m_I2 = stats(I2, minTsteps, nTetrads, nRuns)
+m_I3 = stats(I3, minTsteps, nTetrads, nRuns)
 
 # Print info to infofile
 infofile = datadir + 'info.dat'
@@ -280,7 +180,7 @@ with open(allMeanFile, 'wb') as outfile:
   a.writerows(headers)
   for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,0], m_EVar[tt,0], m_Shape[tt,0],
-      m_I1[tt,0], m_I1[tt,0], m_I1[tt,0]]]
+      m_I1[tt,0], m_I2[tt,0], m_I3[tt,0]]]
     a.writerows(data)
 
 # Print info to datadir -- sdev
@@ -291,7 +191,7 @@ with open(allSdevFile, 'wb') as outfile:
   a.writerows(headers)
   for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,1], m_EVar[tt,1], m_Shape[tt,1],
-      m_I1[tt,1], m_I1[tt,1], m_I1[tt,1]]]
+      m_I1[tt,1], m_I2[tt,1], m_I3[tt,1]]]
     a.writerows(data)
 
 # Print info to datadir -- skew
@@ -302,7 +202,7 @@ with open(allSkewFile, 'wb') as outfile:
   a.writerows(headers)
   for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,2], m_EVar[tt,2], m_Shape[tt,2],
-      m_I1[tt,2], m_I1[tt,2], m_I1[tt,2]]]
+      m_I1[tt,2], m_I2[tt,2], m_I3[tt,2]]]
     a.writerows(data)
 
 # Print info to datadir -- kurt
@@ -313,34 +213,34 @@ with open(allKurtFile, 'wb') as outfile:
   a.writerows(headers)
   for tt in np.arange(0, minTsteps):
     data = [[time[tt], m_RoG[tt,3], m_EVar[tt,3], m_Shape[tt,3],
-      m_I1[tt,3], m_I1[tt,3], m_I1[tt,3]]]
+      m_I1[tt,3], m_I2[tt,3], m_I3[tt,3]]]
     a.writerows(data)
 
-# R
-R = plt.figure(figsize=(12,8))
-m1_R = R.add_subplot(221)
-plt.plot(time, m_RoG[:,0], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], RoG[rr].mean)
-m1_R.set_title('Mean R')
-
-m2_R = R.add_subplot(222)
-plt.plot(time, m_RoG[:,1], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], RoG[rr].sdev)
-m2_R.set_title('sdev R')
-
-m3_R = R.add_subplot(223)
-plt.plot(time, m_RoG[:,2], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], RoG[rr].skew)
-m3_R.set_title('skew R')
-
-m4_R = R.add_subplot(224)
-plt.plot(time, m_RoG[:,3], 'k', linewidth=2)
-for rr in np.arange(0,nRuns):
-  plt.plot(allTime[:,rr], RoG[rr].kurt)
-m4_R.set_title('kurt R')
+## R
+#R = plt.figure(figsize=(12,8))
+#m1_R = R.add_subplot(221)
+#plt.plot(time, m_RoG[:,0], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], RoG[rr].mean)
+#m1_R.set_title('Mean R')
+#
+#m2_R = R.add_subplot(222)
+#plt.plot(time, m_RoG[:,1], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], RoG[rr].sdev)
+#m2_R.set_title('sdev R')
+#
+#m3_R = R.add_subplot(223)
+#plt.plot(time, m_RoG[:,2], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], RoG[rr].skew)
+#m3_R.set_title('skew R')
+#
+#m4_R = R.add_subplot(224)
+#plt.plot(time, m_RoG[:,3], 'k', linewidth=2)
+#for rr in np.arange(0,nRuns):
+#  plt.plot(allTime[:,rr], RoG[rr].kurt)
+#m4_R.set_title('kurt R')
 
 # # EVar
 # EVar_fig = plt.figure(figsize=(12,8))
@@ -436,4 +336,4 @@ m4_R.set_title('kurt R')
 #   plt.plot(allTime[:,rr], I3[rr].kurt, 'b--')
 # m4_I.set_title('kurtI')
  
-plt.show()
+# plt.show()

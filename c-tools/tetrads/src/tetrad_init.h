@@ -15,11 +15,17 @@
 // #Defines
 #define FILE_NAME_SIZE 256
 #define CHAR_BUF_SIZE 256
-#define SIM_ROOT_DIR ".."
-#define ROOT_DIR "."
+
+// Define file structure
+extern char *SIM_ROOT_DIR;      // Simulation root directory
+extern char *ANALYSIS_DIR;      // Analysis directory
+
+#define TETRAD_DIR "tetrads"
+#define DATA_DIR "data"
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define DATA_DIR "data-tetrads"
+#define CONFIG_FILE "tetrad.config"
+
 #define MAX_THREADS_1D 128
 #define MAX_THREADS_DIM 16
 

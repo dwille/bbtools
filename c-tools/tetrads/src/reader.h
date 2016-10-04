@@ -161,6 +161,9 @@ extern double *_gEigVecInit;
 extern double *_sEigVecInit;
 
 /**** FUNCTIONS ****/
+// init dir structure
+void directory_init(int argc, char *argv[]);
+
 // read tetrad.config input file
 void tetrad_read_input(void);
 

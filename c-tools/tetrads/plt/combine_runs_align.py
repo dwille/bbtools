@@ -1,120 +1,33 @@
 #!/usr/bin/env python2
 # Combine various runs of a tetrad analysis into master dat files
 
-import sys, os, re
-import glob
+from setup import *
 import csv
-import numpy as np
-import matplotlib.pyplot as plt
 
-## Define structure class
-class structtype():
-  pass
-
-## Get file length
-def file_len(fname):
-  with open(fname) as f:
-    for i, l in enumerate(f):
-      pass
-  return i    # bc don't count header line
-
-## Nicely sorted function
-def sorted_nicely( l ):
-  """ Sorts the given iterable in a natural way
-
-  Required arguments:
-  l -- The iterable to be sorted.
-
-  courtesy stackoverflow/2669059
-  """
-  convert = lambda text: int(text) if text.isdigit() else text
-  alphanum_key = lambda key: [convert(c) for c in re.split('([0-9]+)', key)]
-  return sorted(l, key = alphanum_key)
-
-## Interpolate
-def interp(time, allTime, array, nRuns):
-  for rr in np.arange(0,nRuns):
-    array[rr].mean = np.interp(time, allTime[:,rr], array[rr].mean)
-    array[rr].sdev = np.interp(time, allTime[:,rr], array[rr].sdev)
-    array[rr].skew = np.interp(time, allTime[:,rr], array[rr].skew)
-    array[rr].kurt = np.interp(time, allTime[:,rr], array[rr].kurt)
-
-  return array
-
-## Overall moments
-def stats(data):
-  mean = np.zeros(minTsteps)
-  var = np.zeros(minTsteps)
-  skew = np.zeros(minTsteps)
-  kurt = np.zeros(minTsteps)
-
-  # Mean
-  for rr in np.arange(0,nRuns):
-    mean += nTetrads[rr] * data[rr].mean
-  mean /= np.sum(nTetrads)
-
-  # sdev
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    var += (Nr - 1.) * np.square(data[rr].sdev) + Nr * diff * diff
-  var /= (np.sum(nTetrads) - 1.)
-  sdev = np.sqrt(var)
-
-  # skew
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    skew += Nr*np.power(data[rr].sdev, 3.)*data[rr].skew 
-    + 3.*(Nr - 1.)*diff 
-    + diff*diff*diff
-  skew /= np.sum(nTetrads)
-  skew /= np.power(sdev, 3.)
-
-  # kurt
-  kurt = np.zeros(minTsteps)
-  for rr in np.arange(0,nRuns):
-    Nr = nTetrads[rr]
-    diff = data[rr].mean - mean
-    kurt += Nr*np.power(data[rr].sdev, 4.)*data[rr].kurt 
-    + 4.*Nr*np.power(data[rr].sdev, 3.)*data[rr].skew*diff
-    + 6.*Nr*np.power(data[rr].sdev, 2.)*diff*diff
-    + diff*diff*diff*diff
-  kurt /= np.sum(nTetrads)
-  kurt /= np.power(sdev, 4.)
-
-  moments = np.zeros((minTsteps,4))
-  moments[:,0] = mean
-  moments[:,1] = sdev
-  moments[:,2] = skew
-  moments[:,3] = kurt
-  return moments
+#os.system('clear')
 
 print ""
 print "---- Combine-Runs Utility -- Alignment ----"
 print ""
 
-# Set root dir, simdir, and datadir
-#root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-#simdir = raw_input("  Simulation directory: ")
-root = "/home/dwille/bbtools/c-tools/multiparticle_statistics/"
-simdir =  "sim/"
+# Setup directory structure and print
+(_, simdir, _) = simParams(sys)
+(root, simdir, datadir, _) = directoryStructure(simdir)
 
-if not simdir.endswith('/'):
-  simdir = simdir + '/'
-
-print "    Sim root directory set to: " + root
-datadir = root + simdir + "data-tetrads/"
+print " Root dir: " + root
+print " Sim dir:  " + simdir
+print " Data dir:  " + datadir
 
 # Get list of directories in the datadir -- corresponds to different runs
 runs = sorted_nicely(glob.glob(datadir + "ts_*"))
 
 # Initalize data structs and arrays
 nRuns = int(len(runs))
-global nTetrads 
 nTetrads = np.zeros(nRuns)
 global nTsteps 
 nTsteps = np.zeros(nRuns)
+
+# Structs
 g1s1 = [ structtype() for i in range(nRuns) ]
 g2s1 = [ structtype() for i in range(nRuns) ]
 g3s1 = [ structtype() for i in range(nRuns) ]
@@ -151,7 +64,6 @@ for rr, run in enumerate(runs):
   nTsteps[rr] = np.genfromtxt(infoFile, skip_header=1, usecols=1)
 
 # find minTsteps
-global minTsteps
 minTsteps = np.min(nTsteps)
 allTime = np.zeros((minTsteps, nRuns))
 
@@ -488,33 +400,33 @@ w_s2 = interp(time, allTime, w_s2, nRuns)
 w_s3 = interp(time, allTime, w_s3, nRuns) 
 
 ## Find moments
-m_g1s1 = stats(g1s1)
-m_g2s1 = stats(g2s1) 
-m_g3s1 = stats(g3s1) 
-m_g1s2 = stats(g1s2) 
-m_g2s2 = stats(g2s2) 
-m_g3s2 = stats(g3s2) 
-m_g1s3 = stats(g1s3) 
-m_g2s3 = stats(g2s3) 
-m_g3s3 = stats(g3s3) 
+m_g1s1 = stats(g1s1, minTsteps, nTetrads, nRuns)
+m_g2s1 = stats(g2s1, minTsteps, nTetrads, nRuns)
+m_g3s1 = stats(g3s1, minTsteps, nTetrads, nRuns)
+m_g1s2 = stats(g1s2, minTsteps, nTetrads, nRuns)
+m_g2s2 = stats(g2s2, minTsteps, nTetrads, nRuns)
+m_g3s2 = stats(g3s2, minTsteps, nTetrads, nRuns)
+m_g1s3 = stats(g1s3, minTsteps, nTetrads, nRuns)
+m_g2s3 = stats(g2s3, minTsteps, nTetrads, nRuns)
+m_g3s3 = stats(g3s3, minTsteps, nTetrads, nRuns)
 
-m_g1_z = stats(g1_z) 
-m_g2_z = stats(g2_z) 
-m_g3_z = stats(g3_z) 
+m_g1_z = stats(g1_z, minTsteps, nTetrads, nRuns)
+m_g2_z = stats(g2_z, minTsteps, nTetrads, nRuns)
+m_g3_z = stats(g3_z, minTsteps, nTetrads, nRuns)
 
-m_s1_z = stats(s1_z) 
-m_s2_z = stats(s2_z) 
-m_s3_z = stats(s3_z) 
+m_s1_z = stats(s1_z, minTsteps, nTetrads, nRuns)
+m_s2_z = stats(s2_z, minTsteps, nTetrads, nRuns)
+m_s3_z = stats(s3_z, minTsteps, nTetrads, nRuns)
 
-m_w_z =  stats(w_z)
+m_w_z =  stats(w_z, minTsteps, nTetrads, nRuns)
 
-m_w_g1 = stats(w_g1) 
-m_w_g2 = stats(w_g2) 
-m_w_g3 = stats(w_g3) 
+m_w_g1 = stats(w_g1, minTsteps, nTetrads, nRuns)
+m_w_g2 = stats(w_g2, minTsteps, nTetrads, nRuns)
+m_w_g3 = stats(w_g3, minTsteps, nTetrads, nRuns)
 
-m_w_s1 = stats(w_s1) 
-m_w_s2 = stats(w_s2) 
-m_w_s3 = stats(w_s3) 
+m_w_s1 = stats(w_s1, minTsteps, nTetrads, nRuns)
+m_w_s2 = stats(w_s2, minTsteps, nTetrads, nRuns)
+m_w_s3 = stats(w_s3, minTsteps, nTetrads, nRuns)
 
 # Print to file -- mean
 allFile = datadir + 'align.mean'

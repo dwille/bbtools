@@ -56,6 +56,26 @@ double *_S33;
 double *_gEigVecInit;
 double *_sEigVecInit;
 
+// Set up directory structure
+void directory_init(int argc, char *argv[])
+{
+  SIM_ROOT_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+  ANALYSIS_DIR = (char*) malloc(CHAR_BUF_SIZE * sizeof(char));
+
+  // arg[0] = program name
+  // arg[1] = SIM_ROOT_DIR
+  if (argc == 2) {
+    sprintf(SIM_ROOT_DIR, "%s", argv[1]);
+    sprintf(ANALYSIS_DIR, "%s/analysis/%s", SIM_ROOT_DIR, TETRAD_DIR);
+  } else if (argc != 2) {
+    printf("usage: %s SIM_ROOT_DIR\n", argv[0]);
+    exit(EXIT_FAILURE);
+  }
+  printf("\n SIM_ROOT_DIR = %s\n", SIM_ROOT_DIR);
+  printf(" ANALYSIS_DIR = %s\n\n", ANALYSIS_DIR);
+  fflush(stdout);
+}
+
 // Read config.tetrad input file
 void tetrad_read_input(void)
 {
@@ -64,8 +84,14 @@ void tetrad_read_input(void)
 
   // open config file for reading
   char fname[CHAR_BUF_SIZE] = "";
-  sprintf(fname, "%s/tetrad.config", ROOT_DIR);
+  sprintf(fname, "%s/%s", ANALYSIS_DIR, CONFIG_FILE);
   FILE *infile = fopen(fname, "r");
+  if (infile == NULL) {
+    printf("Could not open file %s\n", fname);
+    exit(EXIT_FAILURE);
+  } else {
+    printf("Reading config from %s...\n", fname);
+  }
   
   // read input
   fret = fscanf(infile, "tStart %lf\n", &tStart);
@@ -160,12 +186,10 @@ void init_input_files(void)
   }
 
   merge_sort(partFileTime, nFiles, fileMap);
+  printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
   if (nFiles == 0) {
-    printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
     printf("Quitting...\n");
     exit(EXIT_FAILURE);
-  } else {
-    printf("Found %d files in range [%lf, %lf]\n", nFiles, tStart, tEnd);
   }
   simTime = (double*) malloc(nFiles * sizeof(double));
 }
@@ -227,7 +251,7 @@ void create_output_dir(void)
   // From stackoverflow-7430248
   struct stat st = {0};
   char buf[CHAR_BUF_SIZE];
-  sprintf(buf, "%s/%s", ROOT_DIR, DATA_DIR);
+  sprintf(buf, "%s/%s", ANALYSIS_DIR, DATA_DIR);
   if (stat(buf, &st) == -1) {
     mkdir(buf, 0700);
   }
@@ -237,7 +261,7 @@ void create_output_dir(void)
     char format[CHAR_BUF_SIZE] = "";
     char fnameTmp[CHAR_BUF_SIZE] = "";
     sprintf(format, "%%0%d.f", sigFigPre);
-    sprintf(fnameTmp, "%s/%s/ts_%s", ROOT_DIR, DATA_DIR, format);
+    sprintf(fnameTmp, "%s/%s/ts_%s", ANALYSIS_DIR, DATA_DIR, format);
     sprintf(runDir, fnameTmp, tStart);
     if (stat(runDir, &st) == -1) {
       mkdir(runDir, 0700); 
@@ -260,10 +284,10 @@ void init_stat_output(void)
     sprintf(path2skew, "%s/stat.skew", runDir);
     sprintf(path2kurt, "%s/stat.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_DIR);
-    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_DIR);
-    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_DIR);
-    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_DIR);
+    sprintf(path2mean, "%s/%s/stat.mean", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ANALYSIS_DIR, DATA_DIR);
   }
 
   // open file for reading -- stat.mean
@@ -310,10 +334,10 @@ void init_stat_output(void)
     sprintf(path2skew, "%s/align.skew", runDir);
     sprintf(path2kurt, "%s/align.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_DIR);
-    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_DIR);
-    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_DIR);
-    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_DIR);
+    sprintf(path2mean, "%s/%s/align.mean", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/align.sdev", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/align.skew", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/align.kurt", ANALYSIS_DIR, DATA_DIR);
   }
 
   // open file for reading -- mean
@@ -900,7 +924,7 @@ void write_info(void)
   if (multRuns == 1) {
     sprintf(fname, "%s/regularNodes", runDir);
   } else {
-    sprintf(fname, "%s/%s/regularNodes", ROOT_DIR, DATA_DIR);
+    sprintf(fname, "%s/%s/regularNodes", ANALYSIS_DIR, DATA_DIR);
   }
 
   // open file for reading
@@ -921,7 +945,7 @@ void write_info(void)
   if (multRuns == 1) {
     sprintf(fname, "%s/info.dat", runDir);
   } else {
-    sprintf(fname, "%s/%s/info.dat", ROOT_DIR, DATA_DIR);
+    sprintf(fname, "%s/%s/info.dat", ANALYSIS_DIR, DATA_DIR);
   }
   FILE *finfo = fopen(fname, "w");
   if (finfo == NULL) {
@@ -967,7 +991,7 @@ void write_timestep(void)
   if (multRuns == 1) {
     sprintf(fnameall2, "%s/raw-data-%s", runDir, format);
   } else {
-    sprintf(fnameall2, "%s/%s/raw-data-%s", ROOT_DIR, DATA_DIR, format);
+    sprintf(fnameall2, "%s/%s/raw-data-%s", ANALYSIS_DIR, DATA_DIR, format);
   }
   sprintf(fnameall, fnameall2, partFileTime[tt]);
 
@@ -1031,10 +1055,10 @@ void write_timestep(void)
     sprintf(path2skew, "%s/stat.skew", runDir);
     sprintf(path2kurt, "%s/stat.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/stat.mean", ROOT_DIR, DATA_DIR);
-    sprintf(path2sdev, "%s/%s/stat.sdev", ROOT_DIR, DATA_DIR);
-    sprintf(path2skew, "%s/%s/stat.skew", ROOT_DIR, DATA_DIR);
-    sprintf(path2kurt, "%s/%s/stat.kurt", ROOT_DIR, DATA_DIR);
+    sprintf(path2mean, "%s/%s/stat.mean", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/stat.sdev", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/stat.skew", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/stat.kurt", ANALYSIS_DIR, DATA_DIR);
   }
 
   // mean
@@ -1089,10 +1113,10 @@ void write_timestep(void)
     sprintf(path2skew, "%s/align.skew", runDir);
     sprintf(path2kurt, "%s/align.kurt", runDir);
   } else {
-    sprintf(path2mean, "%s/%s/align.mean", ROOT_DIR, DATA_DIR);
-    sprintf(path2sdev, "%s/%s/align.sdev", ROOT_DIR, DATA_DIR);
-    sprintf(path2skew, "%s/%s/align.skew", ROOT_DIR, DATA_DIR);
-    sprintf(path2kurt, "%s/%s/align.kurt", ROOT_DIR, DATA_DIR);
+    sprintf(path2mean, "%s/%s/align.mean", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2sdev, "%s/%s/align.sdev", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2skew, "%s/%s/align.skew", ANALYSIS_DIR, DATA_DIR);
+    sprintf(path2kurt, "%s/%s/align.kurt", ANALYSIS_DIR, DATA_DIR);
   }
 
   // Print mean

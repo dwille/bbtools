@@ -1,188 +1,290 @@
 #!/usr/bin/env python2
-
-import sys, os
-import glob
-import matplotlib.pyplot as plt
-from matplotlib import lines as mlines
-import numpy as np
-import re
+from setup import *
 
 os.system('clear')
-
-## Define structure class
-class structtype():
-  pass
-
-## Get file length
-def file_len(fname):
-  with open(fname) as f:
-    for i, l in enumerate(f):
-      pass
-  return i    # bc don't count header line
 
 print ""
 print " ---- Anisotropy Measures Plotting Utility ---- "
 print "                     Mean"
 print ""
-root = "/home-1/dwillen3@jhu.edu/scratch/triply_per/"
-print "      Sim root directory set to: " + root
 
-# Create imgdir if necessary
-imgdir = root + "img/shape/"
+# Setup directory structure and print
+root = os.path.expanduser("~") + "/scratch/triply_per/"
+imgdir = root + "simdata/img/tetrads/"
+datadir = "/analysis/tetrads/data/"
 if not os.path.exists(imgdir):
   os.makedirs(imgdir)
+print " Root dir: " + root
+print " Img dir:  " + imgdir
 
-# Parameter sweep
-partList = ['500', '1000', '1500', '2000']
-densList = ['rho2.0', 'rho3.3', 'rho4.0', 'rho5.0']
-legendText = ['']*16
+# Simulation information
+partR = 2.1 # XXX mm
+nu = 0.01715  # XXX mm^2/ms
+
+# get phase averaged data
+phaseVelDir = root + "simdata/phaseAveragedFluidVel"
+phaseVelData = np.genfromtxt(phaseVelDir, skip_header=1)
+
+# get terminal vel data
+wTermDir = root + "simdata/singlePartSedi"
+wTermData = np.genfromtxt(wTermDir, skip_header=1)
+
+# pull variance ratios
+varFile = root + "simdata/part_vel_variance"
+vert_var = np.genfromtxt(varFile, skip_header=1, usecols=2)
+hori_var = np.genfromtxt(varFile, skip_header=1, usecols=3)
+var_ratio = vert_var / hori_var
+
+# Parameter sweep -- include dead sims as '' so we get plot colors correct
+simList = ['500/rho2.0', '500/rho3.3', '500/rho4.0', '500/rho5.0',
+  '1000/rho2.0', '1000/rho3.3', '1000/rho4.0', '1000/rho5.0',
+  '1500/rho2.0', '1500/rho3.3', '1500/rho4.0', '',
+  '2000/rho2.0', '2000/rho3.3', '', '']
+nSims = len(simList)
+
+# Get colors for plots TODO this is terribly un-general
+baseColors = ['r', 'g', 'b', 'k']
+baseShades = [0.4, 0.57, 0.74, 0.9]
+colors = ['']*nSims
+shades = ['']*nSims
+for ii in range(nSims):
+   pp = ii / 4
+   dd = ii % 4
+   if simList[ii] != '':
+     colors[ii] = baseColors[pp]
+     shades[ii] = baseShades[dd]
+colors = filter(lambda colors: colors != '', colors)     
+shades = filter(lambda shades: shades != '', shades)     
+ 
+# Now remove the dead sims for the rest
+var_ratio = filter(lambda var_ratio: var_ratio > 0, var_ratio)
+simList = filter(lambda simList: simList != '', simList)
+nSims = len(simList)
+legendText = ['']*nSims
 
 # Initialize arrays
-nTetrads = np.zeros(16)
-data = [ structtype() for i in range(16) ]
-RoG = [ structtype() for i in range(16) ]
-EVar = [ structtype() for i in range(16) ]
-Shape = [ structtype() for i in range(16) ]
-I1 = [ structtype() for i in range(16) ]
-I2 = [ structtype() for i in range(16) ]
-I3 = [ structtype() for i in range(16) ]
- 
+nTetrads = np.zeros(nSims)
+data = [ structtype() for i in range(nSims) ]
+RoG = [ structtype() for i in range(nSims) ]
+EVar = [ structtype() for i in range(nSims) ]
+Shape = [ structtype() for i in range(nSims) ]
+I1 = [ structtype() for i in range(nSims) ]
+I2 = [ structtype() for i in range(nSims) ]
+I3 = [ structtype() for i in range(nSims) ]
+
 # Loop over all directory's
-for pp, part in enumerate(partList):
-  for dd, dens in enumerate(densList):
-    stride = 4*pp + dd
-    caseDir = part + '/' + dens
-    infoFile = root + caseDir + '/data-tetrads/info.dat'
-    nodeFile = root + caseDir + '/data-tetrads/regularNodes'
-    statmean = root + caseDir + '/data-tetrads/stat.mean'
+tau_p = np.zeros(nSims)
+for ii in np.arange(nSims):
+  simdir = root + simList[ii] + datadir
+  infoFile = simdir + 'info.dat'
+  nodeFile = simdir + 'regularNodes'
+  statmean = simdir + 'stat.mean'
 
-    nTetrads[stride] = np.genfromtxt(infoFile, skip_header=1, usecols=0)
+  nTetrads[ii] = np.genfromtxt(infoFile, skip_header=1, usecols=0)
 
-    tmpT = np.genfromtxt(statmean, skip_header=1, usecols=0)
-    data[stride].time = np.zeros(np.size(tmpT))
-    data[stride].time = tmpT - tmpT[0]
+  # Pull time [ms]
+  tmpT = np.genfromtxt(statmean, skip_header=1, usecols=0)
+  data[ii].time = np.zeros(np.size(tmpT))
+  data[ii].time = tmpT - tmpT[0]
+  data[ii].tau = np.zeros(np.size(tmpT))
+  data[ii].tau = tmpT - tmpT[0]
 
-    # mean
-    RoG[stride].mean   = np.zeros(np.size(tmpT))
-    EVar[stride].mean  = np.zeros(np.size(tmpT))
-    Shape[stride].mean = np.zeros(np.size(tmpT))
-    I1[stride].mean    = np.zeros(np.size(tmpT))
-    I2[stride].mean    = np.zeros(np.size(tmpT))
-    I3[stride].mean    = np.zeros(np.size(tmpT))
+  # Normalize time
+  nparts = int(simList[ii].partition('/')[0])
+  rho = float(simList[ii].partition('/')[2][-3:])
+  # phase average fluid velocity
+  for nn in np.arange(0,np.size(phaseVelData, 0)):
+    currN = phaseVelData[nn,0]
+    currRho = phaseVelData[nn,1]
+    if (nparts == currN) & (rho == currRho):
+      phaseVel = phaseVelData[nn,2]   # mm/ms
+  # terminal velocity
+  for nn in np.arange(0, np.size(wTermData, 0)):
+    currRho = wTermData[nn,0]
+    if (rho == currRho):
+      Re_t = 2.*partR*wTermData[nn,1]/nu
 
-    RoG[stride].mean   = np.genfromtxt(statmean, skip_header=1, usecols=1)
-    EVar[stride].mean  = np.genfromtxt(statmean, skip_header=1, usecols=2)
-    Shape[stride].mean = np.genfromtxt(statmean, skip_header=1, usecols=3)
-    I1[stride].mean    = np.genfromtxt(statmean, skip_header=1, usecols=4)
-    I2[stride].mean    = np.genfromtxt(statmean, skip_header=1, usecols=5)
-    I3[stride].mean    = np.genfromtxt(statmean, skip_header=1, usecols=6)
+  # normalize by wf/a
+  data[ii].tau *= phaseVel/(2.*partR)      # ms*(mm/ms)/mm = []  
+  normText = r"$t\langle w_f \rangle/a$"
 
-    legendText[stride] = caseDir + ': ' + str(nTetrads[stride])
+  # calculate stokes relax time, (rho* d^2)/(18nu) / f(Ret)
+  # mm^2 / (mm^s/ms) -> [ms]
+  tau_p[ii] = rho*(2.*partR)*(2.*partR)/(1. + 0.1935*Re_t**(0.6305))/(18.*nu)
+  tau_p[ii] *= phaseVel/(2.*partR)
+  #data[ii].tau /= taup
+  #normText = r"$t 18\nu/(\rho^* (2a)^2)$"
 
-# Plot specs
-plt.rc('font', family='serif')
-plt.rc('xtick', labelsize=10)
-plt.rc('ytick', labelsize=10)
-plt.rc('axes', labelsize=11)
-plt.rc('figure', titlesize=14)
-plt.rc('figure', figsize=(4,3))
-plt.rc('legend', fontsize=10, numpoints=3)
-plt.rc('lines', markersize=4, linewidth=2)
-plt.rc('savefig', dpi=250)
-labelx = -0.17
-colors = ['r', 'g', 'b', 'k']
-shades = [0.4, 0.57, 0.74, 0.9]
+  # mean
+  RoG[ii].mean   = np.zeros(np.size(tmpT))
+  EVar[ii].mean  = np.zeros(np.size(tmpT))
+  Shape[ii].mean = np.zeros(np.size(tmpT))
+  I1[ii].mean    = np.zeros(np.size(tmpT))
+  I2[ii].mean    = np.zeros(np.size(tmpT))
+  I3[ii].mean    = np.zeros(np.size(tmpT))
 
-## Radius of Gyration
+  RoG[ii].mean   = np.genfromtxt(statmean, skip_header=1, usecols=1)
+  EVar[ii].mean  = np.genfromtxt(statmean, skip_header=1, usecols=2)
+  Shape[ii].mean = np.genfromtxt(statmean, skip_header=1, usecols=3)
+  I1[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=4)
+  I2[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=5)
+  I3[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=6)
+
+  legendText[ii] = simList[ii] # + ': ' + str(nTetrads[ii])
+
+## Radius of Gyration -- unscaled
 rgFig = plt.figure()
 rg_ax = rgFig.add_subplot(111)
-for pp in range(4):
-  for dd in range(4):
-    i = 4*pp + dd
-    rg_ax.loglog(data[i].time, RoG[i].mean, color=colors[pp], alpha=shades[dd])
+for ii in np.arange(nSims):
+  rg_ax.loglog(data[ii].time, RoG[ii].mean,
+    color=colors[ii], alpha=shades[ii])
+
+  # For estimating ensemble duration and lag
+  #print simList[ii]
+  #if ii == 0:
+  #  #print "est dur = 6000"
+  #else:
+  #  #print data[ii].time[np.argwhere(RoG[ii].mean >= 42)[0]]
+  #initRoG = RoG[ii].mean[0]
+  #print data[ii].time[np.argwhere(RoG[ii].mean >= 2.*initRoG)[0]]
+
+# Scaling
+#xpnts = np.array([1e2, 1e4])
+#ypnts = np.power(xpnts, 0.54) / 3.3
+#rg_ax.loglog(xpnts, ypnts, 'k-.', linewidth=2, dashes=[4,2])
+#rg_ax.text(400, 4, r'$t^{1/2}$')
+
+# Domain extents
+xl = 42 # XXX
+#rg_ax.loglog(rg_ax.get_xlim(), [xl, xl], "k--")
+
+#rg_ax.legend(legendText, ncol=2, loc='center left', bbox_to_anchor=(1.10,0.5))
+rg_ax.set_xlabel(r"$t\ [ms]$")
+rg_ax.set_ylabel(r"$\langle R_G \rangle \ [mm]$")
+
+# Save
+imgname = imgdir + "all_shape_mean_rog_unscaled"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+## Radius of Gyration -- scaled
+rgFig = plt.figure()
+rg_ax = rgFig.add_subplot(111)
+for ii in np.arange(nSims):
+  y_data = RoG[ii].mean / np.power(data[ii].tau, .54)
+  rg_ax.loglog(data[ii].tau, y_data/partR,
+    color=colors[ii], alpha=shades[ii])
+
+  # For estimating ensemble duration and lag
+  #print simList[ii]
+  #if ii == 0:
+  #  #print "est dur = 6000"
+  #else:
+  #  #print data[ii].time[np.argwhere(RoG[ii].mean >= 42)[0]]
+  #initRoG = RoG[ii].mean[0]
+  #print data[ii].time[np.argwhere(RoG[ii].mean >= 2.*initRoG)[0]]
 
 xpnts = np.array([100, 10000])
 ypnts = np.power(xpnts, 0.6) / 5.
-rg_ax.loglog(xpnts, ypnts, 'k--', linewidth=3)
-rg_ax.text(25, 2.5, 'slope = 0.6')
+#rg_ax.loglog(xpnts, ypnts, 'k--', linewidth=2)
+#rg_ax.text(25, 2.5, 'slope = 0.6')
 
-xpnts = np.array([100, 10000])
-ypnts = np.power(xpnts, 0.5) / 3.15
-rg_ax.loglog(xpnts, ypnts, 'k-.', linewidth=3)
-rg_ax.text(300, 4, 'slope = 0.5')
+xpnts = np.array([6e0, 5e2])
+ypnts = np.power(xpnts, 0.5)  /1.25
+rg_ax.loglog(xpnts, ypnts, 'k-.', linewidth=2, dashes=[4,2])
+rg_ax.text(15, 2, r'$t^{1/2}$')
 
-rg_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
-rg_ax.set_xlabel("Time [ms]")
-rg_ax.set_ylabel(r"$\langle R_g \rangle \ [mm]$")
+# Domain extents
+xl = 42./partR
+rg_ax.loglog(rg_ax.get_xlim(), [xl, xl], "k--")
+
+#rg_ax.legend(legendText, ncol=2, loc='center left', bbox_to_anchor=(1.10,0.5))
+rg_ax.set_xlabel(normText)
+rg_ax.set_ylabel(r"$\langle R_G \rangle/a$")
+
+rg_ax.set_xlim([1e-1, 6e2])
+rg_ax.set_ylim([1e0, 5e1])
 
 # Save
-imgname = imgdir + "all_rog_mean"
+imgname = imgdir + "all_shape_mean_rog_scaled"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
+## Shape factor and variance ##
+fig1 = plt.figure()
 # EVar
-vFig = plt.figure()
-v_ax = vFig.add_subplot(111)
-for pp in range(4):
-  for dd in range(4):
-    i = 4*pp + dd
-    v_ax.semilogx(data[i].time, EVar[i].mean, color=colors[pp], 
-      alpha=shades[dd])
+v_ax = fig1.add_subplot(211)
+for ii in np.arange(nSims):
+  v_ax.semilogx(data[ii].tau, EVar[ii].mean, 
+    color=colors[ii], alpha=shades[ii])
 
+v_ax.set_xlim([1e-1, 6e2])
+v_ax.xaxis.set_ticklabels([])
 v_ax.set_ylim([0, 1])
-
-v_ax.set_xlabel("Time [ms]")
 v_ax.set_ylabel(r'$\langle \Delta \rangle$')
-v_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
+v_ax.yaxis.set_label_coords(-.15, 0.5)
 
-# Save
-imgname = imgdir + "all_evar_mean"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+v_ax.yaxis.set_major_locator(MultipleLocator(0.25))
+v_ax.yaxis.set_minor_locator(MultipleLocator(0.125))
 
 # Shape
-sFig = plt.figure()
-s_ax = sFig.add_subplot(111)
-for pp in range(4):
-  for dd in range(4):
-    i = 4*pp + dd
-    s_ax.semilogx(data[i].time, Shape[i].mean, color=colors[pp], 
-      alpha=shades[dd])
+s_ax = fig1.add_subplot(212)
+for ii in np.arange(nSims):
+  s_ax.semilogx(data[ii].tau, Shape[ii].mean, 
+    color=colors[ii], alpha=shades[ii])
 
+s_ax.set_xlim([1e-1, 6e2])
+s_ax.set_xlabel(normText)
 s_ax.set_ylim([-0.25, 2])
-s_ax.set_yticks([-0.25, 0, 0.5, 1, 1.5, 2])
-s_ax.set_xlabel("Time [ms]")
 s_ax.set_ylabel(r'$\langle S \rangle$')
-s_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
+s_ax.yaxis.set_label_coords(-.15, 0.5)
+s_ax.set_yticks([-0.25, 0, 0.5, 1, 1.5, 2])
+s_ax.yaxis.set_minor_locator(MultipleLocator(0.25))
 
 # Save
-imgname = imgdir + "all_shape_mean"
+imgname = imgdir + "all_shape_mean_sf_var"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
 ## I_j ##
-iFig = plt.figure()
-i_ax = iFig.add_subplot(111)
-for pp in range(4):
-  for dd in range(4):
-    i = 4*pp + dd
-    i_ax.semilogx(data[i].time, I1[i].mean, color=colors[pp], 
-      alpha=shades[dd])
-    i_ax.semilogx(data[i].time, I2[i].mean, color=colors[pp], 
-      alpha=shades[dd], label='_nolegend_')
-    i_ax.semilogx(data[i].time, I3[i].mean, color=colors[pp], 
-      alpha=shades[dd], label='_nolegend_')
+iFig = plt.figure(figsize=(4,2))
+ax1 = iFig.add_subplot(211)
 
-i_ax.text(5, 0.55, 'I1')
-i_ax.text(5, 0.375, 'I2')
-i_ax.text(5, 0.175, 'I3')
+for ii in np.arange(nSims):
+  i_ratio = I1[ii].mean/I2[ii].mean
+  i_ratio /= np.power(data[ii].tau, 1./(2.*var_ratio[ii]))
+  ax1.semilogx(data[ii].tau, i_ratio, color=colors[ii], alpha=shades[ii])
 
-i_ax.set_xlabel("Time [ms]")
-i_ax.set_ylabel(r"$\langle I \rangle$")
+ax1.set_xlim([1e-1, 6e2])
+ax1.set_xticklabels([])
+
+ax1.set_ylabel(r"$\langle I_1\rangle /\langle I_2\rangle $")
+#ax1.set_ylim([1, 10])
+
+#xpnts = np.array([1e0, 2e1])
+#ypnts = np.power(xpnts, 1./3.) * 2.
+#ax1.semilogx(xpnts, ypnts, 'k--')
+
+i_ax = iFig.add_subplot(212)
+for ii in np.arange(nSims):
+  i_ax.semilogx(data[ii].tau, I1[ii].mean, color=colors[ii], 
+    alpha=shades[ii])
+  i_ax.semilogx(data[ii].tau, I2[ii].mean, color=colors[ii], 
+    alpha=shades[ii], dashes=[2,2])
+  i_ax.semilogx(data[ii].tau, I3[ii].mean, color=colors[ii], 
+    alpha=shades[ii], dashes=[5,2])
+
+i_ax.text(5, 0.55, r'$I_1$')
+i_ax.text(5, 0.35, r'$I_2$')
+i_ax.text(5, 0.10, r'$I_3$')
+
+i_ax.set_xlabel(normText)
+i_ax.set_ylabel(r"$\langle I_k \rangle = \langle \lambda_k/R_G^2 \rangle$")
 i_ax.set_ylim([0, 1])
-i_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
+i_ax.set_xlim([1e-1, 6e2])
+#i_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
 
 # Save
-imgname = imgdir + "all_i_mean"
+imgname = imgdir + "all_shape_mean_normi"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
