@@ -29,7 +29,7 @@
 extern char *SIM_ROOT_DIR;   // Simulation root dir
 #define INPUT_DIR "input"
 #define OUTPUT_DIR "output"
-#define PHASE_DIR "phase-averaged-velocity"
+#define PHASE_DIR "phase-averages"
 #define ANALYSIS "histograms"
 extern char *ANALYSIS_DIR;   // Analysis dir
 #define DATA_DIR "data"

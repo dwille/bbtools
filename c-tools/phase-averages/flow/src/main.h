@@ -20,7 +20,7 @@
 extern char *SIM_ROOT_DIR;
 extern char *ANALYSIS_DIR;
 
-#define PHASE_DIR "phase-averaged-velocity"
+#define PHASE_DIR "phase-averages"
 #define ANALYSIS "flow"
 #define DATA_DIR "data"
 #define INPUT_DIR "input"
