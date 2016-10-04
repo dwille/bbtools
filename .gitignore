@@ -1,51 +1,25 @@
-# Compiled source
+# Compiled source files
 *.o
 
-# Bluebottle output/input files
-flow-*.cgns
-part-*.cgns
-grid.cgns
-part.config
-flow.config
+# Tool Binaries
+**/cgns_read/sim/main
+**/fourier-reconstruction/1-dim-flow/sim/f-rec-1D-flow
+**/fourier-reconstruction/1-dim-part/sim/f-rec-1D-part
+**/fourier-reconstruction/3-dim-part/sim/f-rec-3D-part
+**/fourier-reconstruction/histograms/sim/f-rec-3D-hist
+**/phase-averaged-velocity/flow/sim/flowvel
+**/phase-averaged-velocity/histogram-part/sim/part-hist
+**/phase-averaged-velocity/part/sim/partvel
+**/part-pair-distribution/3d-hist_bins/sim/3d-hist_bins
+**/part-pair-distribution/bins/sim/part-pair-bin
+**/part-pair-distribution/fourier/sim/part-pair-fourier
+**/part-pair-distribution/laguerre/sim/part-pair-laguerre
+**/part-pair-distribution/r-fourier/sim/part-pair-r
+**/part-pair-distribution/solid/sim/part-pair-solid
+**/tetrads/sim/tetrads
 
-# c-tool binaries
-f-rec-1D-part
-f-rec-3D-part
-3d-hist_bins
-partvel
-
-# phase averaged velocity files
-flowVel
-flowphaseout
-partVel
-partout
-
-# Fourier Reconstruction files
-f-reconstruct
-plot.out
-
-# other
-out
-.keep
-.sh
-sppressions
+# Python files
 *.pyc
-setup.pyc
 
-# Tetrad Files
-tetrad_init
-tetrad.out
-
-raw-data-*
-align.mean
-align.sdev
-align.skew
-align.kurt
-info.dat
-stat.mean
-stat.sdev
-stat.skew
-stat.kurt
-regularNodes
-ts_*
-
+# Other
+sppressions  # make file suppresions
