@@ -16,6 +16,7 @@ double shapeCutLow;
 double shapeCutHigh;
 int findTets;
 int multRuns;
+int output_raw;
 int nRegular;
 int tt;
 

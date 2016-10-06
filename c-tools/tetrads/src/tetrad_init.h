@@ -51,6 +51,7 @@ extern double shapeCutLow;  // tet shape cutoff
 extern double shapeCutHigh;
 extern int findTets;        // find tets or no (if it already exists)
 extern int multRuns;        // flag for if multiple runs will be performed
+extern int output_raw;      // output raw data or no
 
 extern int dev_start;       // cuda device number
 

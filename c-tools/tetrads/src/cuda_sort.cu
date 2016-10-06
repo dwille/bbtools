@@ -330,20 +330,25 @@ void cuda_tetrad_malloc(void)
 
   cudaSetDevice(dev_start);
 
+  // eigenvectors have 3 vectors x three componentsu
+  // eigenvalues have three componenents
   cudaMalloc((void**) &(_RoG), sizeof(double) * nRegular);
   cudaMalloc((void**) &(_EVar), sizeof(double) * nRegular);
   cudaMalloc((void**) &(_shape), sizeof(double) * nRegular);
 
-  cudaMalloc((void**) &(_I1), 3 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_I2), 3 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_I3), 3 * sizeof(double) * nRegular);
+  // shape tensor
   cudaMalloc((void**) &(_gEigVec), 9 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_sEigVal), 3 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I1), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I2), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_I3), sizeof(double) * nRegular);
+
+  // velocity gradient tensor
   cudaMalloc((void**) &(_sEigVec), 9 * sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S11), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S22), sizeof(double) * nRegular);
+  cudaMalloc((void**) &(_S33), sizeof(double) * nRegular);
+
   cudaMalloc((void**) &(_vorticity), 3 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_S11), 3 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_S22), 3 * sizeof(double) * nRegular);
-  cudaMalloc((void**) &(_S33), 3 * sizeof(double) * nRegular);
   cudaMalloc((void**) &(_vortMag), sizeof(double) * nRegular);
   
   cudaMalloc((void**) &(_gEigVecInit), 9 * sizeof(double) * nRegular);
@@ -419,7 +424,7 @@ void cuda_tetrad_stats(void)
 
   // Calculate tetrad geometry and velocity measures
   tetrad_geometry<<<numBlocks_tetrads, dimBlocks_tetrads>>>(_parts, _tetrads,
-    _dom, _RoG, _EVar, _shape, _I1, _I2, _I3, _gEigVec, _sEigVal, _sEigVec, 
+    _dom, _RoG, _EVar, _shape, _I1, _I2, _I3, _gEigVec, _sEigVec, 
     _vorticity, _S11, _S22, _S33, _vortMag, nRegular, tt);
 
   // If first timestep, save vectors for later comparison
@@ -439,7 +444,6 @@ void cuda_tetrad_stats(void)
   cudaMemcpy(I2, _I2, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
   cudaMemcpy(I3, _I3, sizeof(double)*nRegular, cudaMemcpyDeviceToHost);
   cudaMemcpy(gEigVec,_gEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
-  cudaMemcpy(sEigVal,_sEigVal,3*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
   cudaMemcpy(sEigVec,_sEigVec,9*sizeof(double)*nRegular,cudaMemcpyDeviceToHost);
   cudaMemcpy(vorticity, _vorticity, 3*sizeof(double)*nRegular, 
     cudaMemcpyDeviceToHost);
@@ -593,7 +597,6 @@ void cuda_dev_free(void)
   cudaFree(_I2);
   cudaFree(_I3);
   cudaFree(_gEigVec);
-  cudaFree(_sEigVal);
   cudaFree(_sEigVec);
   cudaFree(_vorticity);
   cudaFree(_vortMag);

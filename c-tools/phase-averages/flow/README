@@ -1,0 +1,17 @@
+PURPOSE:
+Calculates phase-averaged fluid velocity at each timestep
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+
+PLOT
+  -- confidence
+    -- simple linear regression with confidence bounds on input data
+  -- fit_all
+    -- Plots n,k from R-Z relation with confidence bounds and also R-Z relation
+  -- plot_all
+    -- plots <w_f> against rho and nparts
+  -- plot_avg
+    -- Plots <w_f>(t) (and u and v) against time so that a mean can be taken at
+        steady state
+

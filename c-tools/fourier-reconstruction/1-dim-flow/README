@@ -1,0 +1,12 @@
+PURPOSE:
+Calculates the Fourier reconstruction of the flow velocites using fftw in one
+dimension (i.e., cross-plane wavenumbers, x & y, are set to 0)
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- Sets the number of terms to keep in the reconstruction
+  -- Sets whether or not to output the coefficients of the expansion at each
+      timestep. Useful if we want to investigate the coefficients
+
+PLOT
+  -- Plots the reconstructed flow velocities as a spatio-temporal plot

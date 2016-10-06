@@ -1,0 +1,30 @@
+PURPOSE:
+Calculates the pair-distribution function in various ways. Truly, the best way
+to expand this would be a Hankel transform, which I haven't attemped yet. The
+boundary conditions are g(r=0) = 0, g(r->infty) = 1. I've also heard chebyshev
+or some other fancy polynomial in r would work (they use it in mol. dyn.)
+
+CONFIG:
+  -- Start an end time
+  -- Distance to look for pairs
+  -- Bin size or reconstruction parameters
+  -- For 3d-hist_bins, greater than or less than a certain number of sdevs from
+      mean
+
+3d-hist_bins:
+  Tries to conditionally average the pair distribution function based on the
+  volume fraction. Uses a histogram.
+bins
+  Simple histogram way to calculate it.
+fourier
+  Expand r in fourier series. Might work with fancy padding, but otherwise
+  boundary conditions are getting in the way
+laguerre
+  Expand r in laguerre polynomials.
+r-fourier
+  Expands rg(r) instead of g(r)
+solid
+  Expands g(r) in solid harmonics
+
+PLOT
+  -- Plots the result

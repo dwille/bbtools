@@ -181,8 +181,6 @@ imgname = imgdir + "volume-fraction-xcorr-slices"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-sys.exit()
-
 # xcorr of two slices
 fig2 = plt.figure(figsize=(3.25,1.625))
 vfAutoCorr = CrossCorrelationFFT(vFrac[zz,:], vFrac[zz,:])
@@ -242,9 +240,6 @@ plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
 imgname = imgdir + "crosscorrelate-slices"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-
-print "l210"
-sys.exit()
 
 ##
  # Plot one velocity slice

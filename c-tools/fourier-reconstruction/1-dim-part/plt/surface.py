@@ -91,9 +91,6 @@ plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
-print "I'm lazy, let's exit here. (line 66)"
-sys.exit()
-
 # ## NUMBER DENSITY ##
 #nDensFile = datadir + "number-density"
 #numDens = np.genfromtxt(nDensFile).T[:,tsInd:]

@@ -120,14 +120,9 @@ for ii in np.arange(nSims):
   normText = r"$t\langle w_f \rangle/2a$"
 
   # calculate stokes relax time, (rho* d^2)/(18nu) / f(Ret)
+  # (in terms of wf/2a)
   # mm^2 / (mm^s/ms) -> [ms]
-  #tau_p[ii] = rho*(2.*partR)*(2.*partR)/(18.*nu)
-  #tau_p[ii] *= termVel/phaseVel
-  #tau_p[ii] /= (1. + 0.1935*Re_t**(0.6305))
-  #tau_p[ii] *= phaseVel/(2.*partR)
-  tau_p[ii] = rho/18. * Re_t/(1. + 0.1935*Re_t**(0.6305))
-  #data[ii].tau /= taup
-  #normText = r"$t 18\nu/(\rho^* (2a)^2)$"
+  tau_p[ii] = (2.*rho + 1.)/18. * Re_t/(1. + 0.1935*Re_t**(0.6305))
 
   # MEAN
   g1_s1[ii].mean = np.zeros(np.size(tmpT))
@@ -181,8 +176,6 @@ for ii in np.arange(nSims):
 
   legendText[ii] = simList[ii] # + ': ' + str(nTetrads[ii])
 
-print tau_p
-
 # Plot things
 labelx = -0.2
 labely = 0.5
@@ -214,7 +207,7 @@ for ii in np.arange(nSims):
   gis1_ax.semilogx(data[ii].tau, g3_s1[ii].mean, 
     color=colors[ii], alpha=shades[ii], dashes=[5,2])
 
-#gis1_ax.set_xlim([1e-1, 6e2])
+gis1_ax.set_xlim([1e-1, 6e2])
 gis1_ax.xaxis.set_ticklabels([])
 
 gis1_ax.set_ylim([0, 1])
@@ -236,7 +229,7 @@ for ii in np.arange(nSims):
   gis2_ax.semilogx(data[ii].tau, g3_s2[ii].mean, 
     color=colors[ii], alpha=shades[ii], dashes=[5,2])
 
-#gis2_ax.set_xlim([1e-1, 6e2])
+gis2_ax.set_xlim([1e-1, 6e2])
 gis2_ax.xaxis.set_ticklabels([])
 
 gis2_ax.set_ylim([0, 1])
@@ -258,7 +251,7 @@ for ii in np.arange(nSims):
   gis3_ax.semilogx(data[ii].tau, g3_s3[ii].mean, 
     color=colors[ii], alpha=shades[ii], dashes=[5,2])
 
-#gis3_ax.set_xlim([1e-1, 6e2])
+gis3_ax.set_xlim([1e-1, 6e2])
 gis3_ax.set_xlabel(normText)
 
 gis3_ax.set_ylim([0, 1])
@@ -270,8 +263,8 @@ gis3_ax.text(2e0, 0.83, r'$\mathbf{v}_3$', fontsize=9)
 gis3_ax.text(2e0, 0.47, r'$\mathbf{v}_2$', fontsize=9)
 gis3_ax.text(4e0, 0.05, r'$\mathbf{v}_1$', fontsize=9)
 
-# stokes number
-for ii in np.arange(nSims):
+# response time
+for ii in np.arange(4):
   gis1_ax.semilogx(tau_p[ii]*np.ones(2), [-1.,1.], color=colors[ii], alpha=shades[ii])
 
 # Save
@@ -302,6 +295,10 @@ giz_ax.yaxis.set_minor_locator(MultipleLocator(0.125))
 giz_ax.text(3e1, 0.75, r'$\mathbf{v}_1$', fontsize=9)
 giz_ax.text(7e0, 0.32, r'$\mathbf{v}_2$', fontsize=9)
 giz_ax.text(2e0, 0.65, r'$\mathbf{v}_3$', fontsize=9)
+
+# response time
+for ii in np.arange(4):
+  giz_ax.semilogx(tau_p[ii]*np.ones(2), [-1.,1.], color=colors[ii], alpha=shades[ii])
 
 # Save
 imgname = imgdir + "all_align_giz_mean"

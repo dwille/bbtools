@@ -1,0 +1,9 @@
+PURPOSE:
+Calculates histogram of particle data
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- number of bins
+
+PLOT
+  -- Plots histograms

@@ -71,8 +71,11 @@ Shape = [ structtype() for i in range(nSims) ]
 I1 = [ structtype() for i in range(nSims) ]
 I2 = [ structtype() for i in range(nSims) ]
 I3 = [ structtype() for i in range(nSims) ]
+S11 = [ structtype() for i in range(nSims) ]
+S22 = [ structtype() for i in range(nSims) ]
+S33 = [ structtype() for i in range(nSims) ]
 
-# Loop over all directory's
+# Loop over all directories
 tau_p = np.zeros(nSims)
 for ii in np.arange(nSims):
   simdir = root + simList[ii] + datadir
@@ -102,6 +105,7 @@ for ii in np.arange(nSims):
   for nn in np.arange(0, np.size(wTermData, 0)):
     currRho = wTermData[nn,0]
     if (rho == currRho):
+      termVel = wTermData[nn,1]
       Re_t = 2.*partR*wTermData[nn,1]/nu
 
   # normalize by wf/a
@@ -109,11 +113,9 @@ for ii in np.arange(nSims):
   normText = r"$t\langle w_f \rangle/a$"
 
   # calculate stokes relax time, (rho* d^2)/(18nu) / f(Ret)
+  # (in terms of wf/2a)
   # mm^2 / (mm^s/ms) -> [ms]
-  tau_p[ii] = rho*(2.*partR)*(2.*partR)/(1. + 0.1935*Re_t**(0.6305))/(18.*nu)
-  tau_p[ii] *= phaseVel/(2.*partR)
-  #data[ii].tau /= taup
-  #normText = r"$t 18\nu/(\rho^* (2a)^2)$"
+  tau_p[ii] = (2.*rho + 1.)/18. * Re_t/(1. + 0.1935*Re_t**(0.6305))
 
   # mean
   RoG[ii].mean   = np.zeros(np.size(tmpT))
@@ -122,6 +124,9 @@ for ii in np.arange(nSims):
   I1[ii].mean    = np.zeros(np.size(tmpT))
   I2[ii].mean    = np.zeros(np.size(tmpT))
   I3[ii].mean    = np.zeros(np.size(tmpT))
+  S11[ii].mean    = np.zeros(np.size(tmpT))
+  S22[ii].mean    = np.zeros(np.size(tmpT))
+  S33[ii].mean    = np.zeros(np.size(tmpT))
 
   RoG[ii].mean   = np.genfromtxt(statmean, skip_header=1, usecols=1)
   EVar[ii].mean  = np.genfromtxt(statmean, skip_header=1, usecols=2)
@@ -129,6 +134,9 @@ for ii in np.arange(nSims):
   I1[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=4)
   I2[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=5)
   I3[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=6)
+  S11[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=7)
+  S22[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=8)
+  S33[ii].mean    = np.genfromtxt(statmean, skip_header=1, usecols=9)
 
   legendText[ii] = simList[ii] # + ': ' + str(nTetrads[ii])
 
@@ -171,7 +179,9 @@ plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 rgFig = plt.figure()
 rg_ax = rgFig.add_subplot(111)
 for ii in np.arange(nSims):
-  y_data = RoG[ii].mean / np.power(data[ii].tau, .54)
+  alpha = 2./(2. + var_ratio[ii])
+  #print alpha
+  y_data = RoG[ii].mean / np.power(data[ii].tau, alpha)
   rg_ax.loglog(data[ii].tau, y_data/partR,
     color=colors[ii], alpha=shades[ii])
 
@@ -191,19 +201,23 @@ ypnts = np.power(xpnts, 0.6) / 5.
 
 xpnts = np.array([6e0, 5e2])
 ypnts = np.power(xpnts, 0.5)  /1.25
-rg_ax.loglog(xpnts, ypnts, 'k-.', linewidth=2, dashes=[4,2])
+#rg_ax.loglog(xpnts, ypnts, 'k-.', linewidth=2, dashes=[4,2])
 rg_ax.text(15, 2, r'$t^{1/2}$')
 
 # Domain extents
 xl = 42./partR
-rg_ax.loglog(rg_ax.get_xlim(), [xl, xl], "k--")
+#rg_ax.loglog(rg_ax.get_xlim(), [xl, xl], "k--")
 
 #rg_ax.legend(legendText, ncol=2, loc='center left', bbox_to_anchor=(1.10,0.5))
 rg_ax.set_xlabel(normText)
 rg_ax.set_ylabel(r"$\langle R_G \rangle/a$")
 
-rg_ax.set_xlim([1e-1, 6e2])
-rg_ax.set_ylim([1e0, 5e1])
+rg_ax.set_xlim([4e0, 1e2])
+rg_ax.set_ylim([1e0, 2e0])
+
+# response time
+for ii in np.arange(4):
+  rg_ax.semilogx(tau_p[ii]*np.ones(2), [-1.,1.], color=colors[ii], alpha=shades[ii])
 
 # Save
 imgname = imgdir + "all_shape_mean_rog_scaled"
@@ -241,6 +255,10 @@ s_ax.yaxis.set_label_coords(-.15, 0.5)
 s_ax.set_yticks([-0.25, 0, 0.5, 1, 1.5, 2])
 s_ax.yaxis.set_minor_locator(MultipleLocator(0.25))
 
+# response time
+for ii in np.arange(4):
+  s_ax.semilogx(tau_p[ii]*np.ones(2), [-1.,1.], color=colors[ii], alpha=shades[ii])
+
 # Save
 imgname = imgdir + "all_shape_mean_sf_var"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
@@ -252,13 +270,14 @@ ax1 = iFig.add_subplot(211)
 
 for ii in np.arange(nSims):
   i_ratio = I1[ii].mean/I2[ii].mean
-  i_ratio /= np.power(data[ii].tau, 1./(2.*var_ratio[ii]))
+  i_ratio /= np.power(data[ii].tau, 1./3.)
   ax1.semilogx(data[ii].tau, i_ratio, color=colors[ii], alpha=shades[ii])
 
 ax1.set_xlim([1e-1, 6e2])
 ax1.set_xticklabels([])
 
-ax1.set_ylabel(r"$\langle I_1\rangle /\langle I_2\rangle $")
+ax1.set_ylabel(r"$(\langle I_1\rangle /\langle I_2\rangle)/t^{1/3} $", rotation=0)
+ax1.yaxis.set_label_coords(-.25, 0.5)
 #ax1.set_ylim([1, 10])
 
 #xpnts = np.array([1e0, 2e1])
@@ -284,7 +303,34 @@ i_ax.set_ylim([0, 1])
 i_ax.set_xlim([1e-1, 6e2])
 #i_ax.legend(legendText, ncol=1, loc='center left', bbox_to_anchor=(1.10,0.5))
 
+# response time
+for ii in np.arange(4):
+  i_ax.semilogx(tau_p[ii]*np.ones(2), [-1.,1.], color=colors[ii], alpha=shades[ii])
+
 # Save
 imgname = imgdir + "all_shape_mean_normi"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+# S11,S22,S33
+sFig =  plt.figure()
+ax1 = sFig.add_subplot(211)
+
+for ii in np.arange(1):
+  tr = S11[ii].mean + S22[ii].mean + S33[ii].mean
+  ax1.semilogx(data[ii].tau, tr, 'k')
+  ax1.semilogx(data[ii].tau, S11[ii].mean, color=colors[ii], alpha=shades[ii])# , #marker='.')
+  ax1.semilogx(data[ii].tau, S22[ii].mean, color=colors[ii], alpha=shades[ii], #marker='s')
+    dashes=[2,2])
+  ax1.semilogx(data[ii].tau, S33[ii].mean, color=colors[ii], alpha=shades[ii], #marker='o')
+    dashes=[5,2])
+
+ax1.set_xlim([1e-1, 6e2])
+ax1.set_xlabel(r"$\tau$")
+ax1.set_ylim([-8e-3, 8e-3])
+ax1.set_ylabel(r"$S_{kk}$")
+
+# Save
+imgname = imgdir + "all_velgrad_eigs"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

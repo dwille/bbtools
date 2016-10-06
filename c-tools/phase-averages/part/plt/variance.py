@@ -41,9 +41,6 @@ vert_var = np.genfromtxt(varFile, skip_header=1, usecols=2)
 hori_var = np.genfromtxt(varFile, skip_header=1, usecols=3)
 var_ratio = vert_var / hori_var
 
-print var_ratio
-sys.exit()
-
 phase_avg_wf = np.genfromtxt(wfFile, skip_header=1, usecols=2)
 vert_var /= phase_avg_wf
 hori_var /= phase_avg_wf

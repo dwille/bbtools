@@ -1,5 +1,6 @@
 #!/bin/sh
 # Submit multiple plotting jobs to slurm, in parallel
+# This is the first script to run!
 # Input args:
 # 1:  Plot utility program name
 

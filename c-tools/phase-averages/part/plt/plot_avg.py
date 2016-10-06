@@ -119,7 +119,6 @@ ax1.legend([r"$u$", r"$v$", r"$w$"])
 imgname = imgdir + "relative_vel"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-sys.exit()
 
 #uAx.plot(time, up, 'k-', linewidth=2)
 #uAx.plot(time, up + upSdev , 'k--', linewidth=2)
@@ -135,14 +134,14 @@ sys.exit()
 #wAx.plot(time, wp - wpSdev , 'k--', linewidth=2)
 #wAx.plot(time, wf, 'b-', linewidth=2)
 
-# Plot sdev/urel
-fig2 = plt.figure(figsize=(12,8))
-fig2.suptitle('Relative Velocity Mag', fontsize=20)
-ax1 = fig2.add_subplot(111)
-#ax1.plot(time[1:], up[1:]/uf[1:], 'k')
-#ax1.plot(time[1:], vp[1:]/vf[1:], 'b')
-#ax1.plot(time[1:], wp[1:]/wf[1:], 'g')
-ax1.set_ylim([-0.01, 0.01])
+# # Plot sdev/urel
+# fig2 = plt.figure(figsize=(12,8))
+# fig2.suptitle('Relative Velocity Mag', fontsize=20)
+# ax1 = fig2.add_subplot(111)
+# #ax1.plot(time[1:], up[1:]/uf[1:], 'k')
+# #ax1.plot(time[1:], vp[1:]/vf[1:], 'b')
+# #ax1.plot(time[1:], wp[1:]/wf[1:], 'g')
+# ax1.set_ylim([-0.01, 0.01])
 
 #plt.show()
 

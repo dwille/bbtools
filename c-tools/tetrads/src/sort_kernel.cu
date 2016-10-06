@@ -560,7 +560,7 @@ __global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
 
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
   dom_struct *dom, double *RoG, double *EVar, double *shape, double *I1, 
-  double *I2, double *I3, double *gEigVec, double *sEigVal, double *sEigVec, 
+  double *I2, double *I3, double *gEigVec, double *sEigVec, 
   double *vorticity, double *S11, double *S22, double *S33, double *vortMag, 
   int nTetrads, int tt)
 {
@@ -597,7 +597,8 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
   double M[nDim2];      // Coarse-grained vel grad tensor
   double S[nDim2];      // Symmetric part of M
   double O[nDim2];      // Anti-Symmetric part of M
-  double trS, itrS;       // Trace of S and its inverse
+  double sEigVal[3];    // Holds eigs of S
+  //double trS, itrS;     // Trace of S and its inverse
 
   /* Misc */
   int N1, N2, N3, N4;   // tetrad nodes
@@ -747,21 +748,21 @@ __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads,
       }
     }
 
-    trS = matrixTrace3(S);
-    itrS = 1./trS;
-
-    // S11, S22, S33 before diagonalizing -- compressibility in xyz frame
-    S11[tet] = S[0];
-    S22[tet] = S[4];
-    S33[tet] = S[8];
+    // trS = matrixTrace3(S);
+    // itrS = 1./trS;
 
     // Find principal directions and values of strain tensor
-    jacobiEig3(S, &(sEigVal[nDim*tet]), &(sEigVec[nDim2*tet]), &nrot);
+    jacobiEig3(S, sEigVal, &(sEigVec[nDim2*tet]), &nrot);
+
+    // S11, S22, S33 -- principal values of S
+    S11[tet] = sEigVal[0];
+    S22[tet] = sEigVal[1];
+    S33[tet] = sEigVal[2];
 
     // norm sEigVal by trace(S)
-    for (int i = 0; i < nDim; i++) {
-      sEigVal[nDim*tet + i] *= itrS;
-    }
+    // for (int i = 0; i < nDim; i++) {
+    //   sEigVal[nDim*tet + i] *= itrS;
+    // }
 
     // pull vorticity vector:
     // See AP, Fluid Dynamics, pages 38 + 40 -- O is -(7.53) bc (8.9)

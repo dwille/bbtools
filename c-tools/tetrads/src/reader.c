@@ -32,7 +32,6 @@ double *I1;
 double *I2;
 double *I3;
 double *gEigVec;
-double *sEigVal;
 double *sEigVec;
 double *vorticity;
 double *S11;
@@ -46,7 +45,6 @@ double *_I1;
 double *_I2;
 double *_I3;
 double *_gEigVec;
-double *_sEigVal;
 double *_sEigVec;
 double *_vorticity;
 double *_S11;
@@ -105,6 +103,7 @@ void tetrad_read_input(void)
   fret = fscanf(infile, "\n");
   fret = fscanf(infile, "Find Tetrads %d\n", &findTets);
   fret = fscanf(infile, "Multiple Runs %d\n", &multRuns);
+  fret = fscanf(infile, "Output Raw %d\n", &output_raw);
 
   fclose(infile);
 }
@@ -773,7 +772,6 @@ void alloc_tetrad_arrays(void)
   I2 = malloc(sizeof(double) * nRegular);
   I3 = malloc(sizeof(double) * nRegular);
   gEigVec = malloc(9 * sizeof(double) * nRegular);
-  sEigVal = malloc(3 * sizeof(double) * nRegular);
   sEigVec = malloc(9 * sizeof(double) * nRegular);
   vorticity = malloc(3 * sizeof(double) * nRegular);
   S11 = malloc(sizeof(double) * nRegular);
@@ -980,68 +978,67 @@ void get_sigfigs(void)
 void write_timestep(void)
 {
 
-  // Print raw data
   // Set up the filename
   char format[CHAR_BUF_SIZE] = "";
   char fnameall[CHAR_BUF_SIZE] = "";
   char fnameall2[CHAR_BUF_SIZE] = "";
   sprintf(format, "%%0%d.%df", sigFigPre + sigFigPost + 1, sigFigPost);
+  
+  // if we are outputting raw, do so
+  if (output_raw == 1) {
+    // if multiple runs, get correct dir
+    if (multRuns == 1) {
+      sprintf(fnameall2, "%s/raw-data-%s", runDir, format);
+    } else {
+      sprintf(fnameall2, "%s/%s/raw-data-%s", ANALYSIS_DIR, DATA_DIR, format);
+    }
+    sprintf(fnameall, fnameall2, partFileTime[tt]);
 
-  // if multiple runs, get correct dir
-  if (multRuns == 1) {
-    sprintf(fnameall2, "%s/raw-data-%s", runDir, format);
-  } else {
-    sprintf(fnameall2, "%s/%s/raw-data-%s", ANALYSIS_DIR, DATA_DIR, format);
-  }
-  sprintf(fnameall, fnameall2, partFileTime[tt]);
+    FILE *fdat = fopen(fnameall, "w");
+    if (fdat == NULL) {
+      printf("Error opening file %s!\n", fnameall);
+      exit(EXIT_FAILURE);
+    }
 
-  FILE *fdat = fopen(fnameall, "w");
-  if (fdat == NULL) {
-    printf("Error opening file %s!\n", fnameall);
-    exit(EXIT_FAILURE);
-  }
+    fprintf(fdat, "RoG EVar shape ");
+    fprintf(fdat, "I1 I2 I3 ");
+    fprintf(fdat, "gEigVec_1x gEigVec_1y gEigVec_1z ");
+    fprintf(fdat, "gEigVec_2x gEigVec_2y gEigVec_2z ");
+    fprintf(fdat, "gEigVec_3x gEigVec_3y gEigVec_3z ");
+    fprintf(fdat, "sEigVal_1 sEigVal_2 sEigVal_3 ");
+    fprintf(fdat, "sEigVec_1x sEigVec_1y sEigVec_1z ");
+    fprintf(fdat, "sEigVec_2x sEigVec_2y sEigVec_2z ");
+    fprintf(fdat, "sEigVec_3x sEigVec_3y sEigVec_3z ");
+    fprintf(fdat, "vorticity_x vorticity_y vorticity_z\n");
 
-  fprintf(fdat, "RoG EVar shape ");
-  fprintf(fdat, "I1 I2 I3 ");
-  fprintf(fdat, "gEigVec_1x gEigVec_1y gEigVec_1z ");
-  fprintf(fdat, "gEigVec_2x gEigVec_2y gEigVec_2z ");
-  fprintf(fdat, "gEigVec_3x gEigVec_3y gEigVec_3z ");
-  fprintf(fdat, "sEigVal_1 sEigVal_2 sEigVal_3 ");
-  fprintf(fdat, "sEigVec_1x sEigVec_1y sEigVec_1z ");
-  fprintf(fdat, "sEigVec_2x sEigVec_2y sEigVec_2z ");
-  fprintf(fdat, "sEigVec_3x sEigVec_3y sEigVec_3z ");
-  fprintf(fdat, "vorticity_x vorticity_y vorticity_z ");
-  fprintf(fdat, "S11 S22 S33\n");
-
-  for (int i = 0; i < nRegular; i++) {
-        int p3 = nDim * i;    // index for 3-scalar arrays
-        int p9 = nDim2 * i;   // index for 3-vector arrays
-        
-        fprintf(fdat, "%lf %lf %lf ",
-          RoG[i], EVar[i], shape[i]);
-
-        fprintf(fdat, "%lf %lf %lf ",
-          I1[i], I2[i], I3[i]);
-
-        fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
-          gEigVec[p9 + 0], gEigVec[p9 + 3], gEigVec[p9 + 6], 
-          gEigVec[p9 + 1], gEigVec[p9 + 4], gEigVec[p9 + 7], 
-          gEigVec[p9 + 2], gEigVec[p9 + 5], gEigVec[p9 + 8]);
+    for (int i = 0; i < nRegular; i++) {
+          int p3 = nDim * i;    // index for 3-scalar arrays
+          int p9 = nDim2 * i;   // index for 3-vector arrays
           
-        fprintf(fdat, "%lf %lf %lf ",
-          sEigVal[p3 + 0], sEigVal[p3 + 1], sEigVal[p3 + 2]);
-          
-        fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
-          sEigVec[p9 + 0], sEigVec[p9 + 3], sEigVec[p9 + 6], 
-          sEigVec[p9 + 1], sEigVec[p9 + 4], sEigVec[p9 + 7], 
-          sEigVec[p9 + 2], sEigVec[p9 + 5], sEigVec[p9 + 8]);
-          
-        fprintf(fdat, "%lf %lf %lf ",
-          vorticity[p3 + 0], vorticity[p3 + 1], vorticity[p3 + 2]);
+          fprintf(fdat, "%lf %lf %lf ",
+            RoG[i], EVar[i], shape[i]);
 
-        fprintf(fdat, "%lf %lf %lf\n", S11[i], S22[i], S33[i]);
+          fprintf(fdat, "%lf %lf %lf ",
+            I1[i], I2[i], I3[i]);
+
+          fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
+            gEigVec[p9 + 0], gEigVec[p9 + 3], gEigVec[p9 + 6], 
+            gEigVec[p9 + 1], gEigVec[p9 + 4], gEigVec[p9 + 7], 
+            gEigVec[p9 + 2], gEigVec[p9 + 5], gEigVec[p9 + 8]);
+            
+          fprintf(fdat, "%lf %lf %lf ", S11[i], S22[i], S33[i]);
+            
+          fprintf(fdat, "%lf %lf %lf %lf %lf %lf %lf %lf %lf ",
+            sEigVec[p9 + 0], sEigVec[p9 + 3], sEigVec[p9 + 6], 
+            sEigVec[p9 + 1], sEigVec[p9 + 4], sEigVec[p9 + 7], 
+            sEigVec[p9 + 2], sEigVec[p9 + 5], sEigVec[p9 + 8]);
+            
+          fprintf(fdat, "%lf %lf %lf\n",
+            vorticity[p3 + 0], vorticity[p3 + 1], vorticity[p3 + 2]);
+
+    }
+    fclose(fdat);
   }
-  fclose(fdat);
 
   /* Print statistics of scalars */
   char path2mean[FILE_NAME_SIZE] = "";
@@ -1224,7 +1221,6 @@ void free_parts(void)
   free(I2);
   free(I3);
   free(gEigVec);
-  free(sEigVal);
   free(sEigVec);
   free(vorticity);
   free(S11);

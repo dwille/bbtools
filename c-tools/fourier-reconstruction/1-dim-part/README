@@ -1,0 +1,54 @@
+PURPOSE:
+Calculates the Fourier reconstruction of the particle phase quantities in one
+dimension (i.e., cross-plane wavenumbers, x & y, are set to 0). These include
+number density, volume fraction, velocity components, and kinetic energy.
+This does NOT use fftw, since there's a pretty nice analytic expression as 
+particles can be expressed as the sum of Heaviside / delta functions and some
+integrals are eliminated.
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- Sets the number of terms to keep in the reconstruction
+  -- Sets whether or not to output the coefficients of the expansion at each
+      timestep. Useful if we want to investigate the coefficients
+
+SUBMISSION
+  -- batch-submission: submit all to a slurm queue, they run in serial
+  -- submit-parallel: submit all to slurm, they run in parallel
+
+PLOT
+  -- surface.py: 
+       Plots the reconstructed flow velocities as a spatio-temporal plot
+  -- autocorrelate-{space,time}:
+       Autocorrelations in space and time to get frequencies and wavelengths
+  -- avg-{crosscorr,plot}-spacetime, avg:
+       Correlation of time slices and averaging, used to get wavespeed
+  -- avg-waveform: (DEVEL)
+       Tries to average together waveforms based on maxima cross-correlations.
+  -- coeffs{,_field_compare}:
+       Plot the reconstruction coefficients to examine their magnitude
+  -- correlate_two_fields:
+       Tries to correlate different reconstructed fields together
+  -- crosscorrelate-spacetime:
+       Precursor to the averaged version
+  -- fluct_{magnitude,stat_dependence}:
+       Tries to find fluctuation magnitude based on probability levels or
+       standard deviation. Also plots these as a function of reconstruction 
+       order
+  -- histogram_vfrac_vel:
+       Bivariate histogram of velocity and volume fraction
+  -- power-spectrum-{space,time}:
+       Power spectrum of the reconstruction in space and time, useful for 
+       finding strongest component of frequency and wavelength
+  -- radon_{plot,transform}:
+       Apply radon transform to spatio-temporal field and plot. Used to find
+       wavespeed, but not as clear as the correlation analysis
+  -- slices:
+       Plot various slices of the spatio-temporal field to give visuals how we
+       find wavespeed
+  -- submission:
+       Various ways to submit different plotting utils across all simulations
+  -- vfrac_wp_correlation:
+       Compares velocity fluctuations across volume fractions
+  -- wavespeed:
+       Plot wavespeeds as function of volume fraction

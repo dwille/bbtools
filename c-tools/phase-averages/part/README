@@ -1,0 +1,19 @@
+PURPOSE:
+Phase averaged particle velocity over time. Also variance, sdev
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+
+PLOT (these are messy, my apologies. Haven't spent much time on them)
+  -- 3d_plot_flucts
+    -- plots velocity fluctuations as function of Galileo number and vfrac
+  -- hinch_high_rey
+    -- compares velocity fluctuations to some theory by hinch
+  -- plot_all
+    -- plots velocity flucations as a function of phi, also dwdphi
+  -- plot_avg
+    -- plots relative velocity of particle and fluid
+  -- raw_flucts
+    -- flucts non normalized
+  -- variance
+    -- plots variance of velocity components

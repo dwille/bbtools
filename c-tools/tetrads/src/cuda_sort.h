@@ -67,7 +67,7 @@ __global__ void flip_kernel(part_struct *parts, part_struct *partsPrev,
 // tetrad geometry
 __global__ void tetrad_geometry(part_struct *parts, tetrad_struct *tetrads, 
   dom_struct *dom, double *RoG, double *var, double *shape, double *I1, 
-  double *I2, double *I3, double *gEigVec, double *sEigVal, double *sEigVec, 
+  double *I2, double *I3, double *gEigVec, double *sEigVec, 
   double *vorticity, double *S11, double *S22, double *S33, double *vortMag, 
   int nTetrads, int tt);
 

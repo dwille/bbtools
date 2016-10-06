@@ -1,0 +1,9 @@
+PURPOSE:
+Calculates the cumulative number of collisions and puts it into a nice csv
+data file
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+
+PLOT
+  -- Plots the collision rate / total number of collisions

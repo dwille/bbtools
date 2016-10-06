@@ -1,0 +1,9 @@
+PURPOSE:
+Histograms of 3-D reconstructed fields over time.
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- Number of bins in histogram
+
+PLOT
+  -- Plots the histograms

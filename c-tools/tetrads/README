@@ -1,0 +1,29 @@
+PURPOSE:
+Track tetrads of particle throughout time and calculate some cute statistics on
+them
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- Initial size and tolerances
+  -- Multiple runs (for ensembling)
+  -- Output raw data (if ensembling, don't need to) (Actually, don't really 
+      need to at all, ever)
+
+PLOT (some of these are old and not very fleshed out, marked with a *)
+* -- Plots alignment, sometimes from raw data
+  -- all_align{*}
+    -- Plot alignment statistics of all cases
+  -- all_shape{*}
+    -- Plot shape statistics  of all cases
+  -- all_pdf
+*   -- Outputs some pdfs?
+  -- combine_runs_*
+    -- Ensemble average runs together
+* -- lyapunov_exp
+    -- of the RoG scaling?
+* -- mean_measures
+    -- pdf over time? for one case?
+  -- ternary
+    -- ternary diagram of normalized eigenvalues I_k
+* -- tetrad_regulariy
+    -- plot pdfs at initial condition

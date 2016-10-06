@@ -1,0 +1,20 @@
+PURPOSE:
+Calculates the Fourier reconstruction of the part velocites and KE using fftw in
+3 dimensions.
+
+CONFIG
+  -- Sets the starting and ending time to reconstruct
+  -- Sets the number of terms to keep in the reconstruction in all dimensions
+
+TRACK_WAVES
+Using the wavespeed calculated in 1-dim, sweeps an averaging box through at
+that speed and averages a little over the z-direction. Trying to see if the 
+wave structures persist, or whether they are composed of the same particles or
+not.
+
+CONFIG
+  -- Starting and ending time
+  -- Initial location of plane
+  -- Total width of box (vertical direction, in particle units)
+  -- Part radius
+  -- Wavespeed (or sweep velocity
