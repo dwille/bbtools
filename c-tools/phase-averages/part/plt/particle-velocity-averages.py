@@ -26,22 +26,26 @@ if not os.path.exists(termFile):
   print ""
   sys.exit()
 
-# Pull fluid velocity and time
+# Pull fluid velocity and time AFTER steady state time
 ftime = np.genfromtxt(fdataFile, skip_header=1, usecols=0)
-uf = np.genfromtxt(fdataFile, skip_header=1, usecols=1)
-vf = np.genfromtxt(fdataFile, skip_header=1, usecols=2)
-wf = np.genfromtxt(fdataFile, skip_header=1, usecols=3)
+tf_start_ind = np.squeeze(np.argwhere(ftime >= tstart)[0])
 
-# Pull particle velocity and time
+uf = np.genfromtxt(fdataFile, skip_header=1, usecols=1)[tf_start_ind:]
+vf = np.genfromtxt(fdataFile, skip_header=1, usecols=2)[tf_start_ind:]
+wf = np.genfromtxt(fdataFile, skip_header=1, usecols=3)[tf_start_ind:]
+
+# Pull particle velocity and time AFTER steady state time
 ptime = np.genfromtxt(pdataFile, skip_header=1, usecols=0)
-up = np.genfromtxt(pdataFile, skip_header=1, usecols=1)
-vp = np.genfromtxt(pdataFile, skip_header=1, usecols=2)
-wp = np.genfromtxt(pdataFile, skip_header=1, usecols=3)
+tp_start_ind = np.squeeze(np.argwhere(ptime >= tstart)[0])
+
+up = np.genfromtxt(pdataFile, skip_header=1, usecols=1)[tp_start_ind:]
+vp = np.genfromtxt(pdataFile, skip_header=1, usecols=2)[tp_start_ind:]
+wp = np.genfromtxt(pdataFile, skip_header=1, usecols=3)[tp_start_ind:]
 
 # Standard deviation of particle velocity (sdev AT a time step)
-upSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=4)
-vpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=5)
-wpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=6)
+upSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=4)[tp_start_ind:]
+vpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=5)[tp_start_ind:]
+wpSdev = np.genfromtxt(pdataFile, skip_header=1, usecols=6)[tp_start_ind:]
 
 # Pull terminal velocity, find correct for the simulation
 termVel = np.genfromtxt(termFile, skip_header=1, usecols=1)
@@ -55,9 +59,10 @@ elif rho == 5.0:
   termVel = termVel[3]
 
 # Interpolate fluid/particle times together
+commonMinTime = np.max([ptime[0], ftime[0]);
 commonMaxTime = np.min([ptime[-1], ftime[-1]])
 dt = np.mean(np.diff(ptime))
-time = np.arange(0., commonMaxTime + 0.00001, dt)
+time = np.arange(commonMinTime - 1e-5, commonMaxTime + 1e-5, dt)
 
 up = np.interp(time, ptime, up)
 vp = np.interp(time, ptime, vp)

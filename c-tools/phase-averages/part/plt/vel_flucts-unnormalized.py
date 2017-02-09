@@ -143,7 +143,7 @@ plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 
 ## Plot as a function of rho (or Re_t)
 fig2 = plt.figure(figsize=(4,3))
-ax1 = fig2.add_subplot(212)
+ax1 = fig2.add_subplot(211)
 ax1.plot(phi, dwdphi[0:16:4], 'b*', markersize=7, alpha=0.7)
 ax1.plot(phi, dwdphi[1:16:4], 'gs', markersize=7, alpha=0.7)
 ax1.plot(phi, dwdphi[2:16:4], 'ro', markersize=7, alpha=0.7)

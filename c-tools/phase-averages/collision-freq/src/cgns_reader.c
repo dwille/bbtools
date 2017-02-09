@@ -253,7 +253,7 @@ int cgns_fill_parts(int tt)
 
   int coll_total = 0;
   for (int pp = 0; pp < nparts; pp++) {
-    coll_total += (p_coll[pp] > 0);
+    coll_total += p_coll[pp];
   }
 
   cg_close(fn);

@@ -34,7 +34,9 @@ extern char *ANALYSIS_DIR;      // Analysis directory
 // Declare global variables
 extern double tStart;       // start time
 extern double tEnd;         // end time
-extern int order;           // order of fourier expansion
+extern int order_s;         // starting order of fourier expansion
+extern int order_e;         // ending order of fourier expansion
+extern int n_order;         // number of orders
 extern int coeffsOut;       // output coeffs or not
 extern int npoints;         // number of points to evaluate at
 extern int tt;              // time iterator

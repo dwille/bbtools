@@ -66,13 +66,14 @@ if not os.path.exists(imgdir):
 
 # Read data
 flowVel = np.genfromtxt(phaseFile, skip_header=1, usecols=2)
+partVel = np.genfromtxt(phaseFile, skip_header=1, usecols=3)
 termVel = np.genfromtxt(termFile, skip_header=1, usecols=1)
 
 # Constant rho -- phi increasing -- left hand side
-wfwt_rho20 = flowVel[0:16:4]/termVel[0]
-wfwt_rho33 = flowVel[1:16:4]/termVel[1]
-wfwt_rho40 = flowVel[2:16:4]/termVel[2]
-wfwt_rho50 = flowVel[3:16:4]/termVel[3]
+wfwt_rho20 = (flowVel[0:16:4]- partVel[0:16:4])/termVel[0]
+wfwt_rho33 = (flowVel[1:16:4]- partVel[1:16:4])/termVel[1]
+wfwt_rho40 = (flowVel[2:16:4]- partVel[2:16:4])/termVel[2]
+wfwt_rho50 = (flowVel[3:16:4]- partVel[3:16:4])/termVel[3]
 
 # Fit a line to the log log
 (n20, k20, n20_err, k20_err) = fit_param(np.log(1.-phi), np.log(wfwt_rho20))

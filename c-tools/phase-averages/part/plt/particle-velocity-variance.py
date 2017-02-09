@@ -9,7 +9,7 @@ print ""
 # Parse command line args and set up directory structure
 home = os.path.expanduser("~")
 root = home + "/scratch/triply_per/"
-imgdir = root + "simdata/img/phase_averaged_part/"
+imgdir = root + "simdata/img/part/"
 if not os.path.exists(imgdir):
   os.makedirs(imgdir)
   print "Made directory %s" % imgdir

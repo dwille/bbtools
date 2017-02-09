@@ -50,21 +50,23 @@ void alloc_arrays()
   /* Init coefficent arrays */
   // arrays are size (order+1) because includes 0 and order
   //  but zero index will be trash -- this is given by constant coefficient
-  nl_even = (double*) malloc((order + 1) * sizeof(double));
-  nl_odd = (double*) malloc((order + 1) * sizeof(double));
-  nul_even = (double*) malloc((order + 1) * sizeof(double));
-  nul_odd = (double*) malloc((order + 1) * sizeof(double));
-  nvl_even = (double*) malloc((order + 1) * sizeof(double));
-  nvl_odd = (double*) malloc((order + 1) * sizeof(double));
-  nwl_even = (double*) malloc((order + 1) * sizeof(double));
-  nwl_odd = (double*) malloc((order + 1) * sizeof(double));
-  nkel_even = (double*) malloc((order + 1) * sizeof(double));
-  nkel_odd = (double*) malloc((order + 1) * sizeof(double));
+  // TODO: is allocating much more memory than needed if we're only looking at
+  // one wavenumber...
+  nl_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nl_odd = (double*) malloc((order_e + 1)* sizeof(double));
+  nul_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nul_odd = (double*) malloc((order_e + 1)* sizeof(double));
+  nvl_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nvl_odd = (double*) malloc((order_e + 1)* sizeof(double));
+  nwl_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nwl_odd = (double*) malloc((order_e + 1)* sizeof(double));
+  nkel_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nkel_odd = (double*) malloc((order_e + 1)* sizeof(double));
 
-  nwl_avg_even = (double*) malloc((order + 1) * sizeof(double));
-  nwl_avg_odd = (double*) malloc((order + 1) * sizeof(double));
+  nwl_avg_even = (double*) malloc((order_e + 1)* sizeof(double));
+  nwl_avg_odd = (double*) malloc((order_e + 1)* sizeof(double));
 
-  for (int i = 0; i < order; i++) {
+  for (int i = 0; i <(order_e + 1); i++) {
     nl_even[i] = 0.;
     nl_odd[i] = 0.;
     nul_even[i] = 0.;
@@ -88,15 +90,25 @@ void alloc_arrays()
   nv_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nw_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nke_ces = (double*) malloc(npoints * nFiles * sizeof(double));
-
   nw_avg_ces = (double*) malloc(npoints * nFiles * sizeof(double));
 
-  // initialize volume fraction
   double vFrac0 = 4./3.*PI*meanR*meanR*meanR * nparts / (dom.xl*dom.yl*dom.zl);
   for (int j = 0; j < nFiles; j++) {
     for (int i = 0; i < npoints; i++) {
       int c = i + j*npoints;
-      vFrac_ces[c] = vFrac0;
+
+      if (order_s == 0) {
+        vFrac_ces[c] = vFrac0;  // set this explicitly
+      } else {
+        vFrac_ces[c] = 0.;  // set this explicitly
+      }
+
+      n_ces[c] = 0.;
+      nu_ces[c] = 0.;
+      nv_ces[c] = 0.;
+      nw_ces[c] = 0.;
+      nke_ces[c] = 0.;
+      nw_avg_ces[c] = 0.;
     }
   }
 
@@ -145,7 +157,7 @@ void calc_coeffs(double *nql_even, double *nql_odd, double *q,
 void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
   double *evalZ, double ell, double k_ell)
 {
-  double weight = (1. - ell / (order + 1.));
+  double weight = (1. - ell / (order_e + 1.));
   
   for (int zz = 0; zz < npoints; zz++) {
     int cc = zz + npoints*tt;
@@ -162,7 +174,7 @@ void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
 void eval_phase_avg(double *phase_avg_ces, double nql_even, double nql_odd, 
   double *evalZ, double ell, double k_ell)
 {
-  double weight = (1. - ell / (order + 1.));
+  double weight = (1. - ell / (order_e + 1.));
   double correction = 4.*PI/(k_ell*k_ell*k_ell)*(sin(k_ell*meanR) 
                                                 - k_ell*meanR*cos(k_ell*meanR));
   for (int zz = 0; zz < npoints; zz++) {

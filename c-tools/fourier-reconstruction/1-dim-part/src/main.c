@@ -7,7 +7,9 @@ char *ANALYSIS_DIR;
 // Define global variables declared in header file
 double tStart;
 double tEnd;
-int order;
+int order_s;
+int order_e;
+int n_order;
 int coeffsOut;
 int npoints;
 int tt;
@@ -48,39 +50,40 @@ int main(int argc, char *argv[])
     // Fill parts
     cgns_fill_parts();
 
-    // Calculate nq0; init cesaro sum to this value
-    const_coeffs(ones, n_ces);
-    const_coeffs(up, nu_ces);
-    const_coeffs(vp, nv_ces);
-    const_coeffs(wp, nw_ces);
-    const_coeffs(ke, nke_ces);
-    
-    // write constant coeffs to file
-    if (coeffsOut == 1) write_coeffs(0);
-
     // Calclate nql, add to cesaro sum
-    for (int ll = 1; ll <= order; ll++) {
-      double ell = (double) ll;
+    for (int ll = order_s; ll <= order_e; ll++) {
+      // Calculate nq0; init cesaro sum to this value
+      if (ll == 0) {
+        const_coeffs(ones, n_ces);
+        const_coeffs(up, nu_ces);
+        const_coeffs(vp, nv_ces);
+        const_coeffs(wp, nw_ces);
+        const_coeffs(ke, nke_ces);
 
-      // Calculate wavenumber
-      double k_ell = 2.*PI*ell/dom.zl;
+        // write constant coeffs to file
+        if (coeffsOut == 1) write_coeffs(0);
+      } else {
+        // Calculate wavenumber
+        double ell = (double) ll;
+        double k_ell = 2.*PI*ell/dom.zl;
 
-      // Calculate even and odd coefficients
-      calc_coeffs(&nl_even[ll], &nl_odd[ll], ones, parts, k_ell);
-      calc_coeffs(&nul_even[ll], &nul_odd[ll], up, parts, k_ell);
-      calc_coeffs(&nvl_even[ll], &nvl_odd[ll], vp, parts, k_ell);
-      calc_coeffs(&nwl_even[ll], &nwl_odd[ll], wp, parts, k_ell);
-      calc_coeffs(&nkel_even[ll], &nkel_odd[ll], ke, parts, k_ell);
+        // Calculate even and odd coefficients
+        calc_coeffs(&nl_even[ll], &nl_odd[ll], ones, parts, k_ell);
+        calc_coeffs(&nul_even[ll], &nul_odd[ll], up, parts, k_ell);
+        calc_coeffs(&nvl_even[ll], &nvl_odd[ll], vp, parts, k_ell);
+        calc_coeffs(&nwl_even[ll], &nwl_odd[ll], wp, parts, k_ell);
+        calc_coeffs(&nkel_even[ll], &nkel_odd[ll], ke, parts, k_ell);
 
-      // Calculate volume fraction coeffs from number density
-      eval_phase_avg(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+        // Calculate volume fraction coeffs from number density
+        eval_phase_avg(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
 
-      // Evaluate series at z
-      eval_series(n_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
-      eval_series(nu_ces, nul_even[ll], nul_odd[ll], evalZ, ell, k_ell);
-      eval_series(nv_ces, nvl_even[ll], nvl_odd[ll], evalZ, ell, k_ell);
-      eval_series(nw_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
-      eval_series(nke_ces, nkel_even[ll], nkel_odd[ll], evalZ, ell, k_ell);
+        // Evaluate series at z
+        eval_series(n_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+        eval_series(nu_ces, nul_even[ll], nul_odd[ll], evalZ, ell, k_ell);
+        eval_series(nv_ces, nvl_even[ll], nvl_odd[ll], evalZ, ell, k_ell);
+        eval_series(nw_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
+        eval_series(nke_ces, nkel_even[ll], nkel_odd[ll], evalZ, ell, k_ell);
+      }
     }
     // Normalize nq by n to find q
     normalize(nu_ces, n_ces);

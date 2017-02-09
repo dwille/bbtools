@@ -17,7 +17,7 @@ vFracMean = nparts*(4./3.)*np.pi*(partR**3.)/(42.*42.*126.)
 print "      Mean Volume Fraction = %.4f" % vFracMean
 
 # Setup directory structures
-(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
@@ -31,10 +31,11 @@ if not os.path.exists(imgdir):
   os.makedirs(imgdir)
 
 # Pull data to arrays
-vFrac = np.genfromtxt(datadir + "volume-fraction").T[:,tsInd:]
-up = np.genfromtxt(datadir + "part-u").T[:,tsInd:]
-vp = np.genfromtxt(datadir + "part-v").T[:,tsInd:]
-uperp = np.sqrt(up**2 + vp**2)
+#vFrac = np.genfromtxt(datadir + "volume-fraction").T[:,tsInd:] - vFracMean
+vFrac = np.genfromtxt(datadir + "volume-fraction").T[:,tsInd:] - vFracMean
+#up = np.genfromtxt(datadir + "part-u").T[:,tsInd:]
+#vp = np.genfromtxt(datadir + "part-v").T[:,tsInd:]
+#uperp = np.sqrt(up**2 + vp**2)
 wp = np.genfromtxt(datadir + "part-w").T[:,tsInd:]
 
 # Correlations
@@ -45,16 +46,19 @@ vFrac_uperp = np.zeros((nz, nt))
 wp_up = np.zeros((nz, nt))
 wp_vp = np.zeros((nz, nt))
 
-for zz,_ in enumerate(evalZ):
-  # Correlate vFrac with up, vp, wp
-  vFrac_up[zz,:] = CrossCorrelationFFT(vFrac[zz,:], up[zz,:])
-  vFrac_vp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], vp[zz,:])
-  vFrac_wp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], wp[zz,:])
-  vFrac_uperp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], uperp[zz,:])
+#for zz,_ in enumerate(evalZ):
+#  # Correlate vFrac with up, vp, wp
+#  vFrac_up[zz,:] = CrossCorrelationFFT(vFrac[zz,:], up[zz,:])
+#  vFrac_vp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], vp[zz,:])
+#  vFrac_wp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], wp[zz,:])
+#  vFrac_uperp[zz,:] = CrossCorrelationFFT(vFrac[zz,:], uperp[zz,:])
+#
+#  # Correlate wp with vp, up
+#  wp_up[zz,:] = CrossCorrelationFFT(wp[zz,:], up[zz,:])
+#  wp_vp[zz,:] = CrossCorrelationFFT(wp[zz,:], vp[zz,:])
 
-  # Correlati wp with vp, up
-  wp_up[zz,:] = CrossCorrelationFFT(wp[zz,:], up[zz,:])
-  wp_vp[zz,:] = CrossCorrelationFFT(wp[zz,:], vp[zz,:])
+for tt,_ in enumerate(time):
+  vFrac_wp[:,tt] = CrossCorrelationFFT(vFrac[:,tt], wp[:,tt])
 
   # Normalize
   #vFrac_up[zz,:] /= vFrac_up[zz,0]
@@ -66,51 +70,51 @@ for zz,_ in enumerate(evalZ):
 # Plot!
 fsize = (6,3)
 vscale = 0.15
-# Plot of volume fraction and up #
-fig1 = plt.figure(figsize=fsize)
-plt.imshow(vFrac_up, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-vscale, vmax=vscale, cmap='seismic')
-
-plt.colorbar()
-
-plt.title(r"Correlation of $\phi$ and $u_p$")
-plt.xlabel(r"$Time\ [s]$")
-plt.xlim([0, time[-1]])
-plt.ylabel(r"$z\ [mm]$")
-plt.ylim([evalZ[0], evalZ[-1]])
-
-plt.gca().xaxis.set_major_locator(MultipleLocator(2))
-plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
-
-imgname = imgdir + "vfrac-up"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-
-# Plot of volume fraction and vp #
-fig2 = plt.figure(figsize=fsize)
-plt.imshow(vFrac_vp, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-vscale, vmax=vscale, cmap='seismic')
-
-plt.colorbar()
-
-plt.title(r"Correlation of $\phi$ and $v_p$")
-plt.xlabel(r"$Time\ [s]$")
-plt.xlim([0, time[-1]])
-plt.ylabel(r"$z\ [mm]$")
-plt.ylim([evalZ[0], evalZ[-1]])
-
-plt.gca().xaxis.set_major_locator(MultipleLocator(2))
-plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
-
-imgname = imgdir + "vfrac-vp"
-plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# # Plot of volume fraction and up #
+# fig1 = plt.figure(figsize=fsize)
+# plt.imshow(vFrac_up, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+#   vmin=-vscale, vmax=vscale, cmap='seismic')
+# 
+# plt.colorbar()
+# 
+# plt.title(r"Correlation of $\phi$ and $u_p$")
+# plt.xlabel(r"$Time\ [s]$")
+# plt.xlim([0, time[-1]])
+# plt.ylabel(r"$z\ [mm]$")
+# plt.ylim([evalZ[0], evalZ[-1]])
+# 
+# plt.gca().xaxis.set_major_locator(MultipleLocator(2))
+# plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
+# 
+# imgname = imgdir + "vfrac-up"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+# 
+# # Plot of volume fraction and vp #
+# fig2 = plt.figure(figsize=fsize)
+# plt.imshow(vFrac_vp, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
+#   vmin=-vscale, vmax=vscale, cmap='seismic')
+# 
+# plt.colorbar()
+# 
+# plt.title(r"Correlation of $\phi$ and $v_p$")
+# plt.xlabel(r"$Time\ [s]$")
+# plt.xlim([0, time[-1]])
+# plt.ylabel(r"$z\ [mm]$")
+# plt.ylim([evalZ[0], evalZ[-1]])
+# 
+# plt.gca().xaxis.set_major_locator(MultipleLocator(2))
+# plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
+# 
+# imgname = imgdir + "vfrac-vp"
+# plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 
 # Plot of volume fraction and wp #
 fig3 = plt.figure(figsize=fsize)
 plt.imshow(vFrac_wp, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-1., vmax=1., cmap='seismic')
+  vmin=-vscale, vmax=vscale, cmap='seismic')
 
 plt.colorbar()
 
@@ -125,6 +129,8 @@ plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
 
 imgname = imgdir + "vfrac-wp"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+
+sys.exit()
 
 # Plot of volume fraction and uperp #
 fig3 = plt.figure(figsize=fsize)

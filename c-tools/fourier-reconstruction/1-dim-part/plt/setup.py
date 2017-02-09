@@ -4,18 +4,29 @@ import matplotlib
 matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 import numpy as np
+
 from scipy import signal
 import scipy.fftpack as scifft
+import matplotlib.ticker as tick
 
-# Define simulation parameters, get simulation directory and startin time
+# Define simulation parameters
+#  Input: sys -- commandline args
+#  Output: partR -- particle radius
+#          nparts -- particles in simulation
+#          rho_star -- particle-to-fluid density ratio
+#          vFracMean -- mean volume fraction
+#          simdir -- input simulation directory
+#          tstart -- starting time for analysis (useful for transients)
 def simParams(sys):
-  # Parameters
-  partR = 2.1 # XXX
+  # TODO better job of which parameters needs to be set
+  # TODO better way to return these values, i.e. call global -- maybe settings?
+  # User Input Parameters
+  partR = 2.1 
 
-  # Parse command line args
+  # Parse command line arguments
   if len(sys.argv) > 2:
     simdir = sys.argv[1]
-    tstart = float(sys.argv[2]) / 1000 ## CONVERT FROM MS TO S!!!
+    tstart = float(sys.argv[2]) / 1000 # CONVERT FROM MS TO S!!!
   else:
     simdir = raw_input("      Simulation directory: ")
     tstart = float(raw_input("      Starting time [ms]: ")) / 1000
@@ -24,7 +35,11 @@ def simParams(sys):
   if not simdir.endswith('/'):
     simdir = simdir + '/'
 
-  return (partR, simdir, tstart)
+  nparts = int(simdir.partition('/')[0])
+  rho = float(simdir.partition('/')[2][-4:-1])
+  vFracMean = nparts*(4./3.)*np.pi*(partR**3.)/(42.*42.*126.)
+
+  return (partR, nparts, rho, vFracMean, simdir, tstart)
 
 # Setup up directory paths
 def directoryStructure(simdir):

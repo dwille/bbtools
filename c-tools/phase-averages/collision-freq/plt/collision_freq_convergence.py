@@ -25,8 +25,8 @@ nsims = int(len(simdirs))
 data = [ structtype() for i in range(nsims) ]
 for cc, currdir in enumerate(simdirs):
   # Pull data, cut out first time step
-  data[cc].time = np.genfromtxt(currdir, skip_header=1, usecols=0)
-  data[cc].ncolls = np.genfromtxt(currdir, skip_header=1, usecols=1)
+  data[cc].time = np.genfromtxt(currdir, skip_header=1, usecols=0)[1:]
+  data[cc].ncolls = np.genfromtxt(currdir, skip_header=1, usecols=1)[1:]
 
   nsteps = np.size(data[cc].time)
 
@@ -67,13 +67,15 @@ plt.figure()
 
 for cc in np.arange(nsims):
   plt.plot(data[cc].dt, data[cc].freq, color=colors[cc], alpha=shades[cc])
+  #plt.plot(np.arange(np.size(data[cc].freq)), data[cc].freq, color=colors[cc], alpha=shades[cc])
+  #plt.plot(data[cc].time - data[cc].time[0], data[cc].ncolls, color=colors[cc], alpha=shades[cc])
   #plt.plot(data[cc].time - data[cc].time[0], 0.5*(data[cc].ncolls-data[cc].ncolls[0]),
   # color=colors[cc], alpha=shades[cc], marker='o')
 
-plt.xlabel(r"$t$")
-plt.ylabel(r"$coll/t$")
+plt.xlabel(r"$\tau$")
+plt.ylabel(r"$\frac{n_{coll}}{\tau}$")
 
 # save
-imgname = imgdir + "coll_freq"
+imgname = imgdir + "coll_freq_converge"
 print "Saving figure to %s" % imgname
 plt.savefig(imgname + ".png", bbox_inches="tight", format='png')

@@ -1,6 +1,7 @@
 #!/usr/bin/env python2
 from setup import *
 os.system('clear')
+
 from matplotlib.ticker import MultipleLocator
 
 print ""
@@ -9,9 +10,7 @@ print "                Surface Plotting"
 print ""
 
 # Setup simulation parameters
-(partR, simdir, tstart) = simParams(sys)
-nparts = int(simdir.partition('/')[0])
-rho = float(simdir.partition('/')[2][-4:-1])
+(partR, nparts, rho, vFracMean, simdir, tstart) = simParams(sys)
 nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
@@ -23,29 +22,39 @@ nu = .01715   ## mm^2/ms XXX
 # Print simulation data
 printSimulationData(partR, root, simdir, datadir)
 
-## VOLUME FRACTION ##
-vFracFile = datadir + "volume-fraction"
-vFrac = np.genfromtxt(vFracFile).T[:,tsInd:]
-
 # get avg volume fraction
 domX = 42 # XXX
 domY = 42 # XXX
 domZ = 126 # XXX
 avgVolumeFraction = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
 
-# get phase averaged data
-phaseVelDir = root + "simdata/phaseAveragedFluidVel"
-phaseVelData = np.genfromtxt(phaseVelDir, skip_header=1)
+# get phase averaged data and terminal velocity
+phaseVelData = np.genfromtxt(root + "simdata/phaseAveragedFluidVel", skip_header=1)
+termData = np.genfromtxt(root + "simdata/singlePartSedi", skip_header=1)
 
 for nn in np.arange(0,np.size(phaseVelData, 0)):
   currN = phaseVelData[nn,0]
   currRho = phaseVelData[nn,1]
   if (nparts == currN) & (rho == currRho):
     phaseVel = phaseVelData[nn,2]
-phaseVel *= 1000  # mm / ms -> mm / s
+phaseVel *= 1000.  # mm / ms -> mm / s
 
-# Plot
+for nn in np.arange(0, np.size(termData, 0)):
+  currRho = termData[nn,0]
+  if (rho == currRho):
+    termVel = termData[nn,1]  # mm/ms
+
+# Non-dimensionalize Axes (time, position)
+#tau = (2.*partR) / phaseVel       ## mm / (mm/s) = s
+evalZ /= (2.*partR)               ## mm / mm
+tau = (2.*partR)*(2.*partR)/nu    ## mm^2/(mm^2/ms) = ms
+tau /= 1000                       ## ms -> s
+time /= tau                       ## s / s
+
+## VOLUME FRACTION ##
 vFracFig = plt.figure(figsize=(3.25,1.625))
+
+vFrac = np.genfromtxt(datadir + "volume-fraction").T[:,tsInd:]
 
 minVal = np.floor(100*np.amin(vFrac))/100
 maxVal = np.ceil(100*np.amax(vFrac))/100
@@ -60,17 +69,10 @@ maxDiff = np.floor(maxDiff * 100.) / 100.
 # Highight Solid
 #vFrac[vFrac <= avgVolumeFraction] = avgVolumeFraction
 
-#tau = (2.*partR) / phaseVel       ## mm / (mm/s) = s
-# Non-dimensionalize
-evalZ /= (2.*partR)               ## mm / mm
-tau = (2.*partR)*(2.*partR)/nu    ## mm^2/(mm^2/ms) = ms
-tau /= 1000                       ## ms -> s
-time /= tau                       ## s / s
-
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=avgVolumeFraction - maxDiff, vmax=avgVolumeFraction + maxDiff,
-  cmap='coolwarm')
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  cmap='coolwarm')#,
+  #vmin=avgVolumeFraction - maxDiff, vmax=avgVolumeFraction + maxDiff)
+
 
 cbar = plt.colorbar()
 plt.xlabel(r"$\nu t/(2a)^2$")
@@ -107,36 +109,57 @@ plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 # plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 # #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
-# ## u_PART ##
-upFig = plt.figure(figsize=(6,3))
+# ## Particle Velocity ## 
+upFig = plt.figure(figsize=(3,4.5))
 
-upFile = datadir + "part-u"
-up = np.genfromtxt(upFile).T[:,tsInd:]
-vpFile = datadir + "part-v"
-vp = np.genfromtxt(vpFile).T[:,tsInd:]
+up = np.genfromtxt(datadir + "part-u").T[:,tsInd:] / termVel
+vp = np.genfromtxt(datadir + "part-v").T[:,tsInd:] / termVel
+wp = np.genfromtxt(datadir + "part-w").T[:,tsInd:] / termVel
 
-minValU = np.floor(100*np.amin(up))/100
-maxValU = np.ceil(100*np.amax(up))/100
-minValV = np.floor(100*np.amin(vp))/100
-maxValV = np.ceil(100*np.amax(vp))/100
-maxVal = np.max((np.abs(minValU), np.abs(maxValU), np.abs(maxValV), np.abs(minValV)))
+maxVal = np.max([np.max(np.abs(wp)), np.max(np.abs(up)), np.max(np.abs(vp))])
+maxVal = np.floor(maxVal * 100.) / 100.
 
+uax = upFig.add_subplot(311)
 plt.imshow(up, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],
-  vmin=-maxVal, vmax=maxVal, cmap="seismic")
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]], cmap="coolwarm",
+  vmin=-maxVal, vmax=maxVal)
 
+#uax.set_title(r"$u_p\ [mm/ms]$")
+uax.set_ylabel(r'$z/2a$')
+uax.xaxis.set_ticklabels([])
 cbar = plt.colorbar()
-plt.title(r"$U_p\ [mm/ms]$")
-plt.xlabel(r"$t\ [s]$")
-plt.ylabel(r'$z\ [mm]$')
+cbar.locator = tick.MaxNLocator(nbins=5)
+cbar.update_ticks()
 
-xEnd = time[-1]
-plt.xlim([0, xEnd])
-plt.xticks(np.floor(np.arange(0, xEnd+0.01, 1)))
+vax = upFig.add_subplot(312)
+plt.imshow(vp, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]], cmap="coolwarm",
+  vmin=-maxVal, vmax=maxVal)
 
-imgname = imgdir + "part-u"
+#vax.set_title(r"$v_p\ [mm/ms]$")
+vax.xaxis.set_ticklabels([])
+vax.set_ylabel(r'$z/2a$')
+cbar = plt.colorbar()
+cbar.locator = tick.MaxNLocator(nbins=5)
+cbar.update_ticks()
+
+wax = upFig.add_subplot(313)
+plt.imshow(wp, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]], cmap='coolwarm',
+  vmin=-maxVal, vmax=maxVal)
+
+#wax.set_title(r"$w_p\ [mm/ms]$")
+wax.set_xlabel(r"$\nu t/(2a)^2$")
+wax.set_ylabel(r'$z/2a$')
+cbar = plt.colorbar()
+cbar.locator = tick.MaxNLocator(nbins=5)
+cbar.update_ticks()
+
+imgname = imgdir + "part-velocity"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+sys.exit();
 
 ## v_PART ##
 vpFig = plt.figure(figsize=(6,3))

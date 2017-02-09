@@ -327,8 +327,8 @@ for ii in np.arange(1):
 
 ax1.set_xlim([1e-1, 6e2])
 ax1.set_xlabel(r"$\tau$")
-ax1.set_ylim([-8e-3, 8e-3])
-ax1.set_ylabel(r"$S_{kk}$")
+ax1.set_ylim([-8e-2, 8e-2])
+ax1.set_ylabel(r"$S_{k}$")
 
 # Save
 imgname = imgdir + "all_velgrad_eigs"

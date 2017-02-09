@@ -55,10 +55,14 @@ void main_read_input(void)
   fret = fscanf(infile, "Starting Time %lf\n", &tStart);
   fret = fscanf(infile, "Ending Time %lf\n", &tEnd);
   fret = fscanf(infile, "\n");
-  fret = fscanf(infile, "Fourier Order %d\n", &order);
+  fret = fscanf(infile, "Starting Fourier Order %d\n", &order_s);
+  fret = fscanf(infile, "Ending Fourier Order %d\n", &order_e);
   fret = fscanf(infile, "\n");
   fret = fscanf(infile, "Output Coefficients %d\n", &coeffsOut);
   fclose(infile);
+  
+  // +1 since inclusive
+  n_order = order_e - order_s + 1;
 }
 
 // read and sort part files directory
@@ -485,10 +489,12 @@ void domain_init(void)
   dom.Gcc.s3 = dom.Gcc.kn * dom.Gcc.s2;
 
   // Calculate order using sampling theorem -- 1 wave / 1 diameters
-  if (order == -1) {
-    order = (int) floor(dom.zn / (2. * meanR) );
+  if ((order_s == -1) || (order_e == -1)) {
+    order_s = 0;
+    order_e = (int) floor(dom.zn / (2. * meanR) );
   }
-  printf("Order = %d\n", order);
+  printf("Starting Order = %d\n", order_s);
+  printf("Ending Order = %d\n", order_e);
   // Number of points to reconstruct at
   // Just because we can only resolve xn/2 doesnt mean we should underresolve 
   //  the reconstruction...
@@ -587,7 +593,8 @@ void show_domain(void)
   printf("Input Parameters\n");
   printf("  tStart %lf\n", tStart);
   printf("  tEnd %lf\n", tEnd);
-  printf("  order %d\n", order);
+  printf("  Starting order %d\n", order_s);
+  printf("  Ending order %d\n", order_e);
   printf("  coeffsOut %d\n", coeffsOut);
   printf("  nPoints %d\n", npoints);
 }
@@ -615,9 +622,11 @@ void write_coeffs(int in)
     fprintf(fileEven, "%lf", 0.5*n_ces[cc]);
     fprintf(fileOdd, "%lf", 0.5*n_ces[cc]);
   } else if (in == -1) {    // write the rest
-    for (int i = 1; i <= order; i++) {
-      fprintf(fileEven, " %lf", nl_even[i]);
-      fprintf(fileOdd, " %lf", nl_odd[i]);
+    for (int i = order_s; i <= order_e; i++) {
+      if (i > 0) {
+        fprintf(fileEven, " %lf", nl_even[i]);
+        fprintf(fileOdd, " %lf", nl_odd[i]);
+      }
     }
     fprintf(fileEven, "\n");
     fprintf(fileOdd, "\n");
@@ -644,9 +653,11 @@ void write_coeffs(int in)
     fprintf(fileEven, "%lf", 0.5*nw_ces[cc]);
     fprintf(fileOdd, "%lf", 0.5*nw_ces[cc]);
   } else if (in == -1) {    // write the rest
-    for (int i = 1; i <= order; i++) {
-      fprintf(fileEven, " %lf", nwl_even[i]);
-      fprintf(fileOdd, " %lf", nwl_odd[i]);
+    for (int i = order_s; i <= order_e; i++) {
+      if (i > 0) {
+        fprintf(fileEven, " %lf", nwl_even[i]);
+        fprintf(fileOdd, " %lf", nwl_odd[i]);
+      }
     }
     fprintf(fileEven, "\n");
     fprintf(fileOdd, "\n");

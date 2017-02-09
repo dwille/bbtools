@@ -140,6 +140,6 @@ ax2.text(0.15, 1.5, labelText)
 
 ax2.grid(True)
 
-imgname = imgdir + "relative_vel_flucts"
+imgname = imgdir + "hinch_stokes"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

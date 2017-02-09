@@ -92,17 +92,12 @@ rho50_vel = flowVel[3:8:4]
 # Wallis relations
 phiEval = np.linspace(0.05,0.45,101)
 wallis_speed = np.zeros((np.size(phiEval),4))
+wallis_speed_norm_wt = np.zeros((np.size(phiEval),4))
 #gibi_speed = np.zeros((np.size(phiEval),4))
 for rr,_ in enumerate(rho):
   for pp,_ in enumerate(phiEval):
     wallis_speed[pp,rr] = termVel[rr]*kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
-    #wallis_speed[pp,rr] = kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
-
-##
- # Wave Speed Plots
- ##
-fig1 = plt.figure(figsize=(3.25,3.25))
-ax1 = fig1.add_subplot(111)
+    wallis_speed_norm_wt[pp,rr] = kappa[rr]*n[rr]*phiEval[pp]*(1-phiEval[pp])**(n[rr] - 1)
 
 # dark
 bl= "#4C72B0"
@@ -115,7 +110,10 @@ cy= "#64B5CD"
 # Reynolds prefactor
 Rep = d/nu
 
-# Data
+## Wave Speed Plot -- normed by 2a/nu
+fig1 = plt.figure(figsize=(3.25,3.25))
+ax1 = fig1.add_subplot(111)
+
 ax1.plot(phi, Rep*rho20_c, '*', color=bl, markersize=7)
 ax1.plot(phi, Rep*rho33_c, 's', color=gr, markersize=7)
 ax1.plot(phi[0:3], Rep*rho40_c, 'o', color=re, markersize=7)
@@ -151,14 +149,63 @@ ax1.plot(phiEval, Rep*wallis_speed[:,1], '-.', color=gr, zorder=1,
 ax1.plot(phiEval, Rep*wallis_speed[:,2], '-', color=re, zorder=1, linewidth=2)
 ax1.plot(phiEval, Rep*wallis_speed[:,3], '--', color=cy, zorder=1, linewidth=2)
 
-
-imgname = imgdir + "wavespeed"
+imgname = imgdir + "wavespeed_norm_2a_nu"
 #imgname = imgdir + "wavespeed_normed"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
-# Print Errors
+
+
+## Wave Speed plot -- normed by w_t
+fig2 = plt.figure(figsize=(3.25,3.25))
+ax1 = fig2.add_subplot(111)
+
+ax1.plot(phi, rho20_c/termVel[0], '*', color=bl, markersize=7)
+ax1.plot(phi, rho33_c/termVel[1], 's', color=gr, markersize=7)
+ax1.plot(phi[0:3], rho40_c/termVel[2], 'o', color=re, markersize=7)
+ax1.plot(phi[0:2], rho50_c/termVel[3], '^', color=cy, markersize=7)
+
+ax1.set_xlabel(r'$\phi$')
+ax1.set_xlim([0,0.5])
+
+ax1.set_ylabel(r'$c/w_t$')
+ax1.yaxis.set_label_coords(-0.16, 0.5)
+ax1.set_ylim([0,.45])
+ax1.grid(True)
+
+ax1.xaxis.set_major_locator(MultipleLocator(0.1))
+ax1.xaxis.set_minor_locator(MultipleLocator(0.05))
+ax1.yaxis.set_major_locator(MultipleLocator(.10))
+ax1.yaxis.set_minor_locator(MultipleLocator(.05))
+
+lText = [r'$\rho^* = 2.0$', r'$\rho^* = 3.3$', 
+         r'$\rho^* = 4.0$', r'$\rho^* = 5.0$']
+h1 = mlines.Line2D([],[], linestyle=':', color=bl, marker='*', label=lText[0])
+h2 = mlines.Line2D([],[], linestyle='-.', color=gr, marker='s', label=lText[1])
+h3 = mlines.Line2D([],[], linestyle='-', color=re, marker='o', label=lText[2])
+h4 = mlines.Line2D([],[], linestyle='--', color=cy, marker='^', label=lText[3])
+#ax1.legend(handles=[h1,h2,h3,h4], bbox_to_anchor=(0,1.05,1,1), loc="lower left",
+# mode="expand", ncol=2, borderaxespad=0)
+
+# Wallis correlations
+ax1.plot(phiEval, wallis_speed_norm_wt[:,0], ':', color=bl, zorder=1,
+  linewidth=2, dashes=[2, 2])
+ax1.plot(phiEval, wallis_speed_norm_wt[:,1], '-.', color=gr, zorder=1,
+  linewidth=2, dashes=[6, 2, 2, 2])
+ax1.plot(phiEval, wallis_speed_norm_wt[:,2], '-', color=re, zorder=1, 
+  linewidth=2)
+ax1.plot(phiEval, wallis_speed_norm_wt[:,3], '--', color=cy, zorder=1, 
+  linewidth=2)
+
+imgname = imgdir + "wavespeed_norm_wt"
+#imgname = imgdir + "wavespeed_normed"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
+
+
+## Print Errors
 rho20_c = waveSpeed[0:16:4] # / termVel[0]
 rho33_c = waveSpeed[1:16:4] # / termVel[1]
 rho40_c = waveSpeed[2:12:4] # / termVel[2]

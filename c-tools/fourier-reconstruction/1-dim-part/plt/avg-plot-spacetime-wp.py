@@ -11,9 +11,7 @@ print "             Avg Crosscorrelation Plot"
 print ""
 
 # Setup simulation parameters
-(partR, simdir, tstart) = simParams(sys)
-nparts = int(simdir.partition('/')[0])
-rho = float(simdir.partition('/')[2][-4:-1])
+(partR, nparts, rho, avgVolumeFraction, simdir, tstart) = simParams(sys)
 nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
@@ -27,14 +25,7 @@ dz = evalZ - evalZ[0]
 printSimulationData(partR, root, simdir, datadir)
 
 # Pull output data -- each column is a different time
-vfSaveFile = datadir + "z-averaged-vfrac-xcorr"
-vfCrossCorr = np.genfromtxt(vfSaveFile)
-
-# get avg volume fraction
-domX = 42   # mm XXX 
-domY = 42   # mm XXX
-domZ = 126  # mm XXX
-avgVolumeFraction = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
+wpCrossCorr = np.genfromtxt(datadir + "z-averaged-wp-xcorr")
 
 # get phase averaged data
 phaseVelDir = root + "simdata/phaseAveragedFluidVel"
@@ -58,80 +49,80 @@ xEnd = time[-1]
 xEnd = 100.*np.floor(xEnd / 100.)
 
 # Find maxima
-vfFirstMaxima = np.zeros((nz,3))
-vfSecondMaxima = np.zeros((nz,3))
-vfThirdMaxima = np.zeros((nz,3))
+wpFirstMaxima = np.zeros((nz,3))
+wpSecondMaxima = np.zeros((nz,3))
+wpThirdMaxima = np.zeros((nz,3))
 for zz in np.arange(0,nz):
   # Find maxima locations by using where second derivative changes
-  maximaLoc = (np.diff(np.sign(np.diff(vfCrossCorr[zz,:]))) < 0).nonzero()[0] + 1
-  #tmp = vfCrossCorr[zz,:]
+  maximaLoc = (np.diff(np.sign(np.diff(wpCrossCorr[zz,:]))) < 0).nonzero()[0] + 1
+  #tmp = wpCrossCorr[zz,:]
   #maximaLoc = np.r_[True, tmp[1:] > tmp[:-1]] & np.r_[tmp[:-1] > tmp[1:], True]
   #maximaLoc = np.squeeze(np.argwhere(maximaLoc).T)
   # maximum values
-  maxima = vfCrossCorr[zz,maximaLoc]
+  maxima = wpCrossCorr[zz,maximaLoc]
 
   if np.size(maximaLoc) == 0:
-    vfFirstMaxima[zz,0] = np.nan
-    vfFirstMaxima[zz,1] = dz[zz]
-    vfFirstMaxima[zz,2] = np.nan
+    wpFirstMaxima[zz,0] = np.nan
+    wpFirstMaxima[zz,1] = dz[zz]
+    wpFirstMaxima[zz,2] = np.nan
 
-    vfSecondMaxima[zz,0] = np.nan
-    vfSecondMaxima[zz,1] = dz[zz]
-    vfSecondMaxima[zz,2] = np.nan
+    wpSecondMaxima[zz,0] = np.nan
+    wpSecondMaxima[zz,1] = dz[zz]
+    wpSecondMaxima[zz,2] = np.nan
   elif np.size(maximaLoc) > 0:
-    vfFirstMaxima[zz,0] = time[maximaLoc[0]]
-    vfFirstMaxima[zz,1] = dz[zz]
-    vfFirstMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[0]]
+    wpFirstMaxima[zz,0] = time[maximaLoc[0]]
+    wpFirstMaxima[zz,1] = dz[zz]
+    wpFirstMaxima[zz,2] = wpCrossCorr[zz,maximaLoc[0]]
 
     if np.size(maximaLoc) > 1:
-      vfSecondMaxima[zz,0] = time[maximaLoc[1]]
-      vfSecondMaxima[zz,1] = dz[zz]
-      vfSecondMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[1]]
+      wpSecondMaxima[zz,0] = time[maximaLoc[1]]
+      wpSecondMaxima[zz,1] = dz[zz]
+      wpSecondMaxima[zz,2] = wpCrossCorr[zz,maximaLoc[1]]
 
       if np.size(maximaLoc) > 2:
-        vfThirdMaxima[zz,0] = time[maximaLoc[2]]
-        vfThirdMaxima[zz,1] = dz[zz]
-        vfThirdMaxima[zz,2] = vfCrossCorr[zz,maximaLoc[2]]
+        wpThirdMaxima[zz,0] = time[maximaLoc[2]]
+        wpThirdMaxima[zz,1] = dz[zz]
+        wpThirdMaxima[zz,2] = wpCrossCorr[zz,maximaLoc[2]]
 
-  if vfCrossCorr[zz,0] > vfCrossCorr[zz,1]:
+  if wpCrossCorr[zz,0] > wpCrossCorr[zz,1]:
     if np.size(maximaLoc) > 2:
-      vfThirdMaxima[zz,0] = vfSecondMaxima[zz,0]
-      vfThirdMaxima[zz,1] = vfSecondMaxima[zz,1]
-      vfThirdMaxima[zz,2] = vfSecondMaxima[zz,2]
+      wpThirdMaxima[zz,0] = wpSecondMaxima[zz,0]
+      wpThirdMaxima[zz,1] = wpSecondMaxima[zz,1]
+      wpThirdMaxima[zz,2] = wpSecondMaxima[zz,2]
 
     if np.size(maximaLoc) > 1:
-      vfSecondMaxima[zz,0] = vfFirstMaxima[zz,0]
-      vfSecondMaxima[zz,1] = vfFirstMaxima[zz,1]
-      vfSecondMaxima[zz,2] = vfFirstMaxima[zz,2]
+      wpSecondMaxima[zz,0] = wpFirstMaxima[zz,0]
+      wpSecondMaxima[zz,1] = wpFirstMaxima[zz,1]
+      wpSecondMaxima[zz,2] = wpFirstMaxima[zz,2]
 
-    vfFirstMaxima[zz,0] = time[0]
-    vfFirstMaxima[zz,1] = dz[zz]
-    vfFirstMaxima[zz,2] = vfCrossCorr[zz,0]
+    wpFirstMaxima[zz,0] = time[0]
+    wpFirstMaxima[zz,1] = dz[zz]
+    wpFirstMaxima[zz,2] = wpCrossCorr[zz,0]
 
 # Find slope of maxima -- wavespeed
 tau = -np.ones(nz)
 zeta = -np.ones(nz)
-tau[0] = vfFirstMaxima[0,0]
-zeta[0] = vfFirstMaxima[0,1]
+tau[0] = wpFirstMaxima[0,0]
+zeta[0] = wpFirstMaxima[0,1]
 
 tauDistance = 0.01/tstar  # to make sure maximas are near each other
 for zz in np.arange(0,nz-1):
-  tauFirstNext = vfFirstMaxima[zz+1,0]
-  tauSecondNext = vfSecondMaxima[zz+1,0]
-  tauThirdNext = vfThirdMaxima[zz+1, 0]
+  tauFirstNext = wpFirstMaxima[zz+1,0]
+  tauSecondNext = wpSecondMaxima[zz+1,0]
+  tauThirdNext = wpThirdMaxima[zz+1, 0]
 
   # Use first max if it is close
   if np.abs(tau[zz] - tauFirstNext) < tauDistance:
     tau[zz+1] = tauFirstNext
-    zeta[zz+1] = vfFirstMaxima[zz+1,1]
+    zeta[zz+1] = wpFirstMaxima[zz+1,1]
   # if it's too far, try the second max
   elif np.abs(tau[zz] - tauSecondNext) < tauDistance:
     tau[zz+1] = tauSecondNext
-    zeta[zz+1] = vfSecondMaxima[zz+1,1]
+    zeta[zz+1] = wpSecondMaxima[zz+1,1]
   # if it's too far, try the third
   elif np.abs(tau[zz] - tauThirdNext) < tauDistance:
     tau[zz+1] = tauThirdNext
-    zeta[zz+1] = vfThirdMaxima[zz+1,1]
+    zeta[zz+1] = wpThirdMaxima[zz+1,1]
   # if that is not good, quit
   else:
     break;
@@ -145,24 +136,27 @@ yFit = p*tau
 
 ## PLOTTING ##
 # Volume Fraction
-vfFig = plt.figure(figsize=(3.25,1.625))
-plt.imshow(vfCrossCorr, origin="lower", aspect="auto", interpolation="none",
+wpFig = plt.figure(figsize=(3.25,1.625))
+plt.imshow(wpCrossCorr, origin="lower", aspect="auto", interpolation="none",
   extent=[time[0], time[-1], dz[0], dz[-1]],
   vmin=-1., vmax=1., cmap='coolwarm')
 #plt.colorbar()
 
-#plt.plot(vfFirstMaxima[:,0], vfFirstMaxima[:,1], 'w-', alpha=0.4)
-#plt.plot(vfSecondMaxima[:,0], vfSecondMaxima[:,1], 'r-', alpha=0.4)
-#plt.plot(vfThirdMaxima[:,0], vfThirdMaxima[:,1], 'g-', alpha=0.4)
+#plt.plot(wpFirstMaxima[:,0], wpFirstMaxima[:,1], 'w-', alpha=0.4)
+#plt.plot(wpSecondMaxima[:,0], wpSecondMaxima[:,1], 'r-', alpha=0.4)
+#plt.plot(wpThirdMaxima[:,0], wpThirdMaxima[:,1], 'g-', alpha=0.4)
 plt.plot(tau, zeta, 'k-')
 
 plt.plot(tau, yFit, 'w--')
-#cTxtString = r"$c_* = \frac{\Delta_*}{\dz = %.1f\Delta t$" % p
-#plt.text(50, 10, cTxtString, fontsize=12)
+#cTxtString = r"$c_* = \Delta_z = %.3f\Delta t$" % p
+cTxtString = r"$c_{w_p}^* = %.3f$" % p
+plt.text(2, 10, cTxtString, fontsize=12)
 
-plt.xlabel(r'$\Delta t_*$')
+#plt.xlabel(r'$\Delta t_*$')
+plt.xlabel(r'$\nu \Delta t / (2a)^2$')
 plt.xlim([0, 6])
-plt.ylabel(r'$\Delta z_*$', rotation=0)
+#plt.ylabel(r'$\Delta z_*$', rotation=0)
+plt.ylabel(r'$\Delta z/2a$', rotation=90)
 plt.ylim([dz[0], dz[-1]])
 plt.gca().yaxis.set_label_coords(-0.15, 0.45)
 
@@ -171,7 +165,7 @@ plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
 plt.gca().yaxis.set_major_locator(MultipleLocator(5))
 plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
 
-imgname = imgdir + "avg-crosscorr-spacetime-vf"
+imgname = imgdir + "avg-crosscorr-spacetime-wp"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 

@@ -143,6 +143,6 @@ ax2.text(0.15, 1.5, labelText)
 
 ax2.grid(True)
 
-imgname = imgdir + "hinch_high_re_vel_flucts"
+imgname = imgdir + "hinch_high_re"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
