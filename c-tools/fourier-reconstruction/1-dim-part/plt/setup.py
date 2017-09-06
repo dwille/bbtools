@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 import sys, os, csv
 import matplotlib
 matplotlib.use('Agg')
@@ -35,8 +35,8 @@ def simParams(sys):
   if not simdir.endswith('/'):
     simdir = simdir + '/'
 
-  nparts = int(simdir.partition('/')[0])
-  rho = float(simdir.partition('/')[2][-4:-1])
+  nparts = int(simdir.split('/')[-3])
+  rho = float(simdir.split('/')[-2][-3:])
   vFracMean = nparts*(4./3.)*np.pi*(partR**3.)/(42.*42.*126.)
 
   return (partR, nparts, rho, vFracMean, simdir, tstart)
@@ -44,14 +44,14 @@ def simParams(sys):
 # Setup up directory paths
 def directoryStructure(simdir):
   home = os.path.expanduser("~")
-  root = home + "/scratch/triply_per/"
+  root = home + "/scratch/"
   simdir = simdir + 'analysis/fourier-reconstruction/1-dim-part/'
   datadir = root + simdir + "data/"
 
   # Check if datadir exists so we don't go creating extra dirs
   if not os.path.exists(datadir):
-    print "      " + datadir + " does not exist. Exiting..."
-    print ""
+    print("      " + datadir + " does not exist. Exiting...")
+    print("")
     sys.exit()
 
   # Create imgdir if necessary
@@ -67,7 +67,7 @@ def initData(datadir, tstart):
   # Time -- convert to secs
   time = np.genfromtxt(infoFile, skip_footer=1)[1:] / 1000
   tsInd = np.squeeze(np.argwhere(time >= tstart)[0])
-  print "      Starting time set to: %.3f [s]" % time[tsInd]
+  print("      Starting time set to: %.3f [s]" % time[tsInd])
   time = time[tsInd:] - time[tsInd]
   nt = np.size(time)
 
@@ -79,10 +79,10 @@ def initData(datadir, tstart):
 
 # Print simulation data
 def printSimulationData(partR, root, simdir, datadir):
-  print "      Particle Radius set to: %.2f [mm]\n" % partR
-  print "      Sim root directory set to: " + root
-  print "      Sim directory set to: " + simdir
-  print "      Data directory set to: " + datadir
+  print("      Particle Radius set to: %.2f [mm]\n" % partR)
+  print("      Sim root directory set to: " + root)
+  print("      Sim directory set to: " + simdir)
+  print("      Data directory set to: " + datadir)
 
 # FFT Autocorrelation
 def AutoCorrelationFFT(x1):
@@ -101,14 +101,19 @@ def AutoCorrelationSpaceFFT(arrayIn):
   arrayFFT2 = np.fft.fft(arrayFlucts[::-1])
   arrayOut = np.fft.ifft(arrayFFT1*arrayFFT2)
 
-  arrayOutReal = np.real(arrayOut)
-  arrayOutReal /= arrayOutReal[0]
-  arrayOutImag = np.imag(arrayOut)
-
-  #powerSpec = np.absolute(np.fft.fft(arrayIn))**2
+  arrayOut /= arrayOut[0]
   powerSpec = np.absolute(arrayFFT1)**2
 
-  return (arrayOutReal, arrayOutImag, powerSpec)
+  return (arrayOut, powerSpec)
+
+  #arrayOutReal = np.real(arrayOut)
+  #arrayOutReal /= arrayOutReal[0]
+  #arrayOutImag = np.imag(arrayOut)
+
+  ##powerSpec = np.absolute(np.fft.fft(arrayIn))**2
+  #powerSpec = np.absolute(arrayFFT1)**2
+
+  #return (arrayOutReal, arrayOutImag, powerSpec)
 
 
 def CrossCorrelationFFT(x1,x2):
@@ -119,6 +124,19 @@ def CrossCorrelationFFT(x1,x2):
   result = signal.fftconvolve(y2[::-1],y1,mode="full")
   # Re-flip result array 
   result = result[::-1]
+  print("len(result) = %d" % len(result))
+  result = result[np.size(result)/2:]
+  return result
+
+# Same as CrossCorrelationFFT except with logic for odd/even
+def xcorr_fft(x1,x2):
+  y1 = x1 - x1.mean()
+  y2 = x2 - x2.mean()
+  result = signal.fftconvolve(y2[::-1],y1,mode="full")
+
+  # Re-flip result array 
+  result = result[::-1]
+  print("len(result) = %d" % len(result))
   result = result[np.size(result)/2:]
   return result
 

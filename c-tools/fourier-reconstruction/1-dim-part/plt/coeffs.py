@@ -14,13 +14,16 @@ domX = 42
 domY = 42
 domZ = 126
 
-# Setup simulation parameters
-(partR, simdir, tstart) = simParams(sys)
+######################
+### initialization ###
+######################
 
-nparts = float(simdir.partition('/')[0])
+# Get simulation parameters
+(partR, nparts, rho, vFracMean, simdir, tstart) = simParams(sys)
+nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
-(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
@@ -33,16 +36,22 @@ infoFile = datadir + "info"
 nEvenFile = datadir + "number-dens-coeffs-even"
 nOddFile = datadir + "number-dens-coeffs-odd"
 
-# Find output data -- each column is a timestep
+######################
+### data analysis ####
+######################
+
+# Pull output data
+# each row is a different time, transpose so column is time
 nEven = np.genfromtxt(nEvenFile).T
 nOdd = np.genfromtxt(nOddFile).T
 nTotal = nEven + 1j*nOdd
 order = np.arange(np.shape(nEven)[0])
 
-# Calculate vfrac
+# Calculate vfrac coefficients
 vfEven = np.zeros(np.shape(nEven))
 vfOdd = np.zeros(np.shape(nOdd))
 vfTotal = np.zeros(np.shape(nTotal), dtype=complex)
+vf_pspec = np.zeros(np.shape(nTotal))
 for oo in order:
   if oo == 0:
     base = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
@@ -57,67 +66,44 @@ for oo in order:
     vfOdd[oo,:] = correction*nOdd[oo,:]
     vfTotal[oo,:] = correction*nTotal[oo,:]
 
-# Find magnitude of coeffs
-vfMag = np.absolute(vfTotal)
-
-fig = plt.figure(figsize=(3,5.5))
-## vfrac coeffs ## colorma plot
-ax1 = fig.add_subplot(211)
-plt.imshow(vfMag, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], order[0]-0.5, order[-1]+0.5],
-  vmin=0, vmax=0.025)
-plt.colorbar()
-plt.xlabel(r"$t\ [s]$")
-plt.ylabel(r"$order\ \ell$")
-plt.title(r'$|\phi_\ell(t)|$')
-
-## cesaro mean
-#for oo in order:
-#  vfMag[oo] *= (1. - oo/(order[-1] + 1.))
-# mean
+# Find magnitude of coeffs and then average over time
+vfMag = np.absolute(vfTotal)**2
 vf_coeffs_mean = np.mean(vfMag,1)
-vf_coeffs_med = np.median(vfMag,1)
-vf_coeffs_max = np.max(vfMag,1)
-vf_coeffs_sdev = np.std(vfMag,1)
 
-# ylim for both plots
-orderMax = 20
+######################
+### plotting #########
+######################
+size=(2,2)
 
-# plot mean for order
-ax2 = fig.add_subplot(212)
-plt.semilogx(vf_coeffs_mean[1:], order[1:], 'k.')
-# plt.semilogx(vf_coeffs_med, order, 'ro:')
-# plt.semilogx(vf_coeffs_mean + vf_coeffs_sdev, order, 'k--')
-# plt.semilogx(vf_coeffs_mean - vf_coeffs_sdev, order, 'k--')
-# plt.semilogx(vf_coeffs_max, order, 'bo:')
+### mean |coeffs| over time ###
+fig = plt.figure(figsize=size)
+ax2 = fig.add_subplot(111)
 
-ax2.set_ylabel(r"$order\ \ell$")
-#ax2.set_xlabel(r"$\langle \left(1 - \frac{\ell}{L+1}\right) |\phi_\ell| \rangle_t$")
-ax2.set_xlabel(r"$|\langle \phi_\ell| \rangle_t$")
-#ax2.set_xlim([.1, 20])
+plt.plot(order[1:], vf_coeffs_mean[1:]/vf_coeffs_mean[0], 'ko-', markerfacecolor="None",
+  markersize=2.5)
 
-#ax2.xaxis.set_major_locator(MultipleLocator(.25))
-#ax2.xaxis.set_minor_locator(MultipleLocator(.05))
-ax2.set_yticks(np.arange(0,orderMax+0.001,2))
-ticks = ax2.get_yticks()
-print ticks
-ax2.set_ylim([0,orderMax])
-ax2.yaxis.set_major_locator(MultipleLocator(2))
-ax2.yaxis.set_minor_locator(MultipleLocator(1))
-ax2.grid(True)
+ax2.set_xlabel(r"$k$")
+ax2.set_ylabel(r"$\langle |\phi_k|^2 \rangle_t / \phi_0^2$")
 
-# plot mean for wavenumber
-ax3 = ax2.twinx()
-
-ticklabel = np.array(60./ticks, dtype=str)
-ticklabel[0] = "const"
-ax3.set_yticks(ticks)
-#ax3.yaxis.set_major_locator(MultipleLocator(10))
-#ax3.yaxis.set_minor_locator(MultipleLocator(2))
-ax3.set_yticklabels(ticklabel)
-ax3.set_ylabel(r"$\lambda_a = \frac{L_z/a}{\ell}$")
-
+ax2.xaxis.set_major_locator(MultipleLocator(2))
+ax2.xaxis.set_minor_locator(MultipleLocator(1))
 
 imgname = imgdir + "vf-coeffs"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 #plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+
+### vfrac coeffs colormap ###
+# fig = plt.figure(figsize=(3,5.5))
+# ax1 = fig.add_subplot(211)
+# plt.imshow(vfMag, origin="lower", aspect="auto", interpolation="none",
+#   extent=[time[0], time[-1], order[0]-0.5, order[-1]+0.5],
+#   vmin=0, vmax=0.025)
+# plt.colorbar()
+# plt.xlabel(r"$t\ [s]$")
+# plt.ylabel(r"$order\ \ell$")
+# plt.title(r'$|\phi_\ell(t)|$')
+# 
+# 
+# # ylim for both plots
+# orderMax = 20
+# 

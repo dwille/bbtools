@@ -9,12 +9,16 @@ print " ---- Fourier Reconstruction Plotting Utility ---- "
 print "              Power Spectrum -- Time"
 print ""
 
-# Setup simulation parameters
-(partR, simdir, tstart) = simParams(sys)
+######################
+### initialization ###
+######################
+
+# Get simulation parameters
+(partR, nparts, rho, vFracMean, simdir, tstart) = simParams(sys)
+nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
-#(root, simdir, datadir, imgdir) = directoryStructureDevel(simdir)
-(root, simdir, datadir, imgdir) = directoryStructureMarcc(simdir)
+(root, simdir, datadir, imgdir) = directoryStructure(simdir)
 
 # Get time and z data
 (time, tsInd, nt, evalZ, nz) = initData(datadir, tstart)
@@ -22,13 +26,17 @@ print ""
 # Print simulation data
 printSimulationData(partR, root, simdir, datadir)
 
-# Find output data -- each column is a different time
+######################
+### data analysis ####
+######################
+
+# Find output data -- each column is a different time step
 vFracFile = datadir + "volume-fraction"
 vFracPull = np.genfromtxt(vFracFile).T[:,tsInd:]
 
-# Interpolate data to constant dt time
-interpDT = np.mean(np.diff(time))
-uniform_time = np.arange(0, interpDT*np.size(time), interpDT)
+# Interpolate data to constant-dt time
+interp_dt = np.mean(np.diff(time))
+uniform_time = np.arange(0, interp_dt*np.size(time), interp_dt)
 nt = np.size(uniform_time)
 
 vFrac = np.zeros((nz, nt))
@@ -36,13 +44,12 @@ for zz in np.arange(0, nz):
   vFrac[zz,:] = np.interp(uniform_time, time, vFracPull[zz,:])
 
 time = uniform_time
+dt = interp_dt
 
 # Fourier Transform Parameters
-dt = interpDT
-samplingRate = 1./dt
 freq = scifft.fftfreq(nt, dt)
 
-# Autocorrelation of volume fraction
+# Autocorrelation of volume fraction, power spectrum of autocorrelation
 vfAutoCorr = np.zeros((nz, nt))
 vfPowerSpec = np.zeros((nz,nt))
 for zz, zval in enumerate(evalZ):
@@ -51,57 +58,60 @@ for zz, zval in enumerate(evalZ):
   vfPowerSpec[zz,:] = np.absolute(scifft.fft(vfAutoCorr[zz,:]))**2
 
 vfPowerSpec /= (nt*nt)
+
+# Find mean of autocorr, pspec (avg over z)
 vfAutoCorrMean = np.mean(vfAutoCorr, 0)
 vfPowerSpecMean = np.mean(vfPowerSpec, 0)
 
+# Find most prominant frequency based on max power
+freqMax = freq[np.argmax(vfPowerSpecMean)]
+powerMax = np.max(vfPowerSpecMean)
+
+######################
+### plotting #########
+######################
 size = (2,2)
-# PLOT #
+
+### Power Spectrum ###
 fig1 = plt.figure(figsize=size)
+ax1 = fig1.add_subplot(111)
 
-# Plot MEAN of all power spectrums averaged over zz
-vfAvgPowerSpec = np.mean(vfPowerSpec, 0)
-freqMax = freq[np.argmax(vfAvgPowerSpec)]
-powerMax = np.max(vfAvgPowerSpec)
+plt.plot(freq/freqMax, vfPowerSpecMean/powerMax, 'ko-', markerfacecolor="None",
+  markersize=2.5)
 
-ax3 = fig1.add_subplot(111)
-plt.plot(freq/freqMax, vfAvgPowerSpec/powerMax, 'ko-', markerfacecolor="None", markersize=2.5)
+ax1.set_xlabel(r'$f/f_{max}$')
+ax1.set_xlim([0, 7])
 
-ax3.set_xlabel(r'$f/f_{max}\ [\mathrm{Hz}]$')
-ax3.set_xlim([0, 7])
-ax3.set_ylabel(r'$Power/P_{max}$')
-ax3.set_ylim([0, 1.25])
-ax3.set_yticks([0,0.5,1,1.25])
+ax1.set_ylabel(r'$P/P_{max}$')
+ax1.set_ylim([0, 1.25])
+ax1.set_yticks([0,0.5,1,1.25])
+ax1.yaxis.set_minor_locator(MultipleLocator(0.25))
 
-ax3.yaxis.set_minor_locator(MultipleLocator(0.25))
+#firstThreeMaxIndices = np.argsort(-vfPowerSpecMean[0:len(freq)/2])[0:3]
+plt.text(freqMax + 0.4, 1 + 0.05, r"$f_{max} = %.4f\ [\mathrm{Hz}]$" % freqMax)
 
-ax3.annotate(r"$(d)$",xy=get_axis_limits(ax3))
-
-firstThreeMaxIndices = np.argsort(-vfAvgPowerSpec[0:len(freq)/2])[0:3]
-powerMax = vfAvgPowerSpec[np.argmax(vfAvgPowerSpec)]
-plt.text(freqMax + 0.4, 1, r"$f_{max} = %.2f$" % freqMax)
-
-# SAVE
+# save
 imgname = imgdir + "avg-power-spectrum-time-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
 
+
+### Autocorrelation ###
 fig2 = plt.figure(figsize=size)
-# Plot mean of autocorrelation
-ax4 = fig2.add_subplot(111)
+ax2 = fig2.add_subplot(111)
+
 plt.plot(time, vfAutoCorrMean, 'k-')
 
-ax4.set_xlim([0., time[-1]])
-ax4.set_xlabel(r"$\tau\ [\mathrm{s}]$")
-ax4.set_ylim([-0.5, 1])
-ax4.set_ylabel(r"$R(\tau)$")
+ax2.set_xlim([0., time[-1]])
+ax2.set_xlabel(r"$\tau\ [\mathrm{s}]$")
+ax2.set_ylim([-0.5, 1])
+ax2.set_ylabel(r"$R(\tau)$")
 for i in np.arange(1,5):
   xpoints = [i/freqMax,i/freqMax]
   ypoints = [-1,1]
   plt.plot(xpoints, ypoints, 'k:')
 
-ax4.annotate(r"$(b)$",xy=get_axis_limits(ax4))
-
-# SAVE
+# save
 imgname = imgdir + "avg-autocorr-time-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')

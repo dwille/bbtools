@@ -1,15 +1,16 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 from setup import *
 os.system("clear")
 
 from scipy.ndimage import imread
 
-print ""
-print " ---- Fourier Reconstruction Plotting Utility ---- "
-print "              Image Gather"
-print ""
+#print ""
+#print " ---- Fourier Reconstruction Plotting Utility ---- "
+#print "              Image Gather"
+#print ""
 
 root = os.path.expanduser("~") +  "/scratch/triply_per/"
+analysis_dir = "analysis/fourier-reconstruction/1-dim-part/img/"
 imgdir = root + "simdata/img/f-rec-1D/"
 if not os.path.exists(imgdir):
   os.makedirs(imgdir)
@@ -17,34 +18,40 @@ if not os.path.exists(imgdir):
 #File = "volume-fraction"
 #File = "avg-power-spectrum-time-vf"
 #File = "avg-autocorr-time-vf"
-#File = "avg-power-spectrum-space-vf"
+File = "avg-power-spectrum-space-vf"
 #File = "avg-autocorr-space-vf"
+#File = "vf-coeffs"
+
 #File = "autocorr-time-vf"
 #File = "autocorr-space-vf"
 #File = "avg-crosscorr-spacetime-vf"
-File = "hist-vfrac-wvel"
-print "     Using " + File
+#File = "hist-vfrac-wvel"
+print("     Using " + File)
+
+# file type
+ftype = ".png"
 
 # Load images
-i0500_20 = imread(root + "500/rho2.0/f-rec-1D/img/" + File + ".png")
-i0500_33 = imread(root + "500/rho3.3/f-rec-1D/img/" + File + ".png")
-i0500_40 = imread(root + "500/rho4.0/f-rec-1D/img/" + File + ".png")
-i0500_50 = imread(root + "500/rho5.0/f-rec-1D/img/" + File + ".png")
+i0500_20 = imread(root + "500/rho2.0/" + analysis_dir + File + ftype)
+i0500_33 = imread(root + "500/rho3.3/" + analysis_dir + File + ftype)
+i0500_40 = imread(root + "500/rho4.0/" + analysis_dir + File + ftype)
+i0500_50 = imread(root + "500/rho5.0/" + analysis_dir + File + ftype)
 
-i1000_20 = imread(root + "1000/rho2.0/f-rec-1D/img/" + File + ".png")
-i1000_33 = imread(root + "1000/rho3.3/f-rec-1D/img/" + File + ".png")
-i1000_40 = imread(root + "1000/rho4.0/f-rec-1D/img/" + File + ".png")
-i1000_50 = imread(root + "1000/rho5.0/f-rec-1D/img/" + File + ".png")
+i1000_20 = imread(root + "1000/rho2.0/" + analysis_dir + File + ftype)
+i1000_33 = imread(root + "1000/rho3.3/" + analysis_dir + File + ftype)
+i1000_40 = imread(root + "1000/rho4.0/" + analysis_dir + File + ftype)
+i1000_50 = imread(root + "1000/rho5.0/" + analysis_dir + File + ftype)
 
-i1500_20 = imread(root + "1500/rho2.0/f-rec-1D/img/" + File + ".png")
-i1500_33 = imread(root + "1500/rho3.3/f-rec-1D/img/" + File + ".png")
-i1500_40 = imread(root + "1500/rho4.0/f-rec-1D/img/" + File + ".png")
+i1500_20 = imread(root + "1500/rho2.0/" + analysis_dir + File + ftype)
+i1500_33 = imread(root + "1500/rho3.3/" + analysis_dir + File + ftype)
+i1500_40 = imread(root + "1500/rho4.0/" + analysis_dir + File + ftype)
 
-i2000_20 = imread(root + "2000/rho2.0/f-rec-1D/img/" + File + ".png")
-i2000_33 = imread(root + "2000/rho3.3/f-rec-1D/img/" + File + ".png")
+i2000_20 = imread(root + "2000/rho2.0/" + analysis_dir + File + ftype)
+i2000_33 = imread(root + "2000/rho3.3/" + analysis_dir + File + ftype)
 
 # Plot
-fig = plt.figure(figsize=(16,12))
+fig = plt.figure(figsize=(6,6))
+## 16, 12
 
 a11 = fig.add_subplot(4,4,1)
 a11.imshow(i0500_20,cmap='gray')
@@ -122,5 +129,6 @@ a42.yaxis.set_ticks([])
 # SAVE
 imgname = imgdir + "all-" + File
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
-print "\n      ...Done!"
+print("\n      ...Done!")
