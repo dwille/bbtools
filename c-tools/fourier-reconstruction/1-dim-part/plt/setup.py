@@ -91,7 +91,7 @@ def AutoCorrelationFFT(x1):
   result = signal.fftconvolve(y1[::-1],y1,mode="full")
   # Reflip array
   result = result[::-1]
-  result = result[len(result)/2:]
+  result = result[int(np.size(result)/2):]
   result /= result[0]
   return result
 

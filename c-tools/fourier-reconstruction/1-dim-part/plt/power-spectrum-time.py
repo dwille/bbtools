@@ -1,13 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 from setup import *
 os.system("clear")
 
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
-
-print ""
-print " ---- Fourier Reconstruction Plotting Utility ---- "
-print "              Power Spectrum -- Time"
-print ""
 
 ######################
 ### initialization ###
@@ -15,7 +10,6 @@ print ""
 
 # Get simulation parameters
 (partR, nparts, rho, vFracMean, simdir, tstart) = simParams(sys)
-nu = .01715   ## mm^2/ms XXX
 
 # Setup directory structures
 (root, simdir, datadir, imgdir) = directoryStructure(simdir)
@@ -55,7 +49,10 @@ vfPowerSpec = np.zeros((nz,nt))
 for zz, zval in enumerate(evalZ):
   # length of result is ceil(length(time)/2)
   vfAutoCorr[zz,:] = AutoCorrelationFFT(vFrac[zz,:])
-  vfPowerSpec[zz,:] = np.absolute(scifft.fft(vfAutoCorr[zz,:]))**2
+  #vfPowerSpec[zz,:] = np.absolute(scifft.fft(vfAutoCorr[zz,:]))**2
+  tmp = vFrac[zz,:] - np.mean(vFrac[zz,:])
+  tmp = np.fft.fft(tmp)
+  vfPowerSpec[zz,:] = np.absolute(tmp)**2
 
 vfPowerSpec /= (nt*nt)
 
@@ -64,8 +61,15 @@ vfAutoCorrMean = np.mean(vfAutoCorr, 0)
 vfPowerSpecMean = np.mean(vfPowerSpec, 0)
 
 # Find most prominant frequency based on max power
-freqMax = freq[np.argmax(vfPowerSpecMean)]
+freqMax = np.abs(freq[np.argmax(vfPowerSpecMean)])
 powerMax = np.max(vfPowerSpecMean)
+
+# Normalization
+nu = .01715   ## mm^2/ms
+a = 2.1       ## mm
+
+nu *= 1000. / 1000.**2.  ## m^2/s
+a *= 1./1000.            ## m
 
 ######################
 ### plotting #########
@@ -76,11 +80,16 @@ size = (2,2)
 fig1 = plt.figure(figsize=size)
 ax1 = fig1.add_subplot(111)
 
-plt.plot(freq/freqMax, vfPowerSpecMean/powerMax, 'ko-', markerfacecolor="None",
+#plt.plot(freq/freqMax, vfPowerSpecMean/powerMax, 'ko-', markerfacecolor="None",
+#  markersize=2.5)
+print("Max normalize freq = %.3lf\n" % (freqMax * (2.*a)**2. / nu))
+plt.plot(freq * (2.*a)**2. / nu, vfPowerSpecMean/powerMax, 'ko-', markerfacecolor="None",
   markersize=2.5)
 
-ax1.set_xlabel(r'$f/f_{max}$')
-ax1.set_xlim([0, 7])
+#ax1.set_xlabel(r'$f/f_{max}$')
+ax1.set_xlabel(r'$(2a)^2f/\nu$')
+ax1.set_xlim([0, 2.5])
+ax1.xaxis.set_minor_locator(MultipleLocator(0.25))
 
 ax1.set_ylabel(r'$P/P_{max}$')
 ax1.set_ylim([0, 1.25])
@@ -88,7 +97,7 @@ ax1.set_yticks([0,0.5,1,1.25])
 ax1.yaxis.set_minor_locator(MultipleLocator(0.25))
 
 #firstThreeMaxIndices = np.argsort(-vfPowerSpecMean[0:len(freq)/2])[0:3]
-plt.text(freqMax + 0.4, 1 + 0.05, r"$f_{max} = %.4f\ [\mathrm{Hz}]$" % freqMax)
+plt.text(freqMax + 0.4, 1 + 0.05, r"$f_{max}^* = %.4f\ [\mathrm{Hz}]$" % (freqMax * (2.*a)**2. / nu))
 
 # save
 imgname = imgdir + "avg-power-spectrum-time-vf"
@@ -115,8 +124,6 @@ for i in np.arange(1,5):
 imgname = imgdir + "avg-autocorr-time-vf"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
 plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-
-print "\n      ...Done!"
 
 # colormap plots
 #  # Plot

@@ -157,6 +157,7 @@ void calc_coeffs(double *nql_even, double *nql_odd, double *q,
 void eval_series(double *cesaro_sum, double nql_even, double nql_odd,
   double *evalZ, double ell, double k_ell)
 {
+  // Cesaro sum weight -- set = 1 for not cesaro summation
   double weight = (1. - ell / (order_e + 1.));
   
   for (int zz = 0; zz < npoints; zz++) {

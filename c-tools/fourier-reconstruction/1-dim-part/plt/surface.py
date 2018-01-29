@@ -1,13 +1,8 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 from setup import *
 os.system('clear')
 
 from matplotlib.ticker import MultipleLocator
-
-print ""
-print " ---- Fourier Reconstruction Plotting Utility ---- "
-print "                Surface Plotting"
-print ""
 
 # Setup simulation parameters
 (partR, nparts, rho, vFracMean, simdir, tstart) = simParams(sys)
@@ -70,8 +65,8 @@ maxDiff = np.floor(maxDiff * 100.) / 100.
 #vFrac[vFrac <= avgVolumeFraction] = avgVolumeFraction
 
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  cmap='coolwarm')#,
-  #vmin=avgVolumeFraction - maxDiff, vmax=avgVolumeFraction + maxDiff)
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  cmap='seismic',
+  vmin=0.3, vmax=0.4)
 
 
 cbar = plt.colorbar()

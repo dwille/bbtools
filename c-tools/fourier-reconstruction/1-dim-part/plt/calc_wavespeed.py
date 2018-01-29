@@ -28,6 +28,7 @@
 from setup import *
 from scipy import signal
 from matplotlib.ticker import MultipleLocator
+#from matplotlib.ticker import MaxNLocator
 
 # Initialize simulation parameters
 (radius, nparts, rho,  _, simdir, ts) = simParams(sys)
@@ -185,17 +186,28 @@ print(np.min(vfrac_xcorr_mean))
 fig = plt.figure(figsize=(3.25, 1.625))
 plt.imshow(vfrac_xcorr_mean, origin='lower', aspect='auto', interpolation='none',
   extent=[time[0], time[-1], dz[0], dz[-1]],
-  vmin=-0.5, vmax=0.5, cmap='coolwarm')
-plt.colorbar()
+  vmin=-0.1, vmax=0.3, cmap='coolwarm')
+
+cb = plt.colorbar()
+cb.set_ticks([-0.1, 0., 0.1, 0.2, 0.3])
+cb.set_ticklabels([-0.1, 0., 0.1, 0.2, 0.3])
+#tick_locator = MaxNLocator(nbins=5)
+#cb.locator = tick_locator
+#cb.update_ticks()
+
 plt.plot(tau, zeta, 'k-')
 plt.plot(tau, yFit, 'w--')
+
 plt.xlabel(r'$\nu \Delta t / (2a)^2$')
 plt.xlim([0, 6])
+plt.gca().xaxis.set_major_locator(MultipleLocator(2))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
+
 plt.ylabel(r'$\Delta z / 2a$')
 plt.ylim([dz[0], dz[-1]])
 plt.gca().yaxis.set_label_coords(-0.15, 0.5)
-plt.gca().xaxis.set_major_locator(MultipleLocator(2))
-plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
 plt.gca().yaxis.set_major_locator(MultipleLocator(5))
 plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
+
 plt.savefig(imgdir + "wavespeed-slope-fit.png", bbox_inches='tight', format='png')
+plt.savefig(imgdir + "wavespeed-slope-fit.eps", bbox_inches='tight', format='eps')

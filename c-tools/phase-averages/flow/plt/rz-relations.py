@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from confidence import fit_param
 
@@ -22,9 +22,9 @@ def get_axis_limits(ax, scalex=0.8, scaley=0.85):
 
   return xmin + scalex*dx, ymin + scaley*dy
 
-print ""
-print " ---- Phase-Averaged Fluid Velocity Plotting Utility"
-print ""
+print("")
+print(" ---- Phase-Averaged Fluid Velocity Plotting Utility")
+print("")
 
 # Simulation Params
 d = 4.2
@@ -38,21 +38,21 @@ root = home + "/scratch/triply_per/simdata/"
 phaseFile = root + "phaseAveragedFluidVel"
 termFile = root + "singlePartSedi"
 
-print "      Root directory set to: " + root
-print "      Using location: " + phaseFile
-print "      Using location: " + termFile
-print ""
-print "      Using d = %.2f" % d
-print "      Using nu = %.5f" % nu
+print("      Root directory set to: " + root)
+print("      Using location: " + phaseFile)
+print("      Using location: " + termFile)
+print("")
+print("      Using d = %.2f" % d)
+print("      Using nu = %.5f" % nu)
 
 # Check if datadir exists so we don't go creating extra dirs
 if not os.path.exists(phaseFile):
-  print "      " + phaseFile + " does not exist. Exiting..."
-  print ""
+  print("      " + phaseFile + " does not exist. Exiting...")
+  print("")
   sys.exit()
 elif not os.path.exists(termFile):
-  print "      " + termFile + " does not exist. Exiting..."
-  print ""
+  print("      " + termFile + " does not exist. Exiting...")
+  print("")
   sys.exit()
 
 # Create imgdir if necessary
@@ -66,7 +66,8 @@ if not os.path.exists(imgdir):
 
 # Read data
 flowVel = np.genfromtxt(phaseFile, skip_header=1, usecols=2)
-partVel = np.genfromtxt(phaseFile, skip_header=1, usecols=3)
+#partVel = np.genfromtxt(phaseFile, skip_header=1, usecols=3)
+partVel = np.zeros(16) # XXX if not using abs and saying ~0
 termVel = np.genfromtxt(termFile, skip_header=1, usecols=1)
 
 # Constant rho -- phi increasing -- left hand side
@@ -92,26 +93,26 @@ kerrs = [k20_err, k33_err, k40_err, k50_err]
 n_curr = [n20, n33, n40, n50]
 nerrs = [n20_err, n33_err, n40_err, n50_err]
 
-print "Error on coefficients"
-print "   2.0   3.3   4.0   5.0"
-print "n  %.2f  %.2f  %.2f  %.2f" % (n20,n33,n40,n50)
-print "ne %.2f  %.2f  %.2f  %.2f" % (n20_err,n33_err,n40_err,n50_err)
-print "k  %.2f  %.2f  %.2f  %.2f" % (k20,k33,k40,k50)
-print "ke %.2f  %.2f  %.2f  %.2f" % (k20_err,k33_err,k40_err,k50_err)
-print ""
-print "Error on wavespeed"
-print "k = k + k', n = n + n', c = c + c'"
-print "Thus (c + c')/c = (k+k')/k (n+n')/n (1-phi)^n' "
-print "              2.0   3.3   4.0   5.0"
+print("Error on coefficients")
+print("   2.0   3.3   4.0   5.0")
+print("n  %.2f  %.2f  %.2f  %.2f" % (n20,n33,n40,n50))
+print("ne %.2f  %.2f  %.2f  %.2f" % (n20_err,n33_err,n40_err,n50_err))
+print("k  %.2f  %.2f  %.2f  %.2f" % (k20,k33,k40,k50))
+print("ke %.2f  %.2f  %.2f  %.2f" % (k20_err,k33_err,k40_err,k50_err))
+print("")
+print("Error on wavespeed")
+print("k = k + k', n = n + n', c = c + c'")
+print("Thus (c + c')/c = (k+k')/k (n+n')/n (1-phi)^n' ")
+print("              2.0   3.3   4.0   5.0")
 phi = np.array([0.087, 0.175, 0.262, 0.349])
 p20 = (1. + n20_err/n20)*(1. + k20_err/k20)*(1-phi)**(+n20_err)
 p33 = (1. + n33_err/n33)*(1. + k33_err/k33)*(1-phi)**(+n33_err)
 p40 = (1. + n40_err/n40)*(1. + k40_err/k40)*(1-phi)**(+n40_err)
 p50 = (1. + n50_err/n50)*(1. + k50_err/k50)*(1-phi)**(+n50_err)
-print "phi = 0.087   %.3f  %.3f  %.3f  %.3f" % (p20[0], p20[1], p20[2], p20[3])
-print "phi = 0.175   %.3f  %.3f  %.3f  %.3f" % (p33[0], p33[1], p33[2], p33[3])
-print "phi = 0.262   %.3f  %.3f  %.3f  %.3f" % (p40[0], p40[1], p40[2], p40[3])
-print "phi = 0.349   %.3f  %.3f  %.3f  %.3f" % (p50[0], p50[1], p50[2], p50[3])
+print("phi = 0.087   %.3f  %.3f  %.3f  %.3f" % (p20[0], p20[1], p20[2], p20[3]))
+print("phi = 0.175   %.3f  %.3f  %.3f  %.3f" % (p33[0], p33[1], p33[2], p33[3]))
+print("phi = 0.262   %.3f  %.3f  %.3f  %.3f" % (p40[0], p40[1], p40[2], p40[3]))
+print("phi = 0.349   %.3f  %.3f  %.3f  %.3f" % (p50[0], p50[1], p50[2], p50[3]))
 
 # R-Z relations -- n coefficient
 Ret = d*termVel/nu

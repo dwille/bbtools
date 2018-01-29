@@ -23,7 +23,11 @@ for cc, currdir in enumerate(simdirs):
   pp = np.argwhere(curr_rho == rho_star)
   nn = np.argwhere(curr_nparts == nparts)
 
+  print("rho = %.1lf, nparts = %d, freq = %lf" % (curr_rho, curr_nparts, freq))
+
   data[pp, nn] = freq
+
+sys.exit()
 
 # colors for plotting -- still ungeneral but better than in tetrads
 baseColors = ['r', 'g', 'b', 'k']

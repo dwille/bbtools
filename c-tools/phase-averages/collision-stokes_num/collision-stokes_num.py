@@ -68,20 +68,23 @@ for rr, curr_rho in enumerate(rho):
         n_ind = np.argwhere(curr_nparts == nparts)
 
         st_max[p_ind, n_ind] = data[:,2].max()
+        if (st_max[p_ind, n_ind] > 30.):
+          print curr_rho, curr_nparts, data[:,2].max()
         st_mean[p_ind, n_ind] = data[:,2].mean()
         st_sdev[p_ind, n_ind] = data[:,2].std()
         st_skew[p_ind, n_ind] = stats.skew(data[:,2])
         st_num[p_ind, n_ind] = np.size(data,0)
 
-print st_skew
+#print st_skew
 print st_num
+print st_mean
 
 ## Plotting
 fig, ax = plt.subplots(1,1)
 
 # mean vs. vfrac
 for i in np.arange(rho.size):
-  plt.plot(vfrac, st_mean[:,i], 'o--')
+  plt.plot(vfrac, st_mean[i,:], 'o--')
 
 ax.legend([r"$\rho^* = 2.0$", r"$\rho^* = 3.3$", r"$\rho^* = 4.0$", 
   r"$\rho^* = 5.0$"], framealpha=0.7)
@@ -89,12 +92,12 @@ ax.legend([r"$\rho^* = 2.0$", r"$\rho^* = 3.3$", r"$\rho^* = 4.0$",
 # mean + std vs vfrac
 ax.set_prop_cycle(None)   # reset color cyace
 for i in np.arange(rho.size):
-  plt.plot(vfrac, st_mean[:,i] + st_sdev[:,i], ':')
+  plt.plot(vfrac, st_mean[i,:] + 2.*st_sdev[i,:], ':')
 
 # max
 ax.set_prop_cycle(None)   # reset color cyace
 for i in np.arange(rho.size):
-  plt.plot(vfrac, st_max[:,i], '-.')
+  plt.plot(vfrac, st_max[i,:], '-.')
 
 ax.set_xlabel(r"$\phi$")
 ax.set_xlim([0, 0.5])

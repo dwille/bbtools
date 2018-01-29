@@ -149,7 +149,8 @@ for i in np.arange(rho.size):
     
 
 
-plt.savefig("tmp.png", bbox_inches='tight', format='png')
+plt.savefig(imgdir + "wavespeed.png", bbox_inches='tight', format='png')
+plt.savefig(imgdir + "wavespeed.eps", bbox_inches='tight', format='eps')
 sys.exit()
 
 ### HERE BELOW IS OLD, UNMODIFIED. SOME MAY BE USEFUL BUT REQUIRE RENAMING VARIABLES,

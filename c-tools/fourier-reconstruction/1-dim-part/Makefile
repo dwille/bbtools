@@ -3,8 +3,8 @@ ifeq ($(USER),dwille)
   $(info User is $(USER))
   #HDF5_DIR = /opt/hdf5
   #CGNS_DIR = /opt/cgns
-  HDF5_DIR = /home/dwille/.deps/phdf5/1.8.18
-  CGNS_DIR = /home/dwille/.deps/pcgns/3.3.0
+  HDF5_DIR = /opt/phdf5/1.8.19
+  CGNS_DIR = /opt/pcgns/3.3.0
 else ifeq ($(USER),dwillen3@jhu.edu)
   $(info USER is dwillen3@jhu.edu)
   HDF5_DIR = /home-1/dwillen3@jhu.edu/.deps/phdf5/1.8.18

@@ -1,0 +1,151 @@
+/home/dwille/.deps/anaconda2/lib/python2.7/site-packages/matplotlib/__init__.py:486: UserWarning: matplotlibrc text.usetex option can not be used unless TeX-3.1415 or later is installed on your system
+  'installed on your system') % tex_req)
+/home/dwille/.deps/anaconda2/lib/python2.7/site-packages/matplotlib/__init__.py:493: UserWarning: matplotlibrc text.usetex can not be used with *Agg backend unless dvipng-1.5 or later is installed on your system
+  warnings.warn('matplotlibrc text.usetex can not be used with *Agg '
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho2.0/analysis/tetrads/data/
+minTsteps = 3000.0
+      Total tetrads tracked: 1376.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho3.3/analysis/tetrads/data/
+minTsteps = 1976.0
+      Total tetrads tracked: 47507.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho5.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho5.0/analysis/tetrads/data/
+minTsteps = 946.0
+      Total tetrads tracked: 4422.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  2000/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/2000/rho3.3/analysis/tetrads/data/
+    Total tetrads tracked: 232436.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho2.0/analysis/tetrads/data/
+minTsteps = 3331.0
+      Total tetrads tracked: 33839.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  2000/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/2000/rho2.0/analysis/tetrads/data/
+minTsteps = 6649.0
+      Total tetrads tracked: 84339.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho3.3/analysis/tetrads/data/
+minTsteps = 2090.0
+      Total tetrads tracked: 2894.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  2000/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/2000/rho3.3/analysis/tetrads/data/
+minTsteps = 3297.0
+      Total tetrads tracked: 232436.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1500/rho4.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1500/rho4.0/analysis/tetrads/data/
+minTsteps = 1752.0
+      Total tetrads tracked: 200536.0
+     ---- Combine-Runs Utility ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1500/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1500/rho3.3/analysis/tetrads/data/
+minTsteps = 2140.0
+      Total tetrads tracked: 172089.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1500/rho4.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1500/rho4.0/analysis/tetrads/data/
+    Total tetrads tracked: 200536.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1500/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1500/rho3.3/analysis/tetrads/data/
+    Total tetrads tracked: 172089.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1500/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1500/rho2.0/analysis/tetrads/data/
+    Total tetrads tracked: 104230.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho4.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho4.0/analysis/tetrads/data/
+    Total tetrads tracked: 3587.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho5.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho5.0/analysis/tetrads/data/
+    Total tetrads tracked: 4422.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho4.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho4.0/analysis/tetrads/data/
+    Total tetrads tracked: 61302.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho5.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho5.0/analysis/tetrads/data/
+    Total tetrads tracked: 68599.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho3.3/analysis/tetrads/data/
+    Total tetrads tracked: 47507.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho2.0/analysis/tetrads/data/
+    Total tetrads tracked: 1376.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  1000/rho2.0/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/1000/rho2.0/analysis/tetrads/data/
+    Total tetrads tracked: 33839.0
+
+---- Combine-Runs Utility -- Alignment ----
+
+ Root dir: /home/dwille/scratch/triply_per/
+ Sim dir:  500/rho3.3/analysis/tetrads/
+ Data dir:  /home/dwille/scratch/triply_per/500/rho3.3/analysis/tetrads/data/
+    Total tetrads tracked: 2894.0
