@@ -160,3 +160,33 @@ def cor(u, v, w, u0, v0, w0):
   ret_v = numpy.multiply(v0,v)
   ret_w = numpy.multiply(w0,w)
   return (ret_u, ret_v, ret_w)
+
+# do periodic counting for a time series
+def periodic_flip(x, y, z, x0, y0, z0, flip_i, flip_j, flip_k, Lx, Ly, Lz):
+  # Before anything, correct particle position with old flip count to make sure
+  # we're comparing apples to apples
+  x += Lx * flip_i
+  y += Ly * flip_j
+  z += Lz * flip_k
+
+  # Position change since previous timestep
+  dx = x0 - x
+  dy = y0 - y
+  dz = z0 - z
+
+  # Increment flip count:
+  #  -- if (prev - curr) > 0, went R->L, (+) a domain length
+  #  -- if (prev - curr) < 0, went L->R, (-) a domain length
+  flip_i += 1*(dx >= 0.5*Lx) - 1*(dx <= -0.5*Lx)
+  flip_j += 1*(dy >= 0.5*Ly) - 1*(dy <= -0.5*Ly)
+  flip_k += 1*(dz >= 0.5*Lz) - 1*(dz <= -0.5*Lz)
+
+  # Correct particle position one last time
+  x += Lx * (1*(dx >= 0.5*Lx) - 1*(dx <= -0.5*Lx))
+  y += Ly * (1*(dy >= 0.5*Ly) - 1*(dy <= -0.5*Ly))
+  z += Lz * (1*(dz >= 0.5*Lz) - 1*(dz <= -0.5*Lz))
+
+  return (x, y, z, flip_i, flip_j, flip_k)
+
+
+
