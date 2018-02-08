@@ -107,6 +107,11 @@ def read_part_position():
   else:
     return ((x1,y1,z1),(x2,y2,z2))
 
+# Read the particle densities
+def read_mean_part_density():
+  rho = numpy.array(f["/Base/Zone0/Solution/Density/ data"])
+  return (numpy.mean(rho))
+
 # Read the particle velocities.
 def read_part_velocity():
   u1 = numpy.array(f["/Base/Zone0/Solution/VelocityX/ data"])

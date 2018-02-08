@@ -45,14 +45,11 @@ bbparts.open(times[0])
 nparts = bbparts.read_nparts()
 bbparts.close()
 
-# Predefine simulation parameters -- XXX should not hardcode!
+# Predefine simulation parameters
 a = 2.1
 Lx = 42.
 Ly = 42.
 Lz = 126.
-nu = 0.01715  # [mm^2/ms]
-rho = 3.3     # TODO pull from sim directory
-tau_p = (2.*a)**2 * rho / (18. * nu)  # [ms]
 
 r = 3.*a      # kd-tree search radius
 

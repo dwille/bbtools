@@ -12,6 +12,7 @@
 # Imports:
 import sys,os
 import numpy as np
+import bluebottle_particle_reader as bbparts
 import matplotlib.pyplot as plt
 
 ##########
@@ -43,13 +44,24 @@ D[2,0,:] = data[:,7]
 D[2,1,:] = data[:,8]
 D[2,2,:] = data[:,9]
 
-# Predefine simulation parameters -- XXX should not hardcode!
-a = 2.1
-Lx = 42.
-Ly = 42.
-Lz = 126.
-nu = 0.01715  # [mm^2/ms]
-rho = 3.3     # TODO pull from sim directory
+# Predefine simulation parameters
+a = 2.1         # [mm]
+Lx = 42.        # [mm]
+Ly = 42.        # [mm]
+Lz = 126.       # [mm]
+nu = 0.01715    # [mm^2/ms]
+rho_f = 8.75e-4 # [g/mm^3]
+
+# Pull particle density from cgns file
+cgns_times = bbparts.init(data_dir)
+bbparts.open(cgns_times[0])
+rho_p = bbparts.read_mean_part_density()
+nparts = bbparts.read_nparts()
+
+# Derived quantities
+part_vol = 4./3. * np.pi * a**3
+phi = nparts * part_vol / (Lx * Ly * Lz)
+rho = rho_p / rho_f
 tau_p = (2.*a)**2 * rho / (18. * nu)  # [ms]
 
 # Plot
@@ -87,6 +99,8 @@ plt.xlabel(r"$t/\tau_p$")
 plt.ylabel(r"$\sqrt{D_{ii}}/a$")
 plt.ylim([1, 100])
 plt.legend([r"$D_{11}$", r"$D_{22}$", r"$D_{33}$"])
+
+plt.title("rho %.2f, nparts %d" % (rho, nparts))
 
 plt.tight_layout()
 plt.savefig(imgdir + "pair-dispersion-tensor.png", bbox_inches='tight', format='png')
