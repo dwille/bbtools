@@ -23,7 +23,8 @@ extern double *nwl_avg_even;   // phase averaged w-vel
 
 // Reconstructions
 extern double *n_ces;        // particle number density -- cesaro sum
-extern double *vFrac_ces;    // volume fraction -- cesaro sum
+extern double *vfrac_ces;    // volume fraction -- cesaro sum
+extern double *vfrac_wp_ces;    // (volume fraction * vertical particle vel) -- cesaro sum
 extern double *nu_ces;       // u-vel -- cesaro sum
 extern double *nv_ces;       // v-vel -- cesaro sum
 extern double *nw_ces;       // w-vel -- cesaro sum
@@ -38,7 +39,7 @@ extern double *ones;         // array of ones to place hold q for number density
 void alloc_arrays();
 
 // Calculate constant coefficents
-void const_coeffs(double *q, double *cesaro_sum);
+void const_coeffs(double *q, double q_const, double *cesaro_sum);
 
 // Calculate even and odd coefficents
 void calc_coeffs(double *nql_even, double *nql_odd, double *q, 

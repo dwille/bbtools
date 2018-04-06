@@ -54,11 +54,13 @@ int main(int argc, char *argv[])
     for (int ll = order_s; ll <= order_e; ll++) {
       // Calculate nq0; init cesaro sum to this value
       if (ll == 0) {
-        const_coeffs(ones, n_ces);
-        const_coeffs(up, nu_ces);
-        const_coeffs(vp, nv_ces);
-        const_coeffs(wp, nw_ces);
-        const_coeffs(ke, nke_ces);
+        const_coeffs(ones, mean_vol, vfrac_ces);
+        const_coeffs(wp, mean_vol, vfrac_wp_ces);
+        const_coeffs(ones, 1., n_ces);
+        const_coeffs(up, 1., nu_ces);
+        const_coeffs(vp, 1., nv_ces);
+        const_coeffs(wp, 1., nw_ces);
+        const_coeffs(ke, 1., nke_ces);
 
         // write constant coeffs to file
         if (coeffsOut == 1) write_coeffs(0);
@@ -75,7 +77,8 @@ int main(int argc, char *argv[])
         calc_coeffs(&nkel_even[ll], &nkel_odd[ll], ke, parts, k_ell);
 
         // Calculate volume fraction coeffs from number density
-        eval_phase_avg(vFrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+        eval_phase_avg(vfrac_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);
+        eval_phase_avg(vfrac_wp_ces, nwl_even[ll], nwl_odd[ll], evalZ, ell, k_ell);
 
         // Evaluate series at z
         eval_series(n_ces, nl_even[ll], nl_odd[ll], evalZ, ell, k_ell);

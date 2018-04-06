@@ -59,7 +59,8 @@ extern int *partFileMap;
 
 // Number of Particles
 extern int nparts;
-extern double meanR;
+extern double mean_r;
+extern double mean_vol;
 
 // Particle velocities
 extern double *up;

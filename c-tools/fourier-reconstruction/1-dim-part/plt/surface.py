@@ -40,7 +40,6 @@ avgVolumeFraction = 4./3.*np.pi*partR*partR*partR*nparts/(domX*domY*domZ)
 #      termVel = termData[nn,1]  # mm/ms
 
 # Non-dimensionalize Axes (time, position)
-#tau = (2.*partR) / phaseVel       ## mm / (mm/s) = s
 evalZ /= (2.*partR)               ## mm / mm
 tau = (2.*partR)*(2.*partR)/nu    ## mm^2/(mm^2/ms) = ms
 tau /= 1000.                      ## ms -> s
@@ -51,33 +50,16 @@ vFracFig = plt.figure(figsize=(3.25,1.625))
 
 vFrac = np.genfromtxt(datadir + "volume-fraction").T[:,tsInd:]
 
-minVal = np.floor(100*np.amin(vFrac))/100
-maxVal = np.ceil(100*np.amax(vFrac))/100
-upperDiff = maxVal - avgVolumeFraction
-lowerDiff = avgVolumeFraction - minVal
-maxDiff = np.max([upperDiff, lowerDiff])
-maxDiff = np.floor(maxDiff * 100.) / 100.
-
-# Highlight Fluid
-#vFrac[vFrac >= avgVolumeFraction] = avgVolumeFraction
-
-# Highight Solid
-#vFrac[vFrac <= avgVolumeFraction] = avgVolumeFraction
-
 plt.imshow(vFrac, origin="lower", aspect="auto", interpolation="none",
-  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  cmap='seismic',
-  vmin=0.3, vmax=0.4)
-
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]]),  #cmap='seismic')
+  #vmin=0.3, vmax=0.4)
 
 cbar = plt.colorbar()
 plt.xlabel(r"$\nu t/(2a)^2$")
 plt.ylabel(r'$z/2a$', rotation=90)
+plt.title(r'$\phi$')
 plt.gca().yaxis.set_label_coords(-0.15, 0.5)
 
-#xEnd = time[-1]
-#xEnd = 10.*np.floor(xEnd / 10.)
-#xEnd = 14 # XXX
-#plt.xlim([0, xEnd])
 #plt.gca().xaxis.set_major_locator(MultipleLocator(2))
 #plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
 plt.gca().yaxis.set_major_locator(MultipleLocator(5))
@@ -85,8 +67,96 @@ plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
 
 imgname = imgdir + "volume-fraction"
 plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
-plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
-plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
+
+## VOLUME FRACTION -- Particle velocity ##
+vFracFig = plt.figure(figsize=(3.25,1.625))
+
+vFracWp = np.genfromtxt(datadir + "volume-fraction-wp").T[:,tsInd:]
+vFracWp *= 1000.          ## []*mm/ms -> []*mm/s
+vFracWp *= tau/(2.*partR) ## []*mm/s * s/mm
+
+plt.imshow(vFracWp, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]]),  #cmap='seismic')
+  #vmin=0.3, vmax=0.4)
+
+cbar = plt.colorbar()
+plt.xlabel(r"$\nu t/(2a)^2$")
+plt.ylabel(r'$z/2a$', rotation=90)
+plt.title(r'$\phi w_p$')
+plt.gca().yaxis.set_label_coords(-0.15, 0.5)
+
+#plt.gca().xaxis.set_major_locator(MultipleLocator(2))
+#plt.gca().xaxis.set_minor_locator(MultipleLocator(1))
+plt.gca().yaxis.set_major_locator(MultipleLocator(5))
+plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
+
+imgname = imgdir + "volume-fraction-wp"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
+
+## Continuity ##
+cont_fig = plt.figure(figsize=(9.75,2.75))
+dphidt = np.gradient(vFrac, np.mean(np.diff(time)), edge_order=2, axis=1)
+dphiwpdz = np.gradient(vFracWp, np.mean(np.diff(evalZ)), edge_order=2, axis=0)
+continuity = dphidt + dphiwpdz
+
+print(np.sum(continuity*continuity) / np.sum(dphidt * dphidt))
+
+ax1 = cont_fig.add_subplot(131)
+plt.imshow(continuity, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  #cmap='seismic',
+  vmin=-0.005, vmax=0.005)
+
+cbar = plt.colorbar()
+#plt.xlabel(r"$\nu t/(2a)^2$")
+plt.ylabel(r'$z/2a$', rotation=90)
+plt.title(r'$d\phi/dt + d(\phi w_p)/dz$')
+plt.gca().yaxis.set_label_coords(-0.15, 0.5)
+
+plt.gca().xaxis.set_major_locator(MultipleLocator(2.0))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(0.5))
+plt.gca().yaxis.set_major_locator(MultipleLocator(5))
+plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
+
+ax2 = cont_fig.add_subplot(132)
+plt.imshow(dphidt, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  #cmap='seismic',
+  vmin=-0.5, vmax=0.5)
+
+cbar = plt.colorbar()
+#plt.xlabel(r"$\nu t/(2a)^2$")
+plt.ylabel(r'$z/2a$', rotation=90)
+plt.title(r'$d\phi/dt$')
+plt.gca().yaxis.set_label_coords(-0.15, 0.5)
+
+plt.gca().xaxis.set_major_locator(MultipleLocator(2.0))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(0.5))
+plt.gca().yaxis.set_major_locator(MultipleLocator(5))
+plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
+
+ax3 = cont_fig.add_subplot(133)
+plt.imshow(dphiwpdz, origin="lower", aspect="auto", interpolation="none",
+  extent=[time[0], time[-1], evalZ[0], evalZ[-1]],  #cmap='seismic',
+  vmin=-0.5, vmax=0.5)
+
+cbar = plt.colorbar()
+#plt.xlabel(r"$\nu t/(2a)^2$")
+plt.ylabel(r'$z/2a$', rotation=90)
+plt.title(r'$d(\phi w_p)/dz$')
+plt.gca().yaxis.set_label_coords(-0.15, 0.5)
+
+plt.gca().xaxis.set_major_locator(MultipleLocator(2.0))
+plt.gca().xaxis.set_minor_locator(MultipleLocator(0.5))
+plt.gca().yaxis.set_major_locator(MultipleLocator(5))
+plt.gca().yaxis.set_minor_locator(MultipleLocator(2.5))
+
+imgname = imgdir + "continuity"
+plt.savefig(imgname + ".png", bbox_inches='tight', format='png')
+#plt.savefig(imgname + ".pdf", bbox_inches='tight', format='pdf')
+#plt.savefig(imgname + ".eps", bbox_inches='tight', format='eps')
 
 # ## NUMBER DENSITY ##
 #nDensFile = datadir + "number-density"

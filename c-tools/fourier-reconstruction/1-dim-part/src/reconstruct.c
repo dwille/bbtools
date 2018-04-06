@@ -18,7 +18,8 @@ double *nwl_avg_odd;    // phase averaged w-vel
 double *nwl_avg_even;   // phase averaged w-vel
 
 double *n_ces;
-double *vFrac_ces;
+double *vfrac_ces;
+double *vfrac_wp_ces;    // reconstruction of (phi * up)
 double *nu_ces;       // u-vel -- cesaro sum
 double *nv_ces;       // v-vel -- cesaro sum
 double *nw_ces;       // w-vel -- cesaro sum
@@ -85,24 +86,26 @@ void alloc_arrays()
   /* Init cesaro sum result arrays */
   // size is npoints x nFiles
   n_ces = (double*) malloc(npoints * nFiles * sizeof(double));
-  vFrac_ces = (double*) malloc(npoints * nFiles * sizeof(double));
+  vfrac_ces = (double*) malloc(npoints * nFiles * sizeof(double));
+  vfrac_wp_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nu_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nv_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nw_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nke_ces = (double*) malloc(npoints * nFiles * sizeof(double));
   nw_avg_ces = (double*) malloc(npoints * nFiles * sizeof(double));
 
-  double vFrac0 = 4./3.*PI*meanR*meanR*meanR * nparts / (dom.xl*dom.yl*dom.zl);
+  //double vfrac0 = 4./3.*PI*mean_r*mean_r*mean_r * nparts / (dom.xl*dom.yl*dom.zl);
   for (int j = 0; j < nFiles; j++) {
     for (int i = 0; i < npoints; i++) {
       int c = i + j*npoints;
 
-      if (order_s == 0) {
-        vFrac_ces[c] = vFrac0;  // set this explicitly
-      } else {
-        vFrac_ces[c] = 0.;  // set this explicitly
-      }
+      //if (order_s == 0) {
+      //  vfrac_ces[c] = vfrac0;  // set this explicitly
+      //} else {
+      //  vfrac_ces[c] = 0.;  // set this explicitly
+      //}
 
+      vfrac_ces[c] = 0.;
       n_ces[c] = 0.;
       nu_ces[c] = 0.;
       nv_ces[c] = 0.;
@@ -121,11 +124,14 @@ void alloc_arrays()
 }
 
 // Calculate constant coefficients
-void const_coeffs(double *q, double *cesaro_sum)
+// q          -- particle quantity to reconstruct
+// q_const    -- constant to multiply q by
+// cesaro_sum -- sum to add const coeff to
+void const_coeffs(double *q, double q_const, double *cesaro_sum)
 {
   double sum = 0.;
   for (int nn = 0; nn < nparts; nn++) {
-    sum += q[nn];
+    sum += q[nn]*q_const;
   }
   double nq0 = sum/(dom.xl * dom.yl * dom.zl);
 
@@ -176,8 +182,8 @@ void eval_phase_avg(double *phase_avg_ces, double nql_even, double nql_odd,
   double *evalZ, double ell, double k_ell)
 {
   double weight = (1. - ell / (order_e + 1.));
-  double correction = 4.*PI/(k_ell*k_ell*k_ell)*(sin(k_ell*meanR) 
-                                                - k_ell*meanR*cos(k_ell*meanR));
+  double correction = 4.*PI/(k_ell*k_ell*k_ell)*(sin(k_ell*mean_r) 
+                                                - k_ell*mean_r*cos(k_ell*mean_r));
   for (int zz = 0; zz < npoints; zz++) {
     int cc = zz + npoints*tt;
 

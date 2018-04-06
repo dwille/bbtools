@@ -8,7 +8,8 @@ int *partFileMap;
 int sigFigPre;
 int sigFigPost;
 int nparts;
-double meanR;
+double mean_r;
+double mean_vol;
 double *up;
 double *vp;
 double *wp;
@@ -409,12 +410,13 @@ void parts_init(void)
   }
   fflush(stdout);
 
-  meanR = 0.;
+  mean_r = 0.;
   for (int p = 0; p < nparts; p++) {
     parts[p].r = r[p];
-    meanR += parts[p].r;
+    mean_r += parts[p].r;
   }
-  meanR /= nparts;
+  mean_r /= nparts;
+  mean_vol = 4./3.*PI*mean_r*mean_r*mean_r;
 
   cg_close(fn);
   free(r);
@@ -491,7 +493,7 @@ void domain_init(void)
   // Calculate order using sampling theorem -- 1 wave / 1 diameters
   if ((order_s == -1) || (order_e == -1)) {
     order_s = 0;
-    order_e = (int) floor(dom.zn / (2. * meanR) );
+    order_e = (int) floor(dom.zn / (2. * mean_r) );
   }
   printf("Starting Order = %d\n", order_s);
   printf("Ending Order = %d\n", order_e);
@@ -702,7 +704,25 @@ void write_reconstruct(void)
   for (int t = 0; t < nFiles; t++) {
     for (int zz = 0; zz < npoints; zz++) {
       int cc = zz + t*npoints;
-      fprintf(file, "%lf ", vFrac_ces[cc]);
+      fprintf(file, "%lf ", vfrac_ces[cc]);
+    }
+    fprintf(file, "\n");
+  }
+  fclose(file);
+
+  /* (volume fraction)*(particle vertical velocity) */
+  sprintf(fname, "%s/%s/volume-fraction-wp", ANALYSIS_DIR, DATA_DIR);
+  file = fopen(fname, "w");
+  if (file == NULL) {
+    printf("Error opening file %s!\n", fname);
+    exit(EXIT_FAILURE);
+  }
+
+  // each reconstructed timestep is a row
+  for (int t = 0; t < nFiles; t++) {
+    for (int zz = 0; zz < npoints; zz++) {
+      int cc = zz + t*npoints;
+      fprintf(file, "%lf ", vfrac_wp_ces[cc]);
     }
     fprintf(file, "\n");
   }
@@ -816,7 +836,8 @@ void free_vars(void)
   free(nwl_avg_odd);
 
   free(n_ces);
-  free(vFrac_ces);
+  free(vfrac_ces);
+  free(vfrac_wp_ces);
   free(nu_ces);
   free(nv_ces);
   free(nw_ces);
